@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-f1-red: #e10600;
+  --color-f1-red-dark: #b30500;
+  --color-f1-black: #15151e;
+  --color-f1-dark: #1e1e2e;
+  --color-f1-card: #262637;
+  --color-f1-card-hover: #2e2e42;
+  --color-f1-border: #383850;
+  --color-f1-text: #f0f0f5;
+  --color-f1-text-muted: #9898aa;
+  --color-f1-accent: #3b82f6;
+
+  /* Team colors */
+  --color-team-red-bull: #3671c6;
+  --color-team-ferrari: #e80020;
+  --color-team-mclaren: #ff8000;
+  --color-team-mercedes: #27f4d2;
+  --color-team-aston-martin: #229971;
+  --color-team-alpine: #ff87bc;
+  --color-team-williams: #64c4ff;
+  --color-team-haas: #b6babd;
+  --color-team-rb: #6692ff;
+  --color-team-sauber: #52e252;
+}
+
+body {
+  background: var(--color-f1-black);
+  color: var(--color-f1-text);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-f1-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-f1-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-f1-text-muted);
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-live {
+  animation: pulse-live 1.5s ease-in-out infinite;
+}
