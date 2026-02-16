@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -e
+
+echo "================================"
+echo "  F1 Dashboard - 2025 Season"
+echo "================================"
+echo ""
+
+# Check for Node.js
+if ! command -v node &> /dev/null; then
+  echo "Error: Node.js is not installed."
+  echo "Install it from https://nodejs.org (v18+ required)"
+  exit 1
+fi
+
+NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+if [ "$NODE_VERSION" -lt 18 ]; then
+  echo "Error: Node.js v18+ required (found v$NODE_VERSION)"
+  exit 1
+fi
+
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+  echo "Installing dependencies..."
+  npm install
+  echo ""
+fi
+
+echo "Starting F1 Dashboard..."
+echo "Open http://localhost:3000 in your browser"
+echo ""
+
+npm run dev
