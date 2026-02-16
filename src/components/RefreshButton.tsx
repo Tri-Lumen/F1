@@ -1,0 +1,57 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+
+export default function RefreshButton({
+  intervalMs = 30000,
+}: {
+  intervalMs?: number;
+}) {
+  const router = useRouter();
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [countdown, setCountdown] = useState(intervalMs / 1000);
+
+  const refresh = useCallback(() => {
+    router.refresh();
+    setLastRefresh(new Date());
+    setCountdown(intervalMs / 1000);
+  }, [router, intervalMs]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          refresh();
+          return intervalMs / 1000;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [refresh, intervalMs]);
+
+  return (
+    <button
+      onClick={refresh}
+      className="flex items-center gap-2 rounded-lg bg-f1-card px-3 py-1.5 text-xs text-f1-text-muted hover:bg-f1-card-hover transition-colors"
+    >
+      <svg
+        className="h-3.5 w-3.5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        />
+      </svg>
+      <span>
+        Auto-refresh in {countdown}s
+      </span>
+    </button>
+  );
+}
