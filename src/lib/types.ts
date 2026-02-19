@@ -134,3 +134,20 @@ export interface LiveInterval {
   interval: number | null;
   date: string;
 }
+
+// Tire stint data from OpenF1
+export interface LiveStint {
+  driver_number: number;
+  stint_number: number;
+  compound: string;
+  lap_start: number;
+  lap_end: number | null;
+  tyre_age_at_start: number;
+}
+
+// Team radio data from OpenF1
+export interface TeamRadio {
+  driver_number: number;
+  recording_url: string;
+  date: string;
+}

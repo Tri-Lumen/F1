@@ -1,0 +1,319 @@
+export const dynamic = "force-dynamic";
+
+import { Suspense } from "react";
+import Link from "next/link";
+import {
+  getLatestSession,
+  getLiveDrivers,
+  getLivePositions,
+  getLiveIntervals,
+  getLiveStints,
+  getTeamRadio,
+} from "@/lib/api";
+import OnboardButton from "@/components/OnboardButton";
+import TireStrategy from "@/components/TireStrategy";
+import TeamRadioFeed from "@/components/TeamRadioFeed";
+import RefreshButton from "@/components/RefreshButton";
+
+async function LiveContent() {
+  const session = await getLatestSession();
+
+  if (!session) {
+    return (
+      <div className="rounded-xl border border-f1-border bg-f1-card p-12 text-center">
+        <svg
+          className="mx-auto h-16 w-16 text-f1-text-muted/30"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+          />
+        </svg>
+        <h2 className="mt-4 text-xl font-bold">No Live Session</h2>
+        <p className="mt-2 text-sm text-f1-text-muted">
+          There is no active session right now. Check the{" "}
+          <Link href="/races" className="text-f1-accent hover:underline">
+            race calendar
+          </Link>{" "}
+          for upcoming events.
+        </p>
+      </div>
+    );
+  }
+
+  const sessionEnd = new Date(session.date_end);
+  const now = new Date();
+  const isLive = now <= sessionEnd && now >= new Date(session.date_start);
+
+  const [drivers, positions, intervals, stints, radio] = await Promise.all([
+    getLiveDrivers(session.session_key),
+    getLivePositions(session.session_key),
+    getLiveIntervals(session.session_key),
+    getLiveStints(session.session_key),
+    getTeamRadio(session.session_key),
+  ]);
+
+  // Get latest position for each driver
+  const latestPositions = new Map<number, number>();
+  for (const p of positions) {
+    latestPositions.set(p.driver_number, p.position);
+  }
+
+  // Get latest interval for each driver
+  const latestIntervals = new Map<
+    number,
+    { gap: number | null; interval: number | null }
+  >();
+  for (const iv of intervals) {
+    latestIntervals.set(iv.driver_number, {
+      gap: iv.gap_to_leader,
+      interval: iv.interval,
+    });
+  }
+
+  // Get current stint (latest) for each driver
+  const currentStints = new Map<number, { compound: string; age: number }>();
+  for (const stint of stints) {
+    const existing = currentStints.get(stint.driver_number);
+    if (
+      !existing ||
+      stint.stint_number >
+        (stints.find(
+          (s) =>
+            s.driver_number === stint.driver_number &&
+            s.compound === existing.compound
+        )?.stint_number ?? 0)
+    ) {
+      const lapEnd = stint.lap_end ?? stint.lap_start + 5;
+      currentStints.set(stint.driver_number, {
+        compound: stint.compound,
+        age: stint.tyre_age_at_start + (lapEnd - stint.lap_start),
+      });
+    }
+  }
+
+  // Sort drivers by position
+  const sortedDrivers = [...drivers].sort((a, b) => {
+    const posA = latestPositions.get(a.driver_number) ?? 99;
+    const posB = latestPositions.get(b.driver_number) ?? 99;
+    return posA - posB;
+  });
+
+  const COMPOUND_COLORS: Record<string, string> = {
+    SOFT: "bg-red-500",
+    MEDIUM: "bg-yellow-500",
+    HARD: "bg-slate-300",
+    INTERMEDIATE: "bg-green-500",
+    WET: "bg-blue-500",
+  };
+
+  const COMPOUND_LABELS: Record<string, string> = {
+    SOFT: "S",
+    MEDIUM: "M",
+    HARD: "H",
+    INTERMEDIATE: "I",
+    WET: "W",
+  };
+
+  return (
+    <>
+      {/* Session Header */}
+      <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {isLive && (
+              <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-3 py-1 text-sm font-bold text-white">
+                <span className="h-2 w-2 rounded-full bg-white animate-pulse-live" />
+                LIVE
+              </span>
+            )}
+            {!isLive && (
+              <span className="rounded-full bg-f1-dark px-3 py-1 text-sm font-bold text-f1-text-muted">
+                SESSION ENDED
+              </span>
+            )}
+            <div>
+              <h2 className="text-xl font-black">
+                {session.country_name} &mdash; {session.session_name}
+              </h2>
+              <p className="text-sm text-f1-text-muted">
+                {session.circuit_short_name}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-f1-text-muted">
+            <span className="hidden sm:block">
+              MultiViewer integration enabled
+            </span>
+            <svg
+              className="h-4 w-4 text-f1-accent"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Live Timing Table */}
+      <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+        <div className="border-b border-f1-border p-4">
+          <h3 className="font-bold text-lg">Live Timing</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                <th className="px-3 py-3 w-12">Pos</th>
+                <th className="px-3 py-3">Driver</th>
+                <th className="px-3 py-3 hidden sm:table-cell">Team</th>
+                <th className="px-3 py-3 text-center">Tire</th>
+                <th className="px-3 py-3 text-right hidden md:table-cell">
+                  Interval
+                </th>
+                <th className="px-3 py-3 text-right hidden md:table-cell">
+                  Gap
+                </th>
+                <th className="px-3 py-3 text-center w-16">Onboard</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedDrivers.map((driver) => {
+                const pos = latestPositions.get(driver.driver_number);
+                const iv = latestIntervals.get(driver.driver_number);
+                const tire = currentStints.get(driver.driver_number);
+                const compoundBg = tire
+                  ? COMPOUND_COLORS[tire.compound?.toUpperCase()] ??
+                    "bg-gray-500"
+                  : null;
+                const compoundLabel = tire
+                  ? COMPOUND_LABELS[tire.compound?.toUpperCase()] ?? "?"
+                  : null;
+
+                return (
+                  <tr
+                    key={driver.driver_number}
+                    className="border-b border-f1-border/50 transition-colors hover:bg-f1-dark/30"
+                  >
+                    <td className="px-3 py-3 font-bold text-f1-text-muted">
+                      {pos}
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-6 w-1 rounded-full"
+                          style={{
+                            backgroundColor: driver.team_colour
+                              ? `#${driver.team_colour}`
+                              : "#888",
+                          }}
+                        />
+                        <div>
+                          <span className="font-bold">
+                            {driver.name_acronym}
+                          </span>
+                          <span className="ml-2 text-xs text-f1-text-muted sm:hidden">
+                            {driver.team_name}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">
+                      {driver.team_name}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {tire && compoundBg && (
+                        <span
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${compoundBg} text-xs font-black text-black`}
+                          title={`${tire.compound} - ${tire.age} laps`}
+                        >
+                          {compoundLabel}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-right hidden md:table-cell text-f1-text-muted font-mono text-xs">
+                      {pos === 1
+                        ? ""
+                        : iv?.interval != null
+                        ? `+${iv.interval.toFixed(3)}`
+                        : "-"}
+                    </td>
+                    <td className="px-3 py-3 text-right hidden md:table-cell text-f1-text-muted font-mono text-xs">
+                      {pos === 1
+                        ? "LEADER"
+                        : iv?.gap != null
+                        ? `+${iv.gap.toFixed(3)}`
+                        : "-"}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <OnboardButton
+                        driverNumber={driver.driver_number}
+                        acronym={driver.name_acronym}
+                        compact
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Two column layout: Tire Strategy + Team Radio */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TireStrategy
+          stints={stints}
+          drivers={drivers}
+          latestPositions={latestPositions}
+        />
+        <TeamRadioFeed messages={radio} drivers={drivers} />
+      </div>
+    </>
+  );
+}
+
+export default function LivePage() {
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">
+            <span className="text-f1-red">Live</span> Session
+          </h1>
+          <p className="mt-1 text-sm text-f1-text-muted">
+            Real-time timing, tire strategy, team radio &amp; onboard cameras
+          </p>
+        </div>
+        <RefreshButton intervalMs={15000} />
+      </div>
+
+      <Suspense
+        fallback={
+          <div className="space-y-4">
+            <div className="h-24 rounded-xl bg-f1-card animate-pulse" />
+            <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="h-64 rounded-xl bg-f1-card animate-pulse" />
+              <div className="h-64 rounded-xl bg-f1-card animate-pulse" />
+            </div>
+          </div>
+        }
+      >
+        <LiveContent />
+      </Suspense>
+    </div>
+  );
+}

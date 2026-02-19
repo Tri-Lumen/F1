@@ -1,18 +1,19 @@
 @import "tailwindcss";
 
 @theme {
+  /* Official F1 brand palette — true blacks, no purple tint */
   --color-f1-red: #e10600;
-  --color-f1-red-dark: #b30500;
-  --color-f1-black: #15151e;
-  --color-f1-dark: #1e1e2e;
-  --color-f1-card: #262637;
-  --color-f1-card-hover: #2e2e42;
-  --color-f1-border: #383850;
-  --color-f1-text: #f0f0f5;
-  --color-f1-text-muted: #9898aa;
-  --color-f1-accent: #3b82f6;
+  --color-f1-red-dark: #a50500;
+  --color-f1-black: #101010;
+  --color-f1-dark: #1a1a1a;
+  --color-f1-card: #242424;
+  --color-f1-card-hover: #2e2e2e;
+  --color-f1-border: #363636;
+  --color-f1-text: #f5f5f5;
+  --color-f1-text-muted: #949494;
+  --color-f1-accent: #e10600;
 
-  /* Team colors */
+  /* 2025 team colors */
   --color-team-red-bull: #3671c6;
   --color-team-ferrari: #e80020;
   --color-team-mclaren: #ff8000;
@@ -28,6 +29,18 @@
 body {
   background: var(--color-f1-black);
   color: var(--color-f1-text);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] {
+  --color-f1-black: #f4f4f4;
+  --color-f1-dark: #e8e8e8;
+  --color-f1-card: #ffffff;
+  --color-f1-card-hover: #f0f0f0;
+  --color-f1-border: #d4d4d4;
+  --color-f1-text: #151515;
+  --color-f1-text-muted: #666666;
 }
 
 /* Custom scrollbar */
