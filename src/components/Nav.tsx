@@ -10,6 +10,7 @@ const links = [
   { href: "/teams", label: "Teams" },
   { href: "/races", label: "Races" },
   { href: "/compare", label: "Compare" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export default function Nav() {
