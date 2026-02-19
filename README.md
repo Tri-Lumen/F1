@@ -14,6 +14,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Docker
+
+**Using Docker Compose (recommended):**
+
+```bash
+docker compose up -d
+```
+
+**Using Docker directly:**
+
+```bash
+# Build the image
+docker build -t f1-dashboard .
+
+# Run the container
+docker run -p 3000:3000 f1-dashboard
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
 ## Production Build
 
 ```bash
