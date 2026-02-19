@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { getLatestSession, getLiveDrivers, getLivePositions } from "@/lib/api";
+import OnboardButton from "@/components/OnboardButton";
 
 export default async function LiveSessionBanner() {
   const session = await getLatestSession();
@@ -47,6 +49,12 @@ export default async function LiveSessionBanner() {
             </p>
           </div>
         </div>
+        <Link
+          href="/live"
+          className="rounded-lg bg-f1-red px-4 py-2 text-sm font-bold text-white hover:bg-f1-red-dark transition-colors"
+        >
+          Full Live View &rarr;
+        </Link>
       </div>
 
       {top5.length > 0 && (
@@ -70,6 +78,11 @@ export default async function LiveSessionBanner() {
                   }}
                 />
                 <span className="font-medium">{d.name_acronym}</span>
+                <OnboardButton
+                  driverNumber={d.driver_number}
+                  acronym={d.name_acronym}
+                  compact
+                />
               </div>
             );
           })}

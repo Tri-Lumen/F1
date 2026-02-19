@@ -8,6 +8,8 @@ import type {
   LiveTimingDriver,
   LivePosition,
   LiveInterval,
+  LiveStint,
+  TeamRadio,
 } from "./types";
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -113,6 +115,24 @@ export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval
   const res = await fetch(
     `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
     { next: { revalidate: 10 } }
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
+  const res = await fetch(
+    `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
+    { next: { revalidate: 15 } }
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
+  const res = await fetch(
+    `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
+    { next: { revalidate: 15 } }
   );
   if (!res.ok) return [];
   return res.json();
