@@ -14,7 +14,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-f1-black text-f1-text antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@200;300;400;600;700;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-f1-black text-f1-text antialiased" style={{ fontFamily: '"Titillium Web", Arial, sans-serif' }}>
         <Nav />
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           {children}

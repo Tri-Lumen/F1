@@ -106,12 +106,16 @@ function StatBar({
   label,
   valA,
   valB,
+  colorA,
+  colorB,
   higherIsBetter = true,
   format,
 }: {
   label: string;
   valA: number;
   valB: number;
+  colorA: string;
+  colorB: string;
   higherIsBetter?: boolean;
   format?: (v: number) => string;
 }) {
@@ -148,19 +152,29 @@ function StatBar({
       <div className="flex gap-1 h-2">
         <div className="flex-1 flex justify-end">
           <div
-            className={`h-full rounded-l-full transition-all ${
-              aWins && !tie ? "bg-f1-accent" : "bg-f1-border"
-            }`}
-            style={{ width: `${pctA}%` }}
-          />
+            className="h-full rounded-l-full transition-all"
+            style={{
+              width: `${pctA}%`,
+              backgroundColor: aWins && !tie ? colorA : undefined,
+            }}
+          >
+            {!(aWins && !tie) && (
+              <div className="h-full w-full rounded-l-full bg-f1-border" />
+            )}
+          </div>
         </div>
         <div className="flex-1">
           <div
-            className={`h-full rounded-r-full transition-all ${
-              bWins && !tie ? "bg-f1-red" : "bg-f1-border"
-            }`}
-            style={{ width: `${pctB}%` }}
-          />
+            className="h-full rounded-r-full transition-all"
+            style={{
+              width: `${pctB}%`,
+              backgroundColor: bWins && !tie ? colorB : undefined,
+            }}
+          >
+            {!(bWins && !tie) && (
+              <div className="h-full w-full rounded-r-full bg-f1-border" />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -315,21 +329,27 @@ export default function CompareClient({
                 label="Championship Position"
                 valA={statsA.position}
                 valB={statsB.position}
+                colorA={teamColorA}
+                colorB={teamColorB}
                 higherIsBetter={false}
               />
-              <StatBar label="Points" valA={statsA.points} valB={statsB.points} />
-              <StatBar label="Wins" valA={statsA.wins} valB={statsB.wins} />
-              <StatBar label="Podiums" valA={statsA.podiums} valB={statsB.podiums} />
-              <StatBar label="Poles" valA={statsA.poles} valB={statsB.poles} />
+              <StatBar label="Points" valA={statsA.points} valB={statsB.points} colorA={teamColorA} colorB={teamColorB} />
+              <StatBar label="Wins" valA={statsA.wins} valB={statsB.wins} colorA={teamColorA} colorB={teamColorB} />
+              <StatBar label="Podiums" valA={statsA.podiums} valB={statsB.podiums} colorA={teamColorA} colorB={teamColorB} />
+              <StatBar label="Poles" valA={statsA.poles} valB={statsB.poles} colorA={teamColorA} colorB={teamColorB} />
               <StatBar
                 label="Fastest Laps"
                 valA={statsA.fastestLaps}
                 valB={statsB.fastestLaps}
+                colorA={teamColorA}
+                colorB={teamColorB}
               />
               <StatBar
                 label="Avg Finish"
                 valA={statsA.avgFinish}
                 valB={statsB.avgFinish}
+                colorA={teamColorA}
+                colorB={teamColorB}
                 higherIsBetter={false}
                 format={(v) => v.toFixed(1)}
               />
@@ -337,6 +357,8 @@ export default function CompareClient({
                 label="Avg Grid"
                 valA={statsA.avgGrid}
                 valB={statsB.avgGrid}
+                colorA={teamColorA}
+                colorB={teamColorB}
                 higherIsBetter={false}
                 format={(v) => v.toFixed(1)}
               />
@@ -344,12 +366,16 @@ export default function CompareClient({
                 label="Points / Race"
                 valA={statsA.pointsPerRace}
                 valB={statsB.pointsPerRace}
+                colorA={teamColorA}
+                colorB={teamColorB}
                 format={(v) => v.toFixed(1)}
               />
               <StatBar
                 label="DNFs"
                 valA={statsA.dnfs}
                 valB={statsB.dnfs}
+                colorA={teamColorA}
+                colorB={teamColorB}
                 higherIsBetter={false}
               />
             </div>
