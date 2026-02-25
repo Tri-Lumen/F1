@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import { ThemeProvider } from "@/lib/ThemeContext";
+import { FavoritesProvider } from "@/lib/FavoritesContext";
 
 export const metadata: Metadata = {
   title: "F1 Dashboard — 2025 Season",
@@ -28,7 +29,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var t = localStorage.getItem('f1-theme');
-                  if (t === 'light' || t === 'dark') {
+                  if (t === 'light' || t === 'dark' || (t && t.startsWith('team-'))) {
                     document.documentElement.setAttribute('data-theme', t);
                   }
                 } catch(e) {}
@@ -42,10 +43,12 @@ export default function RootLayout({
         style={{ fontFamily: '"Titillium Web", Arial, sans-serif' }}
       >
         <ThemeProvider>
-          <Nav />
-          <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            {children}
-          </main>
+          <FavoritesProvider>
+            <Nav />
+            <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+              {children}
+            </main>
+          </FavoritesProvider>
         </ThemeProvider>
       </body>
     </html>

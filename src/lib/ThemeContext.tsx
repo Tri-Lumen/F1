@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { TEAM_THEMES } from "./teamThemes";
 
-export type Theme = "dark" | "light";
+/** All valid theme identifiers: base modes + one per constructor */
+export type Theme = "dark" | "light" | `team-${string}`;
 
 interface ThemeContextValue {
   theme: Theme;
@@ -18,13 +20,18 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
+function isValidTheme(t: string): t is Theme {
+  if (t === "dark" || t === "light") return true;
+  return TEAM_THEMES.some((theme) => theme.id === t);
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("f1-theme") as Theme | null;
-    if (stored === "light" || stored === "dark") {
+    const stored = localStorage.getItem("f1-theme");
+    if (stored && isValidTheme(stored)) {
       setThemeState(stored);
     }
     setMounted(true);
