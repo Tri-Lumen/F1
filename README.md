@@ -34,6 +34,40 @@ docker run -p 3000:3000 f1-dashboard
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Portainer
+
+Two options for deploying via [Portainer](https://portainer.io):
+
+**Option 1 — Deploy from Git (recommended):**
+
+1. In Portainer, go to **Stacks → Add stack**
+2. Choose **Repository** as the build method
+3. Set the repository URL to this repo (e.g. `https://github.com/Tri-Lumen/F1`)
+4. Set the **Compose path** to `docker-compose.yml`
+5. Click **Deploy the stack**
+
+The dashboard will be available on port `3000` of your host.
+
+**Option 2 — Web editor:**
+
+1. In Portainer, go to **Stacks → Add stack**
+2. Choose **Web editor**
+3. Paste the following and click **Deploy the stack**:
+
+```yaml
+services:
+  f1-dashboard:
+    image: ghcr.io/tri-lumen/f1:latest
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+```
+
+> If you don't have a pre-built image, use `build: .` instead of `image:` and point Portainer at the Git repo as shown in Option 1.
+
 ## Production Build
 
 ```bash
