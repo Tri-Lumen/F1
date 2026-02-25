@@ -15,8 +15,10 @@ export async function POST() {
   const steps: { step: string; output: string }[] = [];
 
   try {
-    // 1. Pull latest from remote
-    const pull = await run("git pull --ff-only 2>&1", cwd);
+    // 1. Pull latest from remote.
+    // Pass safe.directory inline so git doesn't reject /app due to the WORKDIR
+    // being owned by root while the container process runs as the nextjs user.
+    const pull = await run(`git -c safe.directory=${cwd} pull --ff-only 2>&1`, cwd);
     steps.push({ step: "git pull", output: pull.stdout.trim() || pull.stderr.trim() });
 
     const alreadyUpToDate = pull.stdout.includes("Already up to date");
