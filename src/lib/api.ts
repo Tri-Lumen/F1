@@ -158,12 +158,10 @@ export function getTeamColor(constructorId: string): string {
 }
 
 export function getF1TVRaceUrl(race: Race): string {
-  // Construct F1TV URL for race replay
-  const slug = race.raceName
-    .toLowerCase()
-    .replace(/grand prix/i, "grand-prix")
-    .replace(/\s+/g, "-");
-  return `https://f1tv.formula1.com/detail/${race.season}/${slug}`;
+  // F1TV no longer uses /detail/{year}/{slug} URLs.
+  // Link to the search page filtered to race replays for the correct season.
+  const query = encodeURIComponent(race.raceName);
+  return `https://f1tv.formula1.com/search?q=${query}&filter_objectSubtype=Replay&filter_year=${race.season}&orderBy=meeting_Number&sortOrder=asc`;
 }
 
 export function getCountryFlag(nationality: string): string {

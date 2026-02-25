@@ -38,6 +38,11 @@ RUN apk add --no-cache git
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Fix git "dubious ownership" error: /app is created by WORKDIR as root,
+# but the container runs as nextjs. Git 2.35.2+ rejects repos where the
+# directory owner doesn't match the current user.
+RUN chown nextjs:nodejs /app
+
 COPY --from=builder /app/public ./public
 
 # Copy the full source + .git so the update API can git pull & rebuild

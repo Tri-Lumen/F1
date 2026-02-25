@@ -43,6 +43,141 @@ body {
   --color-f1-text-muted: #666666;
 }
 
+/* ── Team livery themes ── */
+/* Each block overrides the f1-* CSS custom properties that Tailwind uses,
+   so buttons, nav indicators, borders, and backgrounds all shift to the
+   team's official colour palette without any component-level changes.     */
+
+[data-theme="team-red_bull"] {
+  --color-f1-black: #0B0D1E;
+  --color-f1-dark: #11132A;
+  --color-f1-card: #181B36;
+  --color-f1-card-hover: #1E2244;
+  --color-f1-border: #252A52;
+  --color-f1-text: #E8EAF6;
+  --color-f1-text-muted: #7B82B4;
+  --color-f1-red: #3671C6;
+  --color-f1-red-dark: #2A5CAF;
+  --color-f1-accent: #3671C6;
+}
+
+[data-theme="team-ferrari"] {
+  --color-f1-black: #120808;
+  --color-f1-dark: #1A0C0C;
+  --color-f1-card: #221212;
+  --color-f1-card-hover: #2C1616;
+  --color-f1-border: #3D1A1A;
+  --color-f1-text: #F5F5F5;
+  --color-f1-text-muted: #A0856E;
+  --color-f1-red: #E8002D;
+  --color-f1-red-dark: #B8001E;
+  --color-f1-accent: #E8002D;
+}
+
+[data-theme="team-mclaren"] {
+  --color-f1-black: #141008;
+  --color-f1-dark: #1C150A;
+  --color-f1-card: #261C0E;
+  --color-f1-card-hover: #302212;
+  --color-f1-border: #4A3420;
+  --color-f1-text: #F5F5F5;
+  --color-f1-text-muted: #B89060;
+  --color-f1-red: #FF8000;
+  --color-f1-red-dark: #CC6600;
+  --color-f1-accent: #FF8000;
+}
+
+[data-theme="team-mercedes"] {
+  --color-f1-black: #081210;
+  --color-f1-dark: #0C1814;
+  --color-f1-card: #112018;
+  --color-f1-card-hover: #162A20;
+  --color-f1-border: #1E3A2E;
+  --color-f1-text: #F0FFFC;
+  --color-f1-text-muted: #6AA090;
+  --color-f1-red: #27F4D2;
+  --color-f1-red-dark: #1EC4A8;
+  --color-f1-accent: #27F4D2;
+}
+
+[data-theme="team-aston_martin"] {
+  --color-f1-black: #081210;
+  --color-f1-dark: #0C1A12;
+  --color-f1-card: #122218;
+  --color-f1-card-hover: #162C1E;
+  --color-f1-border: #1C3A26;
+  --color-f1-text: #F5FFF5;
+  --color-f1-text-muted: #70A080;
+  --color-f1-red: #229971;
+  --color-f1-red-dark: #1A7A5A;
+  --color-f1-accent: #229971;
+}
+
+[data-theme="team-alpine"] {
+  --color-f1-black: #0A0E1C;
+  --color-f1-dark: #0E1426;
+  --color-f1-card: #141C34;
+  --color-f1-card-hover: #1A2440;
+  --color-f1-border: #202E50;
+  --color-f1-text: #F0F4FF;
+  --color-f1-text-muted: #7080B0;
+  --color-f1-red: #FF87BC;
+  --color-f1-red-dark: #E0609A;
+  --color-f1-accent: #FF87BC;
+}
+
+[data-theme="team-williams"] {
+  --color-f1-black: #080C12;
+  --color-f1-dark: #0C1218;
+  --color-f1-card: #121A24;
+  --color-f1-card-hover: #18222E;
+  --color-f1-border: #1E2E40;
+  --color-f1-text: #EDF4FF;
+  --color-f1-text-muted: #6A8CAA;
+  --color-f1-red: #64C4FF;
+  --color-f1-red-dark: #4EB0F0;
+  --color-f1-accent: #64C4FF;
+}
+
+[data-theme="team-haas"] {
+  --color-f1-black: #0E0E0E;
+  --color-f1-dark: #141414;
+  --color-f1-card: #1C1C1C;
+  --color-f1-card-hover: #242424;
+  --color-f1-border: #303030;
+  --color-f1-text: #F5F5F5;
+  --color-f1-text-muted: #909090;
+  --color-f1-red: #E80020;
+  --color-f1-red-dark: #B80018;
+  --color-f1-accent: #E80020;
+}
+
+[data-theme="team-rb"] {
+  --color-f1-black: #080C1A;
+  --color-f1-dark: #0C1222;
+  --color-f1-card: #121A30;
+  --color-f1-card-hover: #18223C;
+  --color-f1-border: #1E2E50;
+  --color-f1-text: #E8EEFF;
+  --color-f1-text-muted: #6878AA;
+  --color-f1-red: #6692FF;
+  --color-f1-red-dark: #5080EE;
+  --color-f1-accent: #6692FF;
+}
+
+[data-theme="team-kick_sauber"] {
+  --color-f1-black: #080E08;
+  --color-f1-dark: #0C140C;
+  --color-f1-card: #121C12;
+  --color-f1-card-hover: #182418;
+  --color-f1-border: #1E2E1E;
+  --color-f1-text: #F0FFF0;
+  --color-f1-text-muted: #70A070;
+  --color-f1-red: #52E252;
+  --color-f1-red-dark: #3EC23E;
+  --color-f1-accent: #52E252;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

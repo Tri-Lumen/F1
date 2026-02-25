@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useFavorites } from "@/lib/FavoritesContext";
 
-const links = [
+const BASE_LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/live", label: "Live" },
   { href: "/drivers", label: "Drivers" },
@@ -15,6 +16,15 @@ const links = [
 
 export default function Nav() {
   const pathname = usePathname();
+  const { hasAnyFavorites } = useFavorites();
+
+  const links = hasAnyFavorites
+    ? [
+        BASE_LINKS[0], // Dashboard
+        { href: "/favorites", label: "Favourites" },
+        ...BASE_LINKS.slice(1),
+      ]
+    : BASE_LINKS;
 
   return (
     <header className="sticky top-0 z-50 border-b border-f1-border bg-f1-black/95 backdrop-blur-sm">
