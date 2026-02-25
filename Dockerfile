@@ -14,6 +14,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure .git exists for the runtime self-update feature.
+# When the build context does not include .git (e.g. Docker stack deploy),
+# initialise a repo with the remote from package.json so git pull works at runtime.
+RUN apk add --no-cache git && \
+    if [ ! -d .git ]; then \
+      git init && \
+      git remote add origin "$(node -e "process.stdout.write(require('./package.json').repository.url)")" ; \
+    fi
+
 RUN npm run build
 
 # --- Production ---
