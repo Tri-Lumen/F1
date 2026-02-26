@@ -59,6 +59,7 @@ body {
   --color-f1-red: #3671C6;
   --color-f1-red-dark: #2A5CAF;
   --color-f1-accent: #3671C6;
+  --color-f1-accent-secondary: #FFD700;
 }
 
 [data-theme="team-ferrari"] {
@@ -72,6 +73,7 @@ body {
   --color-f1-red: #E8002D;
   --color-f1-red-dark: #B8001E;
   --color-f1-accent: #E8002D;
+  --color-f1-accent-secondary: #F8C300;
 }
 
 [data-theme="team-mclaren"] {
@@ -85,6 +87,7 @@ body {
   --color-f1-red: #FF8000;
   --color-f1-red-dark: #CC6600;
   --color-f1-accent: #FF8000;
+  --color-f1-accent-secondary: #00BCF2;
 }
 
 [data-theme="team-mercedes"] {
@@ -98,12 +101,13 @@ body {
   --color-f1-red: #27F4D2;
   --color-f1-red-dark: #1EC4A8;
   --color-f1-accent: #27F4D2;
+  --color-f1-accent-secondary: #A8A9AD;
 }
 
 [data-theme="team-aston_martin"] {
-  --color-f1-black: #081210;
+  --color-f1-black: #071210;
   --color-f1-dark: #0C1A12;
-  --color-f1-card: #122218;
+  --color-f1-card: #112218;
   --color-f1-card-hover: #162C1E;
   --color-f1-border: #1C3A26;
   --color-f1-text: #F5FFF5;
@@ -111,6 +115,7 @@ body {
   --color-f1-red: #229971;
   --color-f1-red-dark: #1A7A5A;
   --color-f1-accent: #229971;
+  --color-f1-accent-secondary: #CEAC54;
 }
 
 [data-theme="team-alpine"] {
@@ -124,6 +129,7 @@ body {
   --color-f1-red: #FF87BC;
   --color-f1-red-dark: #E0609A;
   --color-f1-accent: #FF87BC;
+  --color-f1-accent-secondary: #0053A0;
 }
 
 [data-theme="team-williams"] {
@@ -137,6 +143,7 @@ body {
   --color-f1-red: #64C4FF;
   --color-f1-red-dark: #4EB0F0;
   --color-f1-accent: #64C4FF;
+  --color-f1-accent-secondary: #C3142D;
 }
 
 [data-theme="team-haas"] {
@@ -150,6 +157,7 @@ body {
   --color-f1-red: #E80020;
   --color-f1-red-dark: #B80018;
   --color-f1-accent: #E80020;
+  --color-f1-accent-secondary: #B6BABD;
 }
 
 [data-theme="team-rb"] {
@@ -163,6 +171,7 @@ body {
   --color-f1-red: #6692FF;
   --color-f1-red-dark: #5080EE;
   --color-f1-accent: #6692FF;
+  --color-f1-accent-secondary: #C80000;
 }
 
 [data-theme="team-kick_sauber"] {
@@ -170,12 +179,13 @@ body {
   --color-f1-dark: #0C140C;
   --color-f1-card: #121C12;
   --color-f1-card-hover: #182418;
-  --color-f1-border: #1E2E1E;
+  --color-f1-border: #1E301E;
   --color-f1-text: #F0FFF0;
   --color-f1-text-muted: #70A070;
   --color-f1-red: #52E252;
   --color-f1-red-dark: #3EC23E;
   --color-f1-accent: #52E252;
+  --color-f1-accent-secondary: #00D2BE;
 }
 
 /* Custom scrollbar */

@@ -17,13 +17,13 @@ const BASE_THEMES = [
     id: "dark" as Theme,
     label: "Dark",
     description: "Official F1 dark theme — true blacks with red accents",
-    swatches: ["#101010", "#242424", "#e10600"],
+    swatches: ["#101010", "#1a1a1a", "#242424", "#363636", "#e10600"],
   },
   {
     id: "light" as Theme,
     label: "Light",
     description: "Light theme — white cards on light gray background",
-    swatches: ["#f4f4f4", "#ffffff", "#e10600"],
+    swatches: ["#f4f4f4", "#e8e8e8", "#ffffff", "#d4d4d4", "#e10600"],
   },
 ];
 
@@ -97,7 +97,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                     : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}
               >
-                <div className="mb-4 flex gap-2">
+                <div className="mb-4 flex gap-1.5">
                   {t.swatches.map((c, i) => (
                     <span
                       key={i}
@@ -129,7 +129,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id as Theme)}
-                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
                   active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}
                 style={
@@ -138,15 +138,29 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                     : {}
                 }
               >
-                <div className="mb-3 flex gap-1.5">
+                {/* 5-segment livery colour bar */}
+                <div className="flex h-10 w-full">
                   {t.previewColors.map((c, i) => (
-                    <span key={i} className="h-6 w-6 rounded" style={{ backgroundColor: c }} />
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                   ))}
                 </div>
-                <p className="font-bold text-sm leading-tight">{t.name}</p>
+                <div className="p-3">
+                  <p className="font-bold text-sm leading-tight">{t.name}</p>
+                  {/* accent dots */}
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accent }}
+                    />
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accentSecondary }}
+                    />
+                  </div>
+                </div>
                 {active && (
                   <span
-                    className="absolute top-3 right-3 flex h-4 w-4 items-center justify-center rounded-full text-white"
+                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full text-white shadow"
                     style={{ backgroundColor: t.colors.accent }}
                   >
                     <CheckIcon />

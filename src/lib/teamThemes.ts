@@ -8,6 +8,7 @@ export interface TeamThemeColors {
   textMuted: string;
   accent: string;
   accentDark: string;
+  accentSecondary: string;
 }
 
 export interface TeamTheme {
@@ -16,8 +17,8 @@ export interface TeamTheme {
   /** Matches constructorId from the Ergast/Jolpica API */
   constructorId: string;
   name: string;
-  /** Three hex colors shown as preview swatches [bg, card, accent] */
-  previewColors: [string, string, string];
+  /** Five hex colors shown as preview swatches [bg, card, border, accent, accentSecondary] */
+  previewColors: [string, string, string, string, string];
   colors: TeamThemeColors;
 }
 
@@ -26,13 +27,15 @@ export interface TeamTheme {
  * Backgrounds are derived from each team's primary livery color darkened
  * to a deep, readable shade; accent replaces the default F1 red throughout
  * the app (buttons, active nav indicator, links, etc.).
+ * accentSecondary is drawn from the team's secondary livery colour.
  */
 export const TEAM_THEMES: TeamTheme[] = [
   {
     id: "team-red_bull",
     constructorId: "red_bull",
     name: "Red Bull Racing",
-    previewColors: ["#0B0D1E", "#181B36", "#3671C6"],
+    // bg, card, border, accent (blue), accentSecondary (gold)
+    previewColors: ["#0B0D1E", "#181B36", "#252A52", "#3671C6", "#FFD700"],
     colors: {
       bg: "#0B0D1E",
       dark: "#11132A",
@@ -43,13 +46,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#7B82B4",
       accent: "#3671C6",
       accentDark: "#2A5CAF",
+      accentSecondary: "#FFD700",
     },
   },
   {
     id: "team-ferrari",
     constructorId: "ferrari",
     name: "Scuderia Ferrari",
-    previewColors: ["#120808", "#221212", "#E8002D"],
+    // bg, card, border, accent (red), accentSecondary (Ferrari yellow)
+    previewColors: ["#120808", "#221212", "#3D1A1A", "#E8002D", "#F8C300"],
     colors: {
       bg: "#120808",
       dark: "#1A0C0C",
@@ -60,13 +65,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#A0856E",
       accent: "#E8002D",
       accentDark: "#B8001E",
+      accentSecondary: "#F8C300",
     },
   },
   {
     id: "team-mclaren",
     constructorId: "mclaren",
     name: "McLaren",
-    previewColors: ["#141008", "#261C0E", "#FF8000"],
+    // bg, card, border, accent (papaya), accentSecondary (sky blue)
+    previewColors: ["#141008", "#261C0E", "#4A3420", "#FF8000", "#00BCF2"],
     colors: {
       bg: "#141008",
       dark: "#1C150A",
@@ -77,13 +84,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#B89060",
       accent: "#FF8000",
       accentDark: "#CC6600",
+      accentSecondary: "#00BCF2",
     },
   },
   {
     id: "team-mercedes",
     constructorId: "mercedes",
     name: "Mercedes-AMG Petronas",
-    previewColors: ["#081210", "#112018", "#27F4D2"],
+    // bg, card, border, accent (teal), accentSecondary (silver)
+    previewColors: ["#081210", "#112018", "#1E3A2E", "#27F4D2", "#A8A9AD"],
     colors: {
       bg: "#081210",
       dark: "#0C1814",
@@ -94,30 +103,34 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#6AA090",
       accent: "#27F4D2",
       accentDark: "#1EC4A8",
+      accentSecondary: "#A8A9AD",
     },
   },
   {
     id: "team-aston_martin",
     constructorId: "aston_martin",
     name: "Aston Martin Aramco",
-    previewColors: ["#081210", "#122218", "#229971"],
+    // bg, card, border, accent (BRG green), accentSecondary (gold)
+    previewColors: ["#071210", "#112218", "#1C3A26", "#229971", "#CEAC54"],
     colors: {
-      bg: "#081210",
+      bg: "#071210",
       dark: "#0C1A12",
-      card: "#122218",
+      card: "#112218",
       cardHover: "#162C1E",
       border: "#1C3A26",
       text: "#F5FFF5",
       textMuted: "#70A080",
       accent: "#229971",
       accentDark: "#1A7A5A",
+      accentSecondary: "#CEAC54",
     },
   },
   {
     id: "team-alpine",
     constructorId: "alpine",
     name: "BWT Alpine",
-    previewColors: ["#0A0E1C", "#141C34", "#FF87BC"],
+    // bg, card, border, accent (BWT pink), accentSecondary (BWT blue)
+    previewColors: ["#0A0E1C", "#141C34", "#202E50", "#FF87BC", "#0053A0"],
     colors: {
       bg: "#0A0E1C",
       dark: "#0E1426",
@@ -128,13 +141,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#7080B0",
       accent: "#FF87BC",
       accentDark: "#E0609A",
+      accentSecondary: "#0053A0",
     },
   },
   {
     id: "team-williams",
     constructorId: "williams",
     name: "Williams Racing",
-    previewColors: ["#080C12", "#121A24", "#64C4FF"],
+    // bg, card, border, accent (light blue), accentSecondary (red stripe)
+    previewColors: ["#080C12", "#121A24", "#1E2E40", "#64C4FF", "#C3142D"],
     colors: {
       bg: "#080C12",
       dark: "#0C1218",
@@ -145,13 +160,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#6A8CAA",
       accent: "#64C4FF",
       accentDark: "#4EB0F0",
+      accentSecondary: "#C3142D",
     },
   },
   {
     id: "team-haas",
     constructorId: "haas",
     name: "MoneyGram Haas F1",
-    previewColors: ["#0E0E0E", "#1C1C1C", "#E80020"],
+    // bg, card, border, accent (red), accentSecondary (silver)
+    previewColors: ["#0E0E0E", "#1C1C1C", "#303030", "#E80020", "#B6BABD"],
     colors: {
       bg: "#0E0E0E",
       dark: "#141414",
@@ -162,13 +179,15 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#909090",
       accent: "#E80020",
       accentDark: "#B80018",
+      accentSecondary: "#B6BABD",
     },
   },
   {
     id: "team-rb",
     constructorId: "rb",
     name: "Visa Cash App RB",
-    previewColors: ["#080C1A", "#121A30", "#6692FF"],
+    // bg, card, border, accent (blue), accentSecondary (red)
+    previewColors: ["#080C1A", "#121A30", "#1E2E50", "#6692FF", "#C80000"],
     colors: {
       bg: "#080C1A",
       dark: "#0C1222",
@@ -179,23 +198,26 @@ export const TEAM_THEMES: TeamTheme[] = [
       textMuted: "#6878AA",
       accent: "#6692FF",
       accentDark: "#5080EE",
+      accentSecondary: "#C80000",
     },
   },
   {
     id: "team-kick_sauber",
     constructorId: "kick_sauber",
     name: "Kick Sauber",
-    previewColors: ["#080E08", "#121C12", "#52E252"],
+    // bg, card, border, accent (bright green), accentSecondary (mint teal)
+    previewColors: ["#080E08", "#121C12", "#1E301E", "#52E252", "#00D2BE"],
     colors: {
       bg: "#080E08",
       dark: "#0C140C",
       card: "#121C12",
       cardHover: "#182418",
-      border: "#1E2E1E",
+      border: "#1E301E",
       text: "#F0FFF0",
       textMuted: "#70A070",
       accent: "#52E252",
       accentDark: "#3EC23E",
+      accentSecondary: "#00D2BE",
     },
   },
 ];
