@@ -14,12 +14,25 @@ import type {
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
 const OPENF1_BASE = "https://api.openf1.org/v1";
-const CURRENT_SEASON = "2025";
+const CURRENT_SEASON = "2026";
+
+/** Historical seasons available in the archive section */
+export const ARCHIVE_SEASONS = [
+  "2025", "2024", "2023", "2022", "2021",
+  "2020", "2019", "2018", "2017", "2016",
+];
 
 // --- Ergast / Jolpica API ---
 
 async function fetchErgast<T>(path: string): Promise<T> {
   const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 300 } });
+  if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
+  return res.json();
+}
+
+/** Historical data fetch — 24 h cache since completed seasons never change */
+async function fetchErgastArchive<T>(path: string): Promise<T> {
+  const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
   if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
   return res.json();
 }
@@ -86,7 +99,7 @@ export async function getLiveSessions(): Promise<LiveSession[]> {
 export async function getLatestSession(): Promise<LiveSession | null> {
   const sessions = await getLiveSessions();
   if (!sessions.length) return null;
-  // Find most recent session
+  // Find most recent session that has already started
   const now = new Date();
   const sorted = sessions
     .filter((s) => new Date(s.date_start) <= now)
@@ -138,6 +151,97 @@ export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
   return res.json();
 }
 
+// --- Archive API (historical seasons, 24 h cache) ---
+
+export async function getSeasonDriverStandings(season: string): Promise<DriverStanding[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/driverstandings/?limit=100`);
+  return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
+}
+
+export async function getSeasonConstructorStandings(season: string): Promise<ConstructorStanding[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/constructorstandings/?limit=100`);
+  return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
+}
+
+export async function getSeasonSchedule(season: string): Promise<Race[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/?limit=30`);
+  return data?.MRData?.RaceTable?.Races ?? [];
+}
+
+// --- Next scheduled session (from Ergast calendar) ---
+
+export interface ScheduledSession {
+  /** e.g. "Practice 1", "Qualifying", "Sprint", "Race" */
+  type: string;
+  raceName: string;
+  circuitId: string;
+  circuitName: string;
+  country: string;
+  locality: string;
+  date: Date;
+  round: string;
+}
+
+export async function getNextScheduledSession(): Promise<ScheduledSession | null> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return null;
+  }
+
+  const now = new Date();
+  const upcoming: ScheduledSession[] = [];
+
+  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
+    if (!s) return;
+    // Ergast times are UTC (include Z suffix)
+    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+    const d = new Date(`${s.date}T${timeStr}`);
+    if (d > now) {
+      upcoming.push({
+        type,
+        raceName: race.raceName,
+        circuitId: race.Circuit.circuitId,
+        circuitName: race.Circuit.circuitName,
+        country: race.Circuit.Location.country,
+        locality: race.Circuit.Location.locality,
+        date: d,
+        round: race.round,
+      });
+    }
+  }
+
+  for (const race of races) {
+    push("Practice 1", race, race.FirstPractice);
+    push("Practice 2", race, race.SecondPractice);
+    push("Practice 3", race, race.ThirdPractice);
+    push("Sprint Qualifying", race, race.SprintQualifying);
+    push("Sprint", race, race.Sprint);
+    push("Qualifying", race, race.Qualifying);
+    if (race.time) {
+      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
+      const d = new Date(`${race.date}T${timeStr}`);
+      if (d > now) {
+        upcoming.push({
+          type: "Race",
+          raceName: race.raceName,
+          circuitId: race.Circuit.circuitId,
+          circuitName: race.Circuit.circuitName,
+          country: race.Circuit.Location.country,
+          locality: race.Circuit.Location.locality,
+          date: d,
+          round: race.round,
+        });
+      }
+    }
+  }
+
+  if (!upcoming.length) return null;
+  upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return upcoming[0];
+}
+
 // --- Utility ---
 
 export function getTeamColor(constructorId: string): string {
@@ -151,15 +255,25 @@ export function getTeamColor(constructorId: string): string {
     williams: "#64c4ff",
     haas: "#b6babd",
     rb: "#6692ff",
-    sauber: "#52e252",
-    kick_sauber: "#52e252",
+    // Audi F1 Team — rebranded from Kick Sauber for 2026
+    audi: "#bb0000",
+    sauber: "#bb0000",
+    kick_sauber: "#bb0000",
+    cadillac: "#b8941c",
+    andretti_cadillac: "#b8941c",
   };
-  return colors[constructorId] ?? "#888888";
+  if (colors[constructorId]) return colors[constructorId];
+
+  // Deterministic HSL color for any mid-season newcomer not yet in the map
+  let hash = 0;
+  for (let i = 0; i < constructorId.length; i++) {
+    hash = constructorId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
 }
 
 export function getF1TVRaceUrl(race: Race): string {
-  // F1TV no longer uses /detail/{year}/{slug} URLs.
-  // Link to the search page filtered to race replays for the correct season.
   const query = encodeURIComponent(race.raceName);
   return `https://f1tv.formula1.com/search?q=${query}&filter_objectSubtype=Replay&filter_year=${race.season}&orderBy=meeting_Number&sortOrder=asc`;
 }
@@ -191,7 +305,7 @@ export function getCountryFlagByCountry(country: string): string {
     Venezuela: "🇻🇪", Portugal: "🇵🇹", Bahrain: "🇧🇭",
     "Saudi Arabia": "🇸🇦", Azerbaijan: "🇦🇿", Singapore: "🇸🇬",
     Hungary: "🇭🇺", "United Arab Emirates": "🇦🇪", UAE: "🇦🇪",
-    Qatar: "🇶🇦", "Las Vegas": "🇺🇸", Miami: "🇺🇸",
+    Qatar: "🇶🇦", "Las Vegas": "🇺🇸", Miami: "🇺🇸", Madrid: "🇪🇸",
   };
   return flags[country] ?? "🏁";
 }

@@ -3,52 +3,76 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { TEAM_THEMES } from "./teamThemes";
 
-/** All valid theme identifiers: base modes + one per constructor */
-export type Theme = "dark" | "light" | `team-${string}`;
+/** Base dark / light mode — independent of team accent */
+export type ColorMode = "dark" | "light";
+
+/** Team or retro livery accent — "none" means no accent applied */
+export type AccentTheme = "none" | `team-${string}` | `retro-${string}`;
 
 interface ThemeContextValue {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  mode: ColorMode;
+  accentTheme: AccentTheme;
+  setMode: (mode: ColorMode) => void;
+  setAccentTheme: (theme: AccentTheme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: "dark",
-  setTheme: () => {},
+  mode: "dark",
+  accentTheme: "none",
+  setMode: () => {},
+  setAccentTheme: () => {},
 });
 
 export function useTheme() {
   return useContext(ThemeContext);
 }
 
-function isValidTheme(t: string): t is Theme {
-  if (t === "dark" || t === "light") return true;
-  return TEAM_THEMES.some((theme) => theme.id === t);
+function isValidMode(m: string): m is ColorMode {
+  return m === "dark" || m === "light";
+}
+
+function isValidAccent(a: string): a is AccentTheme {
+  return a === "none" || TEAM_THEMES.some((t) => t.id === a);
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [mode, setModeState] = useState<ColorMode>("dark");
+  const [accentTheme, setAccentState] = useState<AccentTheme>("none");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("f1-theme");
-    if (stored && isValidTheme(stored)) {
-      setThemeState(stored);
-    }
+    const storedMode = localStorage.getItem("f1-mode");
+    const storedAccent = localStorage.getItem("f1-accent");
+    if (storedMode && isValidMode(storedMode)) setModeState(storedMode);
+    if (storedAccent && isValidAccent(storedAccent)) setAccentState(storedAccent);
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("f1-theme", theme);
-  }, [theme, mounted]);
+    document.documentElement.setAttribute("data-mode", mode);
+    localStorage.setItem("f1-mode", mode);
+  }, [mode, mounted]);
 
-  const setTheme = (t: Theme) => {
-    setThemeState(t);
-  };
+  useEffect(() => {
+    if (!mounted) return;
+    if (accentTheme === "none") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", accentTheme);
+    }
+    localStorage.setItem("f1-accent", accentTheme);
+  }, [accentTheme, mounted]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        mode,
+        accentTheme,
+        setMode: setModeState,
+        setAccentTheme: setAccentState,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -13,7 +13,7 @@
   --color-f1-text-muted: #949494;
   --color-f1-accent: #e10600;
 
-  /* 2025 team colors */
+  /* 2026 team colors */
   --color-team-red-bull: #3671c6;
   --color-team-ferrari: #e80020;
   --color-team-mclaren: #ff8000;
@@ -23,7 +23,8 @@
   --color-team-williams: #64c4ff;
   --color-team-haas: #b6babd;
   --color-team-rb: #6692ff;
-  --color-team-sauber: #52e252;
+  --color-team-audi: #bb0000;
+  --color-team-cadillac: #b8941c;
 }
 
 body {
@@ -32,8 +33,8 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* ── Light theme overrides ── */
-[data-theme="light"] {
+/* ── Light mode overrides (no team accent) ── */
+[data-mode="light"] {
   --color-f1-black: #f4f4f4;
   --color-f1-dark: #e8e8e8;
   --color-f1-card: #ffffff;
@@ -59,6 +60,7 @@ body {
   --color-f1-red: #3671C6;
   --color-f1-red-dark: #2A5CAF;
   --color-f1-accent: #3671C6;
+  --color-f1-accent-secondary: #FFD700;
 }
 
 [data-theme="team-ferrari"] {
@@ -72,6 +74,7 @@ body {
   --color-f1-red: #E8002D;
   --color-f1-red-dark: #B8001E;
   --color-f1-accent: #E8002D;
+  --color-f1-accent-secondary: #F8C300;
 }
 
 [data-theme="team-mclaren"] {
@@ -85,6 +88,7 @@ body {
   --color-f1-red: #FF8000;
   --color-f1-red-dark: #CC6600;
   --color-f1-accent: #FF8000;
+  --color-f1-accent-secondary: #00BCF2;
 }
 
 [data-theme="team-mercedes"] {
@@ -98,12 +102,13 @@ body {
   --color-f1-red: #27F4D2;
   --color-f1-red-dark: #1EC4A8;
   --color-f1-accent: #27F4D2;
+  --color-f1-accent-secondary: #A8A9AD;
 }
 
 [data-theme="team-aston_martin"] {
-  --color-f1-black: #081210;
+  --color-f1-black: #071210;
   --color-f1-dark: #0C1A12;
-  --color-f1-card: #122218;
+  --color-f1-card: #112218;
   --color-f1-card-hover: #162C1E;
   --color-f1-border: #1C3A26;
   --color-f1-text: #F5FFF5;
@@ -111,6 +116,7 @@ body {
   --color-f1-red: #229971;
   --color-f1-red-dark: #1A7A5A;
   --color-f1-accent: #229971;
+  --color-f1-accent-secondary: #CEAC54;
 }
 
 [data-theme="team-alpine"] {
@@ -124,6 +130,7 @@ body {
   --color-f1-red: #FF87BC;
   --color-f1-red-dark: #E0609A;
   --color-f1-accent: #FF87BC;
+  --color-f1-accent-secondary: #0053A0;
 }
 
 [data-theme="team-williams"] {
@@ -137,6 +144,7 @@ body {
   --color-f1-red: #64C4FF;
   --color-f1-red-dark: #4EB0F0;
   --color-f1-accent: #64C4FF;
+  --color-f1-accent-secondary: #C3142D;
 }
 
 [data-theme="team-haas"] {
@@ -150,6 +158,7 @@ body {
   --color-f1-red: #E80020;
   --color-f1-red-dark: #B80018;
   --color-f1-accent: #E80020;
+  --color-f1-accent-secondary: #B6BABD;
 }
 
 [data-theme="team-rb"] {
@@ -163,19 +172,315 @@ body {
   --color-f1-red: #6692FF;
   --color-f1-red-dark: #5080EE;
   --color-f1-accent: #6692FF;
+  --color-f1-accent-secondary: #C80000;
 }
 
+/* Audi F1 Team (formerly Kick Sauber) */
+[data-theme="team-audi"],
 [data-theme="team-kick_sauber"] {
-  --color-f1-black: #080E08;
-  --color-f1-dark: #0C140C;
-  --color-f1-card: #121C12;
-  --color-f1-card-hover: #182418;
-  --color-f1-border: #1E2E1E;
-  --color-f1-text: #F0FFF0;
-  --color-f1-text-muted: #70A070;
-  --color-f1-red: #52E252;
-  --color-f1-red-dark: #3EC23E;
-  --color-f1-accent: #52E252;
+  --color-f1-black: #180808;
+  --color-f1-dark: #200A0A;
+  --color-f1-card: #280E0E;
+  --color-f1-card-hover: #321212;
+  --color-f1-border: #3C1010;
+  --color-f1-text: #FFF5F5;
+  --color-f1-text-muted: #A07070;
+  --color-f1-red: #BB0000;
+  --color-f1-red-dark: #8C0000;
+  --color-f1-accent: #BB0000;
+  --color-f1-accent-secondary: #C0C0C0;
+}
+
+[data-theme="team-cadillac"] {
+  --color-f1-black: #0A0E1A;
+  --color-f1-dark: #0E1422;
+  --color-f1-card: #141B2E;
+  --color-f1-card-hover: #1A2238;
+  --color-f1-border: #1E2A46;
+  --color-f1-text: #F0F4FF;
+  --color-f1-text-muted: #7080A0;
+  --color-f1-red: #B8941C;
+  --color-f1-red-dark: #986010;
+  --color-f1-accent: #B8941C;
+  --color-f1-accent-secondary: #C8001C;
+}
+
+/* ── Retro livery themes ── */
+
+/* Jordan Grand Prix — yellow/green Eddie Jordan era */
+[data-theme="retro-jordan"] {
+  --color-f1-black: #1A1400;
+  --color-f1-dark: #2E2400;
+  --color-f1-card: #332A00;
+  --color-f1-card-hover: #4A3C00;
+  --color-f1-border: #665500;
+  --color-f1-text: #FFFDE0;
+  --color-f1-text-muted: #B0A060;
+  --color-f1-red: #FFD700;
+  --color-f1-red-dark: #CC9900;
+  --color-f1-accent: #FFD700;
+  --color-f1-accent-secondary: #00A550;
+}
+
+/* Lotus JPS — John Player Special black-and-gold livery (1972–1986) */
+[data-theme="retro-lotus-jps"] {
+  --color-f1-black: #0A0A0A;
+  --color-f1-dark: #0E0E0E;
+  --color-f1-card: #141414;
+  --color-f1-card-hover: #1C1C1C;
+  --color-f1-border: #2A2A2A;
+  --color-f1-text: #F5F5F0;
+  --color-f1-text-muted: #8A8070;
+  --color-f1-red: #C9A84C;
+  --color-f1-red-dark: #A88030;
+  --color-f1-accent: #C9A84C;
+  --color-f1-accent-secondary: #E8D68A;
+}
+
+/* Benetton Formula — cobalt blue with yellow highlights, Schumacher era */
+[data-theme="retro-benetton"] {
+  --color-f1-black: #040C1C;
+  --color-f1-dark: #08142C;
+  --color-f1-card: #0C1C3C;
+  --color-f1-card-hover: #102244;
+  --color-f1-border: #1A3060;
+  --color-f1-text: #E8F0FF;
+  --color-f1-text-muted: #6080B0;
+  --color-f1-red: #1E6FFF;
+  --color-f1-red-dark: #0047AB;
+  --color-f1-accent: #1E6FFF;
+  --color-f1-accent-secondary: #FFD700;
+}
+
+/* McLaren Honda — Marlboro MP4/4 era with Senna & Prost (1988–1992) */
+[data-theme="retro-mclaren-honda"] {
+  --color-f1-black: #100808;
+  --color-f1-dark: #1C0A0A;
+  --color-f1-card: #280E0E;
+  --color-f1-card-hover: #341212;
+  --color-f1-border: #4A1C1C;
+  --color-f1-text: #FFF5F5;
+  --color-f1-text-muted: #A08080;
+  --color-f1-red: #CC0000;
+  --color-f1-red-dark: #990000;
+  --color-f1-accent: #CC0000;
+  --color-f1-accent-secondary: #C0C0C0;
+}
+
+/* ── Team livery — light mode variants ── */
+/* These use two-attribute selectors so they beat the single-attribute dark defaults above. */
+
+[data-theme="team-red_bull"][data-mode="light"] {
+  --color-f1-black: #EEF1FF;
+  --color-f1-dark: #E0E5FF;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F5F7FF;
+  --color-f1-border: #C0CCEE;
+  --color-f1-text: #090C1E;
+  --color-f1-text-muted: #40558A;
+  --color-f1-red: #3671C6;
+  --color-f1-red-dark: #2A5CAF;
+  --color-f1-accent: #3671C6;
+  --color-f1-accent-secondary: #B8960A;
+}
+
+[data-theme="team-ferrari"][data-mode="light"] {
+  --color-f1-black: #FFF0F0;
+  --color-f1-dark: #FFE8E8;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFF5F5;
+  --color-f1-border: #EEC0C0;
+  --color-f1-text: #180000;
+  --color-f1-text-muted: #804040;
+  --color-f1-red: #E8002D;
+  --color-f1-red-dark: #B8001E;
+  --color-f1-accent: #E8002D;
+  --color-f1-accent-secondary: #B89000;
+}
+
+[data-theme="team-mclaren"][data-mode="light"] {
+  --color-f1-black: #FFF5EA;
+  --color-f1-dark: #FFE8CC;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFFAF2;
+  --color-f1-border: #EECCAA;
+  --color-f1-text: #180800;
+  --color-f1-text-muted: #806040;
+  --color-f1-red: #CC6600;
+  --color-f1-red-dark: #A05000;
+  --color-f1-accent: #CC6600;
+  --color-f1-accent-secondary: #0080CC;
+}
+
+[data-theme="team-mercedes"][data-mode="light"] {
+  --color-f1-black: #EAFAF5;
+  --color-f1-dark: #D0F5EA;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F2FFFC;
+  --color-f1-border: #A0D8C8;
+  --color-f1-text: #001810;
+  --color-f1-text-muted: #307060;
+  --color-f1-red: #00988A;
+  --color-f1-red-dark: #007868;
+  --color-f1-accent: #00988A;
+  --color-f1-accent-secondary: #707070;
+}
+
+[data-theme="team-aston_martin"][data-mode="light"] {
+  --color-f1-black: #EEF8F0;
+  --color-f1-dark: #DFF0E4;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F5FFF7;
+  --color-f1-border: #A8D4B4;
+  --color-f1-text: #001408;
+  --color-f1-text-muted: #3A7050;
+  --color-f1-red: #1A7A58;
+  --color-f1-red-dark: #145A42;
+  --color-f1-accent: #1A7A58;
+  --color-f1-accent-secondary: #8A7010;
+}
+
+[data-theme="team-alpine"][data-mode="light"] {
+  --color-f1-black: #FFF0F8;
+  --color-f1-dark: #FFE2F2;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFF5FA;
+  --color-f1-border: #EEB4D8;
+  --color-f1-text: #18000E;
+  --color-f1-text-muted: #804070;
+  --color-f1-red: #CC5090;
+  --color-f1-red-dark: #A03070;
+  --color-f1-accent: #CC5090;
+  --color-f1-accent-secondary: #0053A0;
+}
+
+[data-theme="team-williams"][data-mode="light"] {
+  --color-f1-black: #EEF5FF;
+  --color-f1-dark: #DDEEFF;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F5FAFF;
+  --color-f1-border: #A8CCE8;
+  --color-f1-text: #000A18;
+  --color-f1-text-muted: #305880;
+  --color-f1-red: #1880CC;
+  --color-f1-red-dark: #1060A0;
+  --color-f1-accent: #1880CC;
+  --color-f1-accent-secondary: #C3142D;
+}
+
+[data-theme="team-haas"][data-mode="light"] {
+  --color-f1-black: #FFF0F0;
+  --color-f1-dark: #FFE8E8;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFF5F5;
+  --color-f1-border: #EEC0C0;
+  --color-f1-text: #180000;
+  --color-f1-text-muted: #804040;
+  --color-f1-red: #E80020;
+  --color-f1-red-dark: #B80018;
+  --color-f1-accent: #E80020;
+  --color-f1-accent-secondary: #707070;
+}
+
+[data-theme="team-rb"][data-mode="light"] {
+  --color-f1-black: #EEF0FF;
+  --color-f1-dark: #E0E4FF;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F5F7FF;
+  --color-f1-border: #B0BCEE;
+  --color-f1-text: #00041A;
+  --color-f1-text-muted: #304880;
+  --color-f1-red: #2860E0;
+  --color-f1-red-dark: #1A4CC0;
+  --color-f1-accent: #2860E0;
+  --color-f1-accent-secondary: #C80000;
+}
+
+[data-theme="team-audi"][data-mode="light"],
+[data-theme="team-kick_sauber"][data-mode="light"] {
+  --color-f1-black: #FFF0F0;
+  --color-f1-dark: #FFE8E8;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFF5F5;
+  --color-f1-border: #DDBBBB;
+  --color-f1-text: #180000;
+  --color-f1-text-muted: #804040;
+  --color-f1-red: #BB0000;
+  --color-f1-red-dark: #8C0000;
+  --color-f1-accent: #BB0000;
+  --color-f1-accent-secondary: #606060;
+}
+
+[data-theme="team-cadillac"][data-mode="light"] {
+  --color-f1-black: #FFF9EC;
+  --color-f1-dark: #FFF0CC;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFFDF2;
+  --color-f1-border: #E0C880;
+  --color-f1-text: #180A00;
+  --color-f1-text-muted: #806040;
+  --color-f1-red: #987010;
+  --color-f1-red-dark: #705000;
+  --color-f1-accent: #987010;
+  --color-f1-accent-secondary: #C8001C;
+}
+
+/* ── Retro livery — light mode variants ── */
+
+[data-theme="retro-jordan"][data-mode="light"] {
+  --color-f1-black: #FFFBE0;
+  --color-f1-dark: #FFF5CC;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FEFEF0;
+  --color-f1-border: #DDD060;
+  --color-f1-text: #181000;
+  --color-f1-text-muted: #806030;
+  --color-f1-red: #AA8000;
+  --color-f1-red-dark: #806000;
+  --color-f1-accent: #AA8000;
+  --color-f1-accent-secondary: #006030;
+}
+
+[data-theme="retro-lotus-jps"][data-mode="light"] {
+  --color-f1-black: #F8F4E8;
+  --color-f1-dark: #F0EAD0;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FDFAF0;
+  --color-f1-border: #CCBA88;
+  --color-f1-text: #0A0800;
+  --color-f1-text-muted: #706040;
+  --color-f1-red: #8A6820;
+  --color-f1-red-dark: #685018;
+  --color-f1-accent: #8A6820;
+  --color-f1-accent-secondary: #A88030;
+}
+
+[data-theme="retro-benetton"][data-mode="light"] {
+  --color-f1-black: #EEF2FF;
+  --color-f1-dark: #DDE6FF;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #F5F7FF;
+  --color-f1-border: #A0B4EE;
+  --color-f1-text: #00041A;
+  --color-f1-text-muted: #304080;
+  --color-f1-red: #0047AB;
+  --color-f1-red-dark: #003090;
+  --color-f1-accent: #0047AB;
+  --color-f1-accent-secondary: #AA8000;
+}
+
+[data-theme="retro-mclaren-honda"][data-mode="light"] {
+  --color-f1-black: #FFF0F0;
+  --color-f1-dark: #FFE8E8;
+  --color-f1-card: #FFFFFF;
+  --color-f1-card-hover: #FFF5F5;
+  --color-f1-border: #EEC0C0;
+  --color-f1-text: #180000;
+  --color-f1-text-muted: #804040;
+  --color-f1-red: #CC0000;
+  --color-f1-red-dark: #990000;
+  --color-f1-accent: #CC0000;
+  --color-f1-accent-secondary: #606060;
 }
 
 /* Custom scrollbar */

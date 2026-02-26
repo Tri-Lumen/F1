@@ -14,34 +14,23 @@ import OnboardButton from "@/components/OnboardButton";
 import TireStrategy from "@/components/TireStrategy";
 import TeamRadioFeed from "@/components/TeamRadioFeed";
 import RefreshButton from "@/components/RefreshButton";
+import NextSessionCard from "@/components/NextSessionCard";
 
 async function LiveContent() {
   const session = await getLatestSession();
 
   if (!session) {
     return (
-      <div className="rounded-xl border border-f1-border bg-f1-card p-12 text-center">
-        <svg
-          className="mx-auto h-16 w-16 text-f1-text-muted/30"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-          />
-        </svg>
-        <h2 className="mt-4 text-xl font-bold">No Live Session</h2>
-        <p className="mt-2 text-sm text-f1-text-muted">
-          There is no active session right now. Check the{" "}
-          <Link href="/races" className="text-f1-accent hover:underline">
-            race calendar
-          </Link>{" "}
-          for upcoming events.
-        </p>
+      <div>
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6 text-center">
+          <p className="text-f1-text-muted text-sm">
+            No session is currently active.{" "}
+            <Link href="/races" className="text-f1-accent hover:underline">
+              View race calendar
+            </Link>
+          </p>
+        </div>
+        <NextSessionCard />
       </div>
     );
   }

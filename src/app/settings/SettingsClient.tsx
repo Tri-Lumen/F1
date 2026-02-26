@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTheme, type Theme } from "@/lib/ThemeContext";
+import { useTheme, type ColorMode, type AccentTheme } from "@/lib/ThemeContext";
 import { useFavorites } from "@/lib/FavoritesContext";
-import { TEAM_THEMES } from "@/lib/teamThemes";
+import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 
@@ -12,18 +12,18 @@ interface Props {
   availableTeams: ConstructorStanding[];
 }
 
-const BASE_THEMES = [
+const BASE_MODES = [
   {
-    id: "dark" as Theme,
+    id: "dark" as ColorMode,
     label: "Dark",
-    description: "Official F1 dark theme — true blacks with red accents",
-    swatches: ["#101010", "#242424", "#e10600"],
+    description: "True blacks with red accents — the default F1 look",
+    swatches: ["#101010", "#1a1a1a", "#242424", "#363636", "#e10600"],
   },
   {
-    id: "light" as Theme,
+    id: "light" as ColorMode,
     label: "Light",
-    description: "Light theme — white cards on light gray background",
-    swatches: ["#f4f4f4", "#ffffff", "#e10600"],
+    description: "White cards on light gray — pairs with any team livery",
+    swatches: ["#f4f4f4", "#e8e8e8", "#ffffff", "#d4d4d4", "#e10600"],
   },
 ];
 
@@ -36,7 +36,7 @@ function CheckIcon() {
 }
 
 export default function SettingsClient({ availableDrivers, availableTeams }: Props) {
-  const { theme, setTheme } = useTheme();
+  const { mode, accentTheme, setMode, setAccentTheme } = useTheme();
   const { favoriteDriverIds, favoriteTeamIds, toggleDriver, toggleTeam } = useFavorites();
 
   const [updating, setUpdating] = useState(false);
@@ -80,24 +80,24 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-1">Appearance</h2>
         <p className="text-sm text-f1-text-muted mb-4">
-          Choose a base theme or apply an official F1 team livery
+          Pick a brightness mode, then optionally apply a team livery below — they work together
         </p>
 
-        {/* Base dark / light */}
+        {/* Dark / Light mode selector */}
         <div className="grid gap-3 sm:grid-cols-2 mb-6">
-          {BASE_THEMES.map((t) => {
-            const active = theme === t.id;
+          {BASE_MODES.map((t) => {
+            const active = mode === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id)}
+                onClick={() => setMode(t.id)}
                 className={`group relative rounded-xl border-2 p-5 text-left transition-all ${
                   active
                     ? "border-f1-red bg-f1-card"
                     : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}
               >
-                <div className="mb-4 flex gap-2">
+                <div className="mb-4 flex gap-1.5">
                   {t.swatches.map((c, i) => (
                     <span
                       key={i}
@@ -120,16 +120,19 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
 
         {/* Team liveries */}
         <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
-          Team Liveries
+          2026 Team Liveries
         </p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TEAM_THEMES.map((t) => {
-            const active = theme === t.id;
+        <p className="text-xs text-f1-text-muted mb-3">
+          Click a livery to apply it — click again to remove. Works in both dark and light mode.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          {CURRENT_TEAMS.map((t) => {
+            const active = accentTheme === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id as Theme)}
-                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                onClick={() => setAccentTheme(active ? "none" : (t.id as AccentTheme))}
+                className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
                   active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}
                 style={
@@ -138,15 +141,84 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                     : {}
                 }
               >
-                <div className="mb-3 flex gap-1.5">
+                {/* 5-segment livery colour bar */}
+                <div className="flex h-10 w-full">
                   {t.previewColors.map((c, i) => (
-                    <span key={i} className="h-6 w-6 rounded" style={{ backgroundColor: c }} />
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                   ))}
                 </div>
-                <p className="font-bold text-sm leading-tight">{t.name}</p>
+                <div className="p-3">
+                  <p className="font-bold text-sm leading-tight">{t.name}</p>
+                  {/* accent dots */}
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accent }}
+                    />
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accentSecondary }}
+                    />
+                  </div>
+                </div>
                 {active && (
                   <span
-                    className="absolute top-3 right-3 flex h-4 w-4 items-center justify-center rounded-full text-white"
+                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full text-white shadow"
+                    style={{ backgroundColor: t.colors.accent }}
+                  >
+                    <CheckIcon />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Retro liveries */}
+        <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
+          Retro Liveries
+        </p>
+        <p className="text-xs text-f1-text-muted mb-3">
+          Iconic historical colour schemes — also toggle-able with the dark/light mode above
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {RETRO_THEMES.map((t) => {
+            const active = accentTheme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setAccentTheme(active ? "none" : (t.id as AccentTheme))}
+                className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
+                  active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
+                }`}
+                style={
+                  active
+                    ? { borderColor: t.colors.accent, backgroundColor: t.colors.card }
+                    : {}
+                }
+              >
+                {/* 5-segment livery colour bar */}
+                <div className="flex h-10 w-full">
+                  {t.previewColors.map((c, i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="p-3">
+                  <p className="font-bold text-sm leading-tight">{t.name}</p>
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accent }}
+                    />
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accentSecondary }}
+                    />
+                  </div>
+                </div>
+                {active && (
+                  <span
+                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full text-white shadow"
                     style={{ backgroundColor: t.colors.accent }}
                   >
                     <CheckIcon />
