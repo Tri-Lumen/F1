@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import StandingsTable from "@/components/StandingsTable";
 import RefreshButton from "@/components/RefreshButton";
+import PointsProgressionChart from "@/components/PointsProgressionChart";
 
 interface DriverStats {
   podiums: number;
@@ -85,6 +86,9 @@ async function DriversContent() {
     getAllSeasonResults(),
   ]);
 
+  // Completed races only (have Results)
+  const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
+
   return (
     <>
       {/* Full Standings Table */}
@@ -94,6 +98,17 @@ async function DriversContent() {
         </div>
         <StandingsTable standings={standings} />
       </div>
+
+      {/* Points Progression Chart */}
+      {completedRaces.length > 0 && (
+        <div className="mb-10">
+          <PointsProgressionChart
+            completedRaces={completedRaces}
+            driverStandings={standings}
+            getTeamColor={getTeamColor}
+          />
+        </div>
+      )}
 
       {/* Detailed Driver Cards */}
       <h2 className="mb-4 text-lg font-bold text-f1-text-muted">
@@ -112,6 +127,10 @@ async function DriversContent() {
               id={s.Driver.driverId}
               className="group rounded-xl border border-f1-border bg-f1-card p-5 transition-all hover:border-f1-border hover:bg-f1-card-hover"
             >
+              <div
+                className="h-0.5 w-full rounded-full mb-4 -mt-1"
+                style={{ backgroundColor: teamColor }}
+              />
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -180,14 +199,20 @@ async function DriversContent() {
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex items-center justify-between">
+                <Link
+                  href={`/drivers/${s.Driver.driverId}`}
+                  className="text-xs font-medium text-f1-accent hover:underline"
+                >
+                  View Profile &rarr;
+                </Link>
                 <a
                   href={s.Driver.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-f1-accent hover:underline"
+                  className="text-xs text-f1-text-muted hover:underline"
                 >
-                  Wikipedia &rarr;
+                  Wikipedia
                 </a>
               </div>
             </div>

@@ -201,7 +201,7 @@ async function TeamsContent() {
                   {drivers.map((d) => (
                     <Link
                       key={d.Driver.driverId}
-                      href={`/drivers#${d.Driver.driverId}`}
+                      href={`/drivers/${d.Driver.driverId}`}
                       className="flex items-center justify-between rounded-lg bg-f1-dark p-3 transition-colors hover:bg-f1-border"
                     >
                       <div className="flex items-center gap-2">
@@ -230,14 +230,20 @@ async function TeamsContent() {
                   ))}
                 </div>
 
-                <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex items-center justify-between">
+                  <Link
+                    href={`/teams/${s.Constructor.constructorId}`}
+                    className="text-xs font-medium text-f1-accent hover:underline"
+                  >
+                    View Team &rarr;
+                  </Link>
                   <a
                     href={s.Constructor.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-f1-accent hover:underline"
+                    className="text-xs text-f1-text-muted hover:underline"
                   >
-                    Wikipedia &rarr;
+                    Wikipedia
                   </a>
                 </div>
               </div>
