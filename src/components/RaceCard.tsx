@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Race } from "@/lib/types";
 import { getCountryFlagByCountry, getF1TVRaceUrl } from "@/lib/api";
+import CircuitMap from "@/components/CircuitMap";
 
 function formatDate(dateStr: string, timeStr?: string): string {
   const d = new Date(timeStr ? `${dateStr}T${timeStr}` : dateStr);
@@ -46,8 +47,8 @@ export default function RaceCard({ race }: { race: Race }) {
           : "border-f1-border bg-f1-card hover:bg-f1-card-hover"
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="rounded bg-f1-dark px-2 py-0.5 text-xs font-bold text-f1-text-muted">
               R{race.round}
@@ -63,7 +64,7 @@ export default function RaceCard({ race }: { race: Race }) {
             )}
           </div>
 
-          <h3 className="mt-2 font-bold text-lg">
+          <h3 className="mt-2 font-bold text-lg leading-tight">
             {flag} {race.raceName}
           </h3>
           <p className="text-sm text-f1-text-muted">
@@ -75,6 +76,14 @@ export default function RaceCard({ race }: { race: Race }) {
             {formatDate(race.date, race.time)}
           </p>
         </div>
+
+        {/* Circuit map */}
+        <CircuitMap
+          circuitId={race.Circuit.circuitId}
+          className={`w-24 h-16 shrink-0 ${
+            live ? "opacity-80" : "opacity-40"
+          }`}
+        />
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">

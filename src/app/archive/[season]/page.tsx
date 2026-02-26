@@ -9,6 +9,7 @@ import {
   getCountryFlagByCountry,
   getF1TVRaceUrl,
 } from "@/lib/api";
+import CircuitMap from "@/components/CircuitMap";
 
 export const dynamic = "force-dynamic";
 
@@ -196,15 +197,21 @@ export default async function ArchiveSeasonPage({
                 key={race.round}
                 className="rounded-xl border border-f1-border bg-f1-card p-4 flex flex-col gap-2"
               >
-                <div>
-                  <p className="text-xs text-f1-text-muted uppercase tracking-wider">
-                    Round {race.round}
-                  </p>
-                  <p className="font-bold mt-1 leading-tight">{race.raceName}</p>
-                  <p className="text-xs text-f1-text-muted mt-0.5">
-                    {getCountryFlagByCountry(race.Circuit.Location.country)}{" "}
-                    {race.Circuit.Location.country} &middot; {race.date}
-                  </p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-f1-text-muted uppercase tracking-wider">
+                      Round {race.round}
+                    </p>
+                    <p className="font-bold mt-1 leading-tight">{race.raceName}</p>
+                    <p className="text-xs text-f1-text-muted mt-0.5">
+                      {getCountryFlagByCountry(race.Circuit.Location.country)}{" "}
+                      {race.Circuit.Location.country} &middot; {race.date}
+                    </p>
+                  </div>
+                  <CircuitMap
+                    circuitId={race.Circuit.circuitId}
+                    className="w-20 h-14 shrink-0 opacity-40"
+                  />
                 </div>
                 <a
                   href={getF1TVRaceUrl(race)}
