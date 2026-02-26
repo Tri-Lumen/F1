@@ -12,6 +12,7 @@ import StandingsTable from "@/components/StandingsTable";
 import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RaceCard from "@/components/RaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
+import NextSessionCard from "@/components/NextSessionCard";
 import RefreshButton from "@/components/RefreshButton";
 
 function LoadingSkeleton({ rows = 5 }: { rows?: number }) {
@@ -34,7 +35,7 @@ async function DashboardContent() {
     getRaceSchedule(),
   ]);
 
-  // Find next race
+  // Find next race (event-level, not session-level)
   const now = new Date();
   const nextRace = races.find((r) => {
     const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
@@ -101,7 +102,7 @@ async function DashboardContent() {
         </div>
       </div>
 
-      {/* Next Race */}
+      {/* Next Race (event-level context with links) */}
       {nextRace && (
         <div className="mb-8">
           <h2 className="mb-3 text-lg font-bold text-f1-text-muted">
@@ -182,6 +183,16 @@ export default function Home() {
         <RefreshButton intervalMs={60000} />
       </div>
 
+      {/* Next session countdown with circuit map */}
+      <Suspense
+        fallback={
+          <div className="mb-8 h-60 rounded-xl bg-f1-card animate-pulse" />
+        }
+      >
+        <NextSessionCard />
+      </Suspense>
+
+      {/* Season standings, recent races, etc. */}
       <Suspense fallback={<LoadingSkeleton rows={10} />}>
         <DashboardContent />
       </Suspense>

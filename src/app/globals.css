@@ -13,7 +13,7 @@
   --color-f1-text-muted: #949494;
   --color-f1-accent: #e10600;
 
-  /* 2025 team colors */
+  /* 2026 team colors */
   --color-team-red-bull: #3671c6;
   --color-team-ferrari: #e80020;
   --color-team-mclaren: #ff8000;
@@ -23,7 +23,8 @@
   --color-team-williams: #64c4ff;
   --color-team-haas: #b6babd;
   --color-team-rb: #6692ff;
-  --color-team-sauber: #52e252;
+  --color-team-audi: #bb0000;
+  --color-team-cadillac: #b8941c;
 }
 
 body {
@@ -174,18 +175,34 @@ body {
   --color-f1-accent-secondary: #C80000;
 }
 
+/* Audi F1 Team (formerly Kick Sauber) */
+[data-theme="team-audi"],
 [data-theme="team-kick_sauber"] {
-  --color-f1-black: #080E08;
-  --color-f1-dark: #0C140C;
-  --color-f1-card: #121C12;
-  --color-f1-card-hover: #182418;
-  --color-f1-border: #1E301E;
-  --color-f1-text: #F0FFF0;
-  --color-f1-text-muted: #70A070;
-  --color-f1-red: #52E252;
-  --color-f1-red-dark: #3EC23E;
-  --color-f1-accent: #52E252;
-  --color-f1-accent-secondary: #00D2BE;
+  --color-f1-black: #180808;
+  --color-f1-dark: #200A0A;
+  --color-f1-card: #280E0E;
+  --color-f1-card-hover: #321212;
+  --color-f1-border: #3C1010;
+  --color-f1-text: #FFF5F5;
+  --color-f1-text-muted: #A07070;
+  --color-f1-red: #BB0000;
+  --color-f1-red-dark: #8C0000;
+  --color-f1-accent: #BB0000;
+  --color-f1-accent-secondary: #C0C0C0;
+}
+
+[data-theme="team-cadillac"] {
+  --color-f1-black: #0A0E1A;
+  --color-f1-dark: #0E1422;
+  --color-f1-card: #141B2E;
+  --color-f1-card-hover: #1A2238;
+  --color-f1-border: #1E2A46;
+  --color-f1-text: #F0F4FF;
+  --color-f1-text-muted: #7080A0;
+  --color-f1-red: #B8941C;
+  --color-f1-red-dark: #986010;
+  --color-f1-accent: #B8941C;
+  --color-f1-accent-secondary: #C8001C;
 }
 
 /* Custom scrollbar */

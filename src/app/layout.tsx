@@ -3,17 +3,48 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
+import { getNextScheduledSession, getLatestSession } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "F1 Dashboard — 2025 Season",
-  description: "Live F1 stats, standings, and race results for the 2025 season",
+  title: "F1 Dashboard — 2026 Season",
+  description: "Live F1 stats, standings, and race results for the 2026 season",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Fetch session info once at the layout level so the Nav countdown
+  // doesn't require an extra round-trip per page.
+  let navSession: { type: string; raceName: string; country: string; date: string } | null = null;
+  let isLive = false;
+
+  try {
+    const [nextSession, latestSession] = await Promise.all([
+      getNextScheduledSession(),
+      getLatestSession(),
+    ]);
+
+    if (nextSession) {
+      navSession = {
+        type: nextSession.type,
+        raceName: nextSession.raceName,
+        country: nextSession.country,
+        date: nextSession.date.toISOString(),
+      };
+    }
+
+    if (latestSession) {
+      const now = new Date();
+      isLive =
+        now >= new Date(latestSession.date_start) &&
+        now <= new Date(latestSession.date_end);
+    }
+  } catch {
+    // Non-fatal — nav will render without the countdown
+  }
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -44,7 +75,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <FavoritesProvider>
-            <Nav />
+            <Nav nextSession={navSession} isLive={isLive} />
             <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
               {children}
             </main>

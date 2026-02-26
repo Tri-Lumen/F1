@@ -23,7 +23,7 @@ export interface TeamTheme {
 }
 
 /**
- * Official-style color palettes for every 2025 F1 constructor.
+ * Official-style color palettes for every 2026 F1 constructor.
  * Backgrounds are derived from each team's primary livery color darkened
  * to a deep, readable shade; accent replaces the default F1 red throughout
  * the app (buttons, active nav indicator, links, etc.).
@@ -202,22 +202,42 @@ export const TEAM_THEMES: TeamTheme[] = [
     },
   },
   {
-    id: "team-kick_sauber",
-    constructorId: "kick_sauber",
-    name: "Kick Sauber",
-    // bg, card, border, accent (bright green), accentSecondary (mint teal)
-    previewColors: ["#080E08", "#121C12", "#1E301E", "#52E252", "#00D2BE"],
+    id: "team-audi",
+    constructorId: "audi",
+    name: "Audi F1 Team",
+    // bg, card, border, accent (Audi red), accentSecondary (aluminum silver)
+    // Formerly Kick Sauber — rebranded as Audi for the 2026 season
+    previewColors: ["#180808", "#280E0E", "#3C1010", "#BB0000", "#C0C0C0"],
     colors: {
-      bg: "#080E08",
-      dark: "#0C140C",
-      card: "#121C12",
-      cardHover: "#182418",
-      border: "#1E301E",
-      text: "#F0FFF0",
-      textMuted: "#70A070",
-      accent: "#52E252",
-      accentDark: "#3EC23E",
-      accentSecondary: "#00D2BE",
+      bg: "#180808",
+      dark: "#200A0A",
+      card: "#280E0E",
+      cardHover: "#321212",
+      border: "#3C1010",
+      text: "#FFF5F5",
+      textMuted: "#A07070",
+      accent: "#BB0000",
+      accentDark: "#8C0000",
+      accentSecondary: "#C0C0C0",
+    },
+  },
+  {
+    id: "team-cadillac",
+    constructorId: "cadillac",
+    name: "Cadillac F1 Team",
+    // bg, card, border, accent (Cadillac gold), accentSecondary (American red)
+    previewColors: ["#0A0E1A", "#141B2E", "#1E2A46", "#B8941C", "#C8001C"],
+    colors: {
+      bg: "#0A0E1A",
+      dark: "#0E1422",
+      card: "#141B2E",
+      cardHover: "#1A2238",
+      border: "#1E2A46",
+      text: "#F0F4FF",
+      textMuted: "#7080A0",
+      accent: "#B8941C",
+      accentDark: "#986010",
+      accentSecondary: "#C8001C",
     },
   },
 ];
