@@ -41,9 +41,9 @@ export default function StandingsTable({
             return (
               <tr
                 key={s.Driver.driverId}
-                className="border-b border-f1-border/50 transition-colors hover:bg-f1-card/50"
+                className="border-b border-f1-border/50 transition-colors hover:bg-f1-card-hover"
               >
-                <td className="px-3 py-3 font-bold text-f1-text-muted">
+                <td className={`px-3 py-3 font-bold ${s.position === "1" ? "text-f1-accent" : "text-f1-text-muted"}`}>
                   {s.position}
                 </td>
                 <td className="px-3 py-3">

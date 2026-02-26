@@ -41,10 +41,10 @@ export default function RaceCard({ race }: { race: Race }) {
     <div
       className={`rounded-xl border p-4 transition-all ${
         live
-          ? "border-f1-red bg-f1-red/5 shadow-lg shadow-f1-red/10"
+          ? "border-f1-accent bg-f1-accent/5 shadow-lg shadow-f1-accent/15"
           : past
           ? "border-f1-border/50 bg-f1-card/50"
-          : "border-f1-border bg-f1-card hover:bg-f1-card-hover"
+          : "border-f1-border bg-f1-card hover:bg-f1-card-hover hover:border-f1-accent/30"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -54,7 +54,7 @@ export default function RaceCard({ race }: { race: Race }) {
               R{race.round}
             </span>
             {live && (
-              <span className="flex items-center gap-1 rounded-full bg-f1-red px-2 py-0.5 text-xs font-bold text-white">
+              <span className="flex items-center gap-1 rounded-full bg-f1-accent px-2 py-0.5 text-xs font-bold text-white">
                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-live" />
                 LIVE
               </span>
@@ -98,7 +98,7 @@ export default function RaceCard({ race }: { race: Race }) {
         {live && (
           <Link
             href={`/race/${race.round}`}
-            className="rounded-lg bg-f1-red px-3 py-1.5 text-xs font-bold text-white hover:bg-f1-red-dark transition-colors"
+            className="rounded-lg bg-f1-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-f1-red-dark transition-colors"
           >
             Live Timing
           </Link>
@@ -112,7 +112,7 @@ export default function RaceCard({ race }: { race: Race }) {
           Watch on F1TV &rarr;
         </a>
         {race.Sprint && (
-          <span className="rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-400">
+          <span className="rounded-lg bg-f1-accent-secondary/15 px-3 py-1.5 text-xs font-medium text-f1-accent-secondary border border-f1-accent-secondary/25">
             Sprint Weekend
           </span>
         )}

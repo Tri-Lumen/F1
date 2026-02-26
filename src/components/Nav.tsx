@@ -196,7 +196,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
           <span className="text-2xl font-black tracking-tight text-f1-red">
             F1
           </span>
-          <span className="hidden text-xs font-semibold uppercase tracking-widest text-f1-text-muted sm:block">
+          <span className="hidden text-xs font-semibold uppercase tracking-widest text-f1-accent-secondary sm:block opacity-70">
             Dashboard 2026
           </span>
         </Link>
@@ -239,7 +239,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
               href={link.href}
               className={`relative flex-shrink-0 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
                 isActive(link.href)
-                  ? "text-white"
+                  ? "text-f1-accent"
                   : "text-f1-text-muted hover:text-f1-text"
               }`}
             >
@@ -257,7 +257,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
                 onClick={() => setMoreOpen((o) => !o)}
                 className={`relative flex items-center gap-1 px-3 py-2 text-sm font-semibold uppercase tracking-wide transition-colors ${
                   overflowLinks.some((l) => isActive(l.href))
-                    ? "text-white"
+                    ? "text-f1-accent"
                     : "text-f1-text-muted hover:text-f1-text"
                 }`}
               >
@@ -355,7 +355,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
                 href={link.href}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors ${
                   isActive(link.href)
-                    ? "bg-f1-card text-white"
+                    ? "bg-f1-accent/10 text-f1-accent border border-f1-accent/20"
                     : "text-f1-text-muted hover:bg-f1-card/50 hover:text-f1-text"
                 }`}
               >
