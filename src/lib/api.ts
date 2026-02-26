@@ -292,7 +292,7 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
 
 export function getTeamColor(constructorId: string): string {
   const colors: Record<string, string> = {
-    red_bull: "#3671c6",
+    red_bull: "#b8941c",
     ferrari: "#e80020",
     mclaren: "#ff8000",
     mercedes: "#27f4d2",
@@ -305,8 +305,8 @@ export function getTeamColor(constructorId: string): string {
     audi: "#bb0000",
     sauber: "#bb0000",
     kick_sauber: "#bb0000",
-    cadillac: "#b8941c",
-    andretti_cadillac: "#b8941c",
+    cadillac: "#e0e0e0",
+    andretti_cadillac: "#e0e0e0",
   };
   if (colors[constructorId]) return colors[constructorId];
 

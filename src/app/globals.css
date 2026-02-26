@@ -16,7 +16,7 @@
   --color-f1-accent-secondary: #ffffff;
 
   /* 2026 team colors */
-  --color-team-red-bull: #3671c6;
+  --color-team-red-bull: #b8941c;
   --color-team-ferrari: #e80020;
   --color-team-mclaren: #ff8000;
   --color-team-mercedes: #27f4d2;
@@ -26,7 +26,7 @@
   --color-team-haas: #b6babd;
   --color-team-rb: #6692ff;
   --color-team-audi: #bb0000;
-  --color-team-cadillac: #b8941c;
+  --color-team-cadillac: #e0e0e0;
 }
 
 body {
@@ -73,17 +73,17 @@ body::before {
    team's official colour palette without any component-level changes.     */
 
 [data-theme="team-red_bull"] {
-  --color-f1-black: #0B0D1E;
-  --color-f1-dark: #11132A;
-  --color-f1-card: #181B36;
-  --color-f1-card-hover: #1E2244;
-  --color-f1-border: #252A52;
-  --color-f1-text: #E8EAF6;
-  --color-f1-text-muted: #7B82B4;
-  --color-f1-red: #3671C6;
-  --color-f1-red-dark: #2A5CAF;
-  --color-f1-accent: #3671C6;
-  --color-f1-accent-secondary: #FFD700;
+  --color-f1-black: #0A0E1A;
+  --color-f1-dark: #0E1422;
+  --color-f1-card: #141B2E;
+  --color-f1-card-hover: #1A2238;
+  --color-f1-border: #1E2A46;
+  --color-f1-text: #F0F4FF;
+  --color-f1-text-muted: #7080A0;
+  --color-f1-red: #B8941C;
+  --color-f1-red-dark: #986010;
+  --color-f1-accent: #B8941C;
+  --color-f1-accent-secondary: #C8001C;
 }
 
 [data-theme="team-ferrari"] {
@@ -215,17 +215,17 @@ body::before {
 }
 
 [data-theme="team-cadillac"] {
-  --color-f1-black: #0A0E1A;
-  --color-f1-dark: #0E1422;
-  --color-f1-card: #141B2E;
-  --color-f1-card-hover: #1A2238;
-  --color-f1-border: #1E2A46;
-  --color-f1-text: #F0F4FF;
-  --color-f1-text-muted: #7080A0;
-  --color-f1-red: #B8941C;
-  --color-f1-red-dark: #986010;
-  --color-f1-accent: #B8941C;
-  --color-f1-accent-secondary: #C8001C;
+  --color-f1-black: #0C0C0C;
+  --color-f1-dark: #141414;
+  --color-f1-card: #1E1E1E;
+  --color-f1-card-hover: #262626;
+  --color-f1-border: #333333;
+  --color-f1-text: #F5F5F5;
+  --color-f1-text-muted: #909090;
+  --color-f1-red: #FFFFFF;
+  --color-f1-red-dark: #CCCCCC;
+  --color-f1-accent: #FFFFFF;
+  --color-f1-accent-secondary: #AAAAAA;
 }
 
 /* ── Retro livery themes ── */
@@ -294,17 +294,17 @@ body::before {
 /* These use two-attribute selectors so they beat the single-attribute dark defaults above. */
 
 [data-theme="team-red_bull"][data-mode="light"] {
-  --color-f1-black: #EEF1FF;
-  --color-f1-dark: #E0E5FF;
+  --color-f1-black: #FFF9EC;
+  --color-f1-dark: #FFF0CC;
   --color-f1-card: #FFFFFF;
-  --color-f1-card-hover: #F5F7FF;
-  --color-f1-border: #C0CCEE;
-  --color-f1-text: #090C1E;
-  --color-f1-text-muted: #40558A;
-  --color-f1-red: #3671C6;
-  --color-f1-red-dark: #2A5CAF;
-  --color-f1-accent: #3671C6;
-  --color-f1-accent-secondary: #B8960A;
+  --color-f1-card-hover: #FFFDF2;
+  --color-f1-border: #E0C880;
+  --color-f1-text: #180A00;
+  --color-f1-text-muted: #806040;
+  --color-f1-red: #987010;
+  --color-f1-red-dark: #705000;
+  --color-f1-accent: #987010;
+  --color-f1-accent-secondary: #C8001C;
 }
 
 [data-theme="team-ferrari"][data-mode="light"] {
@@ -435,17 +435,17 @@ body::before {
 }
 
 [data-theme="team-cadillac"][data-mode="light"] {
-  --color-f1-black: #FFF9EC;
-  --color-f1-dark: #FFF0CC;
+  --color-f1-black: #F5F5F5;
+  --color-f1-dark: #EEEEEE;
   --color-f1-card: #FFFFFF;
-  --color-f1-card-hover: #FFFDF2;
-  --color-f1-border: #E0C880;
-  --color-f1-text: #180A00;
-  --color-f1-text-muted: #806040;
-  --color-f1-red: #987010;
-  --color-f1-red-dark: #705000;
-  --color-f1-accent: #987010;
-  --color-f1-accent-secondary: #C8001C;
+  --color-f1-card-hover: #F8F8F8;
+  --color-f1-border: #D0D0D0;
+  --color-f1-text: #0C0C0C;
+  --color-f1-text-muted: #606060;
+  --color-f1-red: #1A1A1A;
+  --color-f1-red-dark: #000000;
+  --color-f1-accent: #1A1A1A;
+  --color-f1-accent-secondary: #606060;
 }
 
 /* ── Retro livery — light mode variants ── */

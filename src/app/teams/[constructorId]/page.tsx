@@ -279,11 +279,13 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   );
 }
 
-export default function TeamDetailPage({
+export default async function TeamDetailPage({
   params,
 }: {
-  params: { constructorId: string };
+  params: Promise<{ constructorId: string }>;
 }) {
+  const { constructorId } = await params;
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -309,7 +311,7 @@ export default function TeamDetailPage({
           </div>
         }
       >
-        <TeamDetailContent constructorId={params.constructorId} />
+        <TeamDetailContent constructorId={constructorId} />
       </Suspense>
     </div>
   );
