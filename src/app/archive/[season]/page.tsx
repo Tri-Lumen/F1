@@ -9,9 +9,7 @@ import {
   getCountryFlagByCountry,
 } from "@/lib/api";
 
-export function generateStaticParams() {
-  return ARCHIVE_SEASONS.map((season) => ({ season }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
