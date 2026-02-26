@@ -24,31 +24,72 @@ export const ARCHIVE_SEASONS = [
 
 // --- Ergast / Jolpica API ---
 
-async function fetchErgast<T>(path: string): Promise<T> {
-  const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 300 } });
-  if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
-  return res.json();
+async function fetchErgast<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 /** Historical data fetch — 24 h cache since completed seasons never change */
-async function fetchErgastArchive<T>(path: string): Promise<T> {
-  const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
-  if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
-  return res.json();
+async function fetchErgastArchive<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 export async function getDriverStandings(): Promise<DriverStanding[]> {
   const data = await fetchErgast<any>(`/${CURRENT_SEASON}/driverstandings/?limit=100`);
-  return (
-    data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? []
-  );
+  const standings: DriverStanding[] =
+    data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
+
+  // Pre-season fallback: if no standings yet, build entries from the driver list
+  if (standings.length === 0) {
+    const driversData = await fetchErgast<any>(`/${CURRENT_SEASON}/drivers/?limit=100`);
+    const drivers: any[] = driversData?.MRData?.DriverTable?.Drivers ?? [];
+    if (drivers.length > 0) {
+      return drivers.map((d: any, i: number) => ({
+        position: String(i + 1),
+        positionText: String(i + 1),
+        points: "0",
+        wins: "0",
+        Driver: d,
+        Constructors: [],
+      }));
+    }
+  }
+
+  return standings;
 }
 
 export async function getConstructorStandings(): Promise<ConstructorStanding[]> {
   const data = await fetchErgast<any>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`);
-  return (
-    data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? []
-  );
+  const standings: ConstructorStanding[] =
+    data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
+
+  // Pre-season fallback: if no standings yet, build entries from the constructors list
+  if (standings.length === 0) {
+    const ctorData = await fetchErgast<any>(`/${CURRENT_SEASON}/constructors/?limit=100`);
+    const ctors: any[] = ctorData?.MRData?.ConstructorTable?.Constructors ?? [];
+    if (ctors.length > 0) {
+      return ctors.map((c: any, i: number) => ({
+        position: String(i + 1),
+        positionText: String(i + 1),
+        points: "0",
+        wins: "0",
+        Constructor: c,
+      }));
+    }
+  }
+
+  return standings;
 }
 
 export async function getRaceSchedule(): Promise<Race[]> {
@@ -165,6 +206,11 @@ export async function getSeasonConstructorStandings(season: string): Promise<Con
 
 export async function getSeasonSchedule(season: string): Promise<Race[]> {
   const data = await fetchErgastArchive<any>(`/${season}/?limit=30`);
+  return data?.MRData?.RaceTable?.Races ?? [];
+}
+
+export async function getSeasonRaceResults(season: string): Promise<Race[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/results/?limit=500`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 

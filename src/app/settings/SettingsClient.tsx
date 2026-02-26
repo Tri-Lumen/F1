@@ -18,12 +18,16 @@ const BASE_MODES = [
     label: "Dark",
     description: "True blacks with red accents — the default F1 look",
     swatches: ["#101010", "#1a1a1a", "#242424", "#363636", "#e10600"],
+    accent: "#e10600",
+    accentSecondary: "#ffffff",
   },
   {
     id: "light" as ColorMode,
     label: "Light",
     description: "White cards on light gray — pairs with any team livery",
     swatches: ["#f4f4f4", "#e8e8e8", "#ffffff", "#d4d4d4", "#e10600"],
+    accent: "#e10600",
+    accentSecondary: "#151515",
   },
 ];
 
@@ -38,6 +42,23 @@ function CheckIcon() {
 export default function SettingsClient({ availableDrivers, availableTeams }: Props) {
   const { mode, accentTheme, setMode, setAccentTheme } = useTheme();
   const { favoriteDriverIds, favoriteTeamIds, toggleDriver, toggleTeam } = useFavorites();
+
+  const [mvHost, setMvHost] = useState("localhost:10101");
+  const [mvSaved, setMvSaved] = useState(false);
+
+  // Load saved MultiViewer host from localStorage on mount
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("f1-multiviewer-host");
+      if (saved) setMvHost(saved);
+    }
+  });
+
+  function saveMvHost() {
+    localStorage.setItem("f1-multiviewer-host", mvHost.trim() || "localhost:10101");
+    setMvSaved(true);
+    setTimeout(() => setMvSaved(false), 2000);
+  }
 
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<{
@@ -108,6 +129,16 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                 </div>
                 <p className="font-bold text-lg">{t.label}</p>
                 <p className="text-sm text-f1-text-muted mt-1">{t.description}</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                    style={{ backgroundColor: t.accent }}
+                  />
+                  <span
+                    className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                    style={{ backgroundColor: t.accentSecondary }}
+                  />
+                </div>
                 {active && (
                   <span className="absolute top-4 right-4 flex h-5 w-5 items-center justify-center rounded-full bg-f1-red text-white">
                     <CheckIcon />
@@ -375,6 +406,52 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
             })}
           </div>
         )}
+      </section>
+
+      {/* ── MultiViewer Configuration ── */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-1">MultiViewer</h2>
+        <p className="text-sm text-f1-text-muted mb-4">
+          Configure the host and port of your{" "}
+          <a
+            href="https://multiviewer.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-f1-accent hover:underline"
+          >
+            MultiViewer
+          </a>{" "}
+          instance to enable live onboard camera buttons. Default is{" "}
+          <code className="rounded bg-f1-dark px-1 py-0.5 text-xs">localhost:10101</code>.
+          If your app runs in Docker and MultiViewer is on the host machine, use{" "}
+          <code className="rounded bg-f1-dark px-1 py-0.5 text-xs">host.docker.internal:10101</code>.
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            value={mvHost}
+            onChange={(e) => setMvHost(e.target.value)}
+            placeholder="localhost:10101"
+            className="rounded-lg border border-f1-border bg-f1-dark px-4 py-2 text-sm text-f1-text placeholder:text-f1-text-muted focus:border-f1-accent focus:outline-none w-64"
+          />
+          <button
+            onClick={saveMvHost}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors ${
+              mvSaved ? "bg-green-600" : "bg-f1-red hover:bg-f1-red-dark"
+            }`}
+          >
+            {mvSaved ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Saved
+              </>
+            ) : (
+              "Save"
+            )}
+          </button>
+        </div>
       </section>
 
       {/* ── Application Update ── */}
