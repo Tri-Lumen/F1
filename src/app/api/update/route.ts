@@ -10,11 +10,41 @@ function run(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string
   });
 }
 
+/**
+ * When running inside Docker, 127.0.0.1 in the git remote URL refers to the
+ * container itself rather than the host machine. Replace it with
+ * host.docker.internal so git can reach the host's git server.
+ * The docker-compose.yml adds the host.docker.internal → host-gateway mapping.
+ */
+async function fixRemoteForDocker(cwd: string): Promise<void> {
+  try {
+    const { stdout } = await run(
+      `git -c safe.directory=${cwd} remote get-url origin 2>&1`,
+      cwd
+    );
+    const url = stdout.trim();
+    if (url.includes("127.0.0.1") || url.includes("localhost")) {
+      const fixed = url
+        .replace(/127\.0\.0\.1/g, "host.docker.internal")
+        .replace(/\blocalhost\b/g, "host.docker.internal");
+      await run(
+        `git -c safe.directory=${cwd} remote set-url origin "${fixed}" 2>&1`,
+        cwd
+      );
+    }
+  } catch {
+    // Non-fatal — git pull will surface the real error if it fails
+  }
+}
+
 export async function POST() {
   const cwd = process.cwd();
   const steps: { step: string; output: string }[] = [];
 
   try {
+    // Rewrite localhost remote URL so git pull works from inside Docker
+    await fixRemoteForDocker(cwd);
+
     // 1. Pull latest from remote.
     // Pass safe.directory inline so git doesn't reject /app due to the WORKDIR
     // being owned by root while the container process runs as the nextjs user.

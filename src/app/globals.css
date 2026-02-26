@@ -12,6 +12,8 @@
   --color-f1-text: #f5f5f5;
   --color-f1-text-muted: #949494;
   --color-f1-accent: #e10600;
+  /* Secondary accent — white in default dark mode, overridden per-team */
+  --color-f1-accent-secondary: #ffffff;
 
   /* 2026 team colors */
   --color-team-red-bull: #3671c6;
@@ -42,6 +44,7 @@ body {
   --color-f1-border: #d4d4d4;
   --color-f1-text: #151515;
   --color-f1-text-muted: #666666;
+  --color-f1-accent-secondary: #151515;
 }
 
 /* ── Team livery themes ── */

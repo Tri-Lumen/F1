@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-const MULTIVIEWER_API = "http://localhost:10101/api/graphql";
+const DEFAULT_MV_HOST = "localhost:10101";
+
+function getMultiviewerUrl(): string {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("f1-multiviewer-host");
+    const host = saved && saved.trim() ? saved.trim() : DEFAULT_MV_HOST;
+    return `http://${host}/api/graphql`;
+  }
+  return `http://${DEFAULT_MV_HOST}/api/graphql`;
+}
 
 export default function OnboardButton({
   driverNumber,
@@ -19,8 +28,9 @@ export default function OnboardButton({
   const [mvConnected, setMvConnected] = useState<boolean | null>(null);
 
   const checkConnection = useCallback(async () => {
+    const url = getMultiviewerUrl();
     try {
-      const res = await fetch(MULTIVIEWER_API, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: "{ systemInfo { version } }" }),
@@ -43,8 +53,9 @@ export default function OnboardButton({
     }
 
     setStatus("loading");
+    const url = getMultiviewerUrl();
     try {
-      const res = await fetch(MULTIVIEWER_API, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,7 +85,7 @@ export default function OnboardButton({
 
   const title =
     status === "no-mv"
-      ? "MultiViewer not detected - make sure it's running"
+      ? "MultiViewer not detected — check Settings to configure the host"
       : status === "success"
       ? `Opened ${acronym} onboard!`
       : status === "error"
@@ -154,7 +165,7 @@ export default function OnboardButton({
       {/* Tooltip for no-mv status */}
       {status === "no-mv" && (
         <span className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-f1-dark px-2 py-1 text-xs text-f1-text shadow-lg border border-f1-border z-10">
-          Start MultiViewer to use onboard
+          MultiViewer not found — configure host in Settings
         </span>
       )}
     </button>

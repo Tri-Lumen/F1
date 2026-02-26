@@ -7,6 +7,7 @@ import {
   ARCHIVE_SEASONS,
   getCountryFlag,
   getCountryFlagByCountry,
+  getF1TVRaceUrl,
 } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -193,16 +194,26 @@ export default async function ArchiveSeasonPage({
             {races.map((race) => (
               <div
                 key={race.round}
-                className="rounded-xl border border-f1-border bg-f1-card p-4"
+                className="rounded-xl border border-f1-border bg-f1-card p-4 flex flex-col gap-2"
               >
-                <p className="text-xs text-f1-text-muted uppercase tracking-wider">
-                  Round {race.round}
-                </p>
-                <p className="font-bold mt-1 leading-tight">{race.raceName}</p>
-                <p className="text-xs text-f1-text-muted mt-0.5">
-                  {getCountryFlagByCountry(race.Circuit.Location.country)}{" "}
-                  {race.Circuit.Location.country} &middot; {race.date}
-                </p>
+                <div>
+                  <p className="text-xs text-f1-text-muted uppercase tracking-wider">
+                    Round {race.round}
+                  </p>
+                  <p className="font-bold mt-1 leading-tight">{race.raceName}</p>
+                  <p className="text-xs text-f1-text-muted mt-0.5">
+                    {getCountryFlagByCountry(race.Circuit.Location.country)}{" "}
+                    {race.Circuit.Location.country} &middot; {race.date}
+                  </p>
+                </div>
+                <a
+                  href={getF1TVRaceUrl(race)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="self-start rounded-lg bg-f1-dark px-3 py-1 text-xs font-medium text-f1-accent hover:bg-f1-border transition-colors"
+                >
+                  Watch on F1TV &rarr;
+                </a>
               </div>
             ))}
           </div>
