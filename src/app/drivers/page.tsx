@@ -112,6 +112,10 @@ async function DriversContent() {
               id={s.Driver.driverId}
               className="group rounded-xl border border-f1-border bg-f1-card p-5 transition-all hover:border-f1-border hover:bg-f1-card-hover"
             >
+              <div
+                className="h-0.5 w-full rounded-full mb-4 -mt-1"
+                style={{ backgroundColor: teamColor }}
+              />
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -180,14 +184,20 @@ async function DriversContent() {
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex items-center justify-between">
+                <Link
+                  href={`/drivers/${s.Driver.driverId}`}
+                  className="text-xs font-medium text-f1-accent hover:underline"
+                >
+                  View Profile &rarr;
+                </Link>
                 <a
                   href={s.Driver.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-f1-accent hover:underline"
+                  className="text-xs text-f1-text-muted hover:underline"
                 >
-                  Wikipedia &rarr;
+                  Wikipedia
                 </a>
               </div>
             </div>
