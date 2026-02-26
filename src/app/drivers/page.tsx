@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import StandingsTable from "@/components/StandingsTable";
 import RefreshButton from "@/components/RefreshButton";
+import PointsProgressionChart from "@/components/PointsProgressionChart";
 
 interface DriverStats {
   podiums: number;
@@ -85,6 +86,9 @@ async function DriversContent() {
     getAllSeasonResults(),
   ]);
 
+  // Completed races only (have Results)
+  const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
+
   return (
     <>
       {/* Full Standings Table */}
@@ -94,6 +98,17 @@ async function DriversContent() {
         </div>
         <StandingsTable standings={standings} />
       </div>
+
+      {/* Points Progression Chart */}
+      {completedRaces.length > 0 && (
+        <div className="mb-10">
+          <PointsProgressionChart
+            completedRaces={completedRaces}
+            driverStandings={standings}
+            getTeamColor={getTeamColor}
+          />
+        </div>
+      )}
 
       {/* Detailed Driver Cards */}
       <h2 className="mb-4 text-lg font-bold text-f1-text-muted">
