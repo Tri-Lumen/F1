@@ -82,21 +82,21 @@ async function DashboardContent() {
             </span>
           </p>
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border border-t-2 border-t-f1-accent bg-f1-card p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Championship Leader
           </p>
-          <p className="mt-1 text-lg font-black">
+          <p className="mt-1 text-lg font-black text-f1-accent">
             {driverStandings[0]
               ? `${driverStandings[0].Driver.givenName} ${driverStandings[0].Driver.familyName}`
               : "TBD"}
           </p>
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border border-t-2 border-t-f1-accent-secondary bg-f1-card p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Top Constructor
           </p>
-          <p className="mt-1 text-lg font-black">
+          <p className="mt-1 text-lg font-black text-f1-accent-secondary">
             {constructorStandings[0]?.Constructor.name ?? "TBD"}
           </p>
         </div>
@@ -105,7 +105,8 @@ async function DashboardContent() {
       {/* Next Race (event-level context with links) */}
       {nextRace && (
         <div className="mb-8">
-          <h2 className="mb-3 text-lg font-bold text-f1-text-muted">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+            <span className="w-1 h-5 rounded-full bg-f1-accent" />
             Next Race
           </h2>
           <RaceCard race={nextRace} />
@@ -117,7 +118,10 @@ async function DashboardContent() {
         {/* Driver Standings */}
         <div className="rounded-xl border border-f1-border bg-f1-card">
           <div className="flex items-center justify-between border-b border-f1-border p-4">
-            <h2 className="font-bold">Driver Standings</h2>
+            <h2 className="flex items-center gap-2 font-bold">
+              <span className="w-1 h-4 rounded-full bg-f1-accent" />
+              Driver Standings
+            </h2>
             <Link
               href="/drivers"
               className="text-xs text-f1-accent hover:underline"
@@ -131,7 +135,10 @@ async function DashboardContent() {
         {/* Constructor Standings */}
         <div className="rounded-xl border border-f1-border bg-f1-card">
           <div className="flex items-center justify-between border-b border-f1-border p-4">
-            <h2 className="font-bold">Constructor Standings</h2>
+            <h2 className="flex items-center gap-2 font-bold">
+              <span className="w-1 h-4 rounded-full bg-f1-accent-secondary" />
+              Constructor Standings
+            </h2>
             <Link
               href="/teams"
               className="text-xs text-f1-accent hover:underline"
@@ -147,7 +154,8 @@ async function DashboardContent() {
       {completedRaces.length > 0 && (
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-f1-text-muted">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <span className="w-1 h-5 rounded-full bg-f1-accent-secondary" />
               Recent Races
             </h2>
             <Link

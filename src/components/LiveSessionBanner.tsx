@@ -33,10 +33,10 @@ export default async function LiveSessionBanner() {
   const top5 = sortedDrivers.slice(0, 5);
 
   return (
-    <div className="mb-6 rounded-xl border border-f1-red/50 bg-gradient-to-r from-f1-red/10 to-f1-card p-4">
+    <div className="mb-6 rounded-xl border border-f1-accent/50 bg-gradient-to-r from-f1-accent/10 to-f1-card p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-3 py-1 text-sm font-bold text-white">
+          <span className="flex items-center gap-1.5 rounded-full bg-f1-accent px-3 py-1 text-sm font-bold text-white">
             <span className="h-2 w-2 rounded-full bg-white animate-pulse-live" />
             LIVE
           </span>
@@ -51,7 +51,7 @@ export default async function LiveSessionBanner() {
         </div>
         <Link
           href="/live"
-          className="rounded-lg bg-f1-red px-4 py-2 text-sm font-bold text-white hover:bg-f1-red-dark transition-colors"
+          className="rounded-lg bg-f1-accent px-4 py-2 text-sm font-bold text-white hover:bg-f1-red-dark transition-colors"
         >
           Full Live View &rarr;
         </Link>
@@ -66,7 +66,7 @@ export default async function LiveSessionBanner() {
                 key={d.driver_number}
                 className="flex items-center gap-2 rounded-lg bg-f1-dark/50 px-3 py-1.5 text-sm"
               >
-                <span className="font-bold text-f1-text-muted">
+                <span className={`font-bold ${pos === 1 ? "text-f1-accent" : "text-f1-text-muted"}`}>
                   P{pos}
                 </span>
                 <span

@@ -38,9 +38,9 @@ export default function ConstructorStandingsTable({
             return (
               <tr
                 key={s.Constructor.constructorId}
-                className="border-b border-f1-border/50 transition-colors hover:bg-f1-card/50"
+                className="border-b border-f1-border/50 transition-colors hover:bg-f1-card-hover"
               >
-                <td className="px-3 py-3 font-bold text-f1-text-muted">
+                <td className={`px-3 py-3 font-bold ${s.position === "1" ? "text-f1-accent" : "text-f1-text-muted"}`}>
                   {s.position}
                 </td>
                 <td className="px-3 py-3">
@@ -61,7 +61,7 @@ export default function ConstructorStandingsTable({
                 </td>
                 <td className="px-3 py-3 text-right hidden md:table-cell">
                   <div className="flex items-center justify-end gap-2">
-                    <span className="text-xs text-f1-text-muted w-14 text-right">
+                    <span className={`text-xs w-14 text-right font-semibold ${gap > 0 ? "text-f1-text-muted" : "text-f1-accent"}`}>
                       {gap > 0 ? `-${gap}` : "LEADER"}
                     </span>
                     <div className="w-36 h-3 rounded-full bg-f1-dark overflow-hidden">

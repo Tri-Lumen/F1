@@ -35,6 +35,26 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+/* Subtle accent radial wash at the top of the page — changes with theme */
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 80% 35% at 50% -5%,
+    color-mix(in srgb, var(--color-f1-accent) 9%, transparent),
+    transparent 70%
+  );
+}
+
+/* Ensure page content sits above the gradient */
+#__next, main {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Light mode overrides (no team accent) ── */
 [data-mode="light"] {
   --color-f1-black: #f4f4f4;
@@ -178,20 +198,20 @@ body {
   --color-f1-accent-secondary: #C80000;
 }
 
-/* Audi F1 Team (formerly Kick Sauber) */
+/* Audi F1 Team — Audi brand: near-black with Audi red and silver */
 [data-theme="team-audi"],
 [data-theme="team-kick_sauber"] {
-  --color-f1-black: #180808;
-  --color-f1-dark: #200A0A;
-  --color-f1-card: #280E0E;
-  --color-f1-card-hover: #321212;
-  --color-f1-border: #3C1010;
-  --color-f1-text: #FFF5F5;
-  --color-f1-text-muted: #A07070;
+  --color-f1-black: #0C0C0E;
+  --color-f1-dark: #141416;
+  --color-f1-card: #1C1C1E;
+  --color-f1-card-hover: #242426;
+  --color-f1-border: #2E2E32;
+  --color-f1-text: #F5F5F5;
+  --color-f1-text-muted: #909090;
   --color-f1-red: #BB0000;
   --color-f1-red-dark: #8C0000;
   --color-f1-accent: #BB0000;
-  --color-f1-accent-secondary: #C0C0C0;
+  --color-f1-accent-secondary: #D0D0D0;
 }
 
 [data-theme="team-cadillac"] {
@@ -401,17 +421,17 @@ body {
 
 [data-theme="team-audi"][data-mode="light"],
 [data-theme="team-kick_sauber"][data-mode="light"] {
-  --color-f1-black: #FFF0F0;
-  --color-f1-dark: #FFE8E8;
+  --color-f1-black: #F4F4F4;
+  --color-f1-dark: #EBEBEB;
   --color-f1-card: #FFFFFF;
-  --color-f1-card-hover: #FFF5F5;
-  --color-f1-border: #DDBBBB;
-  --color-f1-text: #180000;
-  --color-f1-text-muted: #804040;
+  --color-f1-card-hover: #F8F8F8;
+  --color-f1-border: #D0D0D0;
+  --color-f1-text: #0C0C0E;
+  --color-f1-text-muted: #606060;
   --color-f1-red: #BB0000;
   --color-f1-red-dark: #8C0000;
   --color-f1-accent: #BB0000;
-  --color-f1-accent-secondary: #606060;
+  --color-f1-accent-secondary: #505050;
 }
 
 [data-theme="team-cadillac"][data-mode="light"] {
@@ -486,19 +506,19 @@ body {
   --color-f1-accent-secondary: #606060;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — uses accent colour subtly */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--color-f1-dark);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-f1-border);
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-f1-accent) 40%, var(--color-f1-border));
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-f1-text-muted);
+  background: color-mix(in srgb, var(--color-f1-accent) 70%, var(--color-f1-border));
 }
 
 /* Pulse animation for live indicator */

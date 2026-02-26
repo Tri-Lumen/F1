@@ -21,14 +21,15 @@ export default async function NextSessionCard() {
   const isRace = session.type === "Race";
 
   return (
-    <div className="mb-8 rounded-xl border border-f1-border bg-f1-card overflow-hidden">
+    <div className="mb-8 rounded-xl border border-f1-accent/25 bg-f1-card overflow-hidden">
       <div className="grid lg:grid-cols-[1fr_1.2fr]">
-        {/* Circuit map panel */}
-        <div className="relative flex items-center justify-center p-8 bg-f1-dark/60 min-h-[200px]">
+        {/* Circuit map panel — accent-tinted background */}
+        <div className="relative flex items-center justify-center p-8 min-h-[200px]"
+          style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-f1-accent) 12%, var(--color-f1-dark)) 0%, var(--color-f1-dark) 100%)" }}>
           <CircuitMap
             circuitId={session.circuitId}
             circuitName={session.circuitName}
-            className="w-full max-w-[260px] h-40 text-f1-accent opacity-80"
+            className="w-full max-w-[260px] h-40 text-f1-accent"
           />
           <p className="absolute bottom-3 left-4 text-xs text-f1-text-muted font-medium">
             {session.circuitName}
@@ -43,8 +44,8 @@ export default async function NextSessionCard() {
               <span
                 className={`text-xs uppercase tracking-wider font-bold px-2.5 py-1 rounded-full ${
                   isRace
-                    ? "bg-f1-red/20 text-f1-red border border-f1-red/30"
-                    : "bg-f1-accent/15 text-f1-accent border border-f1-accent/25"
+                    ? "bg-f1-accent/20 text-f1-accent border border-f1-accent/40"
+                    : "bg-f1-accent-secondary/15 text-f1-accent-secondary border border-f1-accent-secondary/30"
                 }`}
               >
                 {session.type}
