@@ -328,6 +328,21 @@ const FALLBACK: CircuitData = {
   path: "M 100,20 C 148,20 172,45 172,65 C 172,85 148,110 100,110 C 52,110 28,85 28,65 C 28,45 52,20 100,20 Z",
 };
 
+/**
+ * Circuit ID aliases — maps alternative/API-variant IDs to the canonical
+ * key used in CIRCUITS above.
+ *
+ * The Jolpica (Ergast) API derives circuit IDs from Wikipedia article titles,
+ * which may differ from the common city-name keys used here:
+ *   - Madrid 2026: official circuit brand is "Madring"; Jolpica likely uses
+ *     "madring" derived from the Wikipedia article title.
+ *   - Las Vegas: API uses "las_vegas" (confirmed from 2023–2025 seasons).
+ */
+const CIRCUIT_ID_ALIASES: Record<string, string> = {
+  madring: "madrid",       // Jolpica/Ergast ID from Wikipedia "Madring" article
+  ifema_madrid: "madrid",  // Older reference name before official rebrand
+};
+
 interface CircuitMapProps {
   circuitId: string;
   circuitName?: string;
@@ -341,7 +356,8 @@ export default function CircuitMap({
   className = "",
   showSectors = true,
 }: CircuitMapProps) {
-  const circuit = CIRCUITS[circuitId] ?? FALLBACK;
+  const resolvedId = CIRCUIT_ID_ALIASES[circuitId] ?? circuitId;
+  const circuit = CIRCUITS[resolvedId] ?? FALLBACK;
   const hasSectors = showSectors && circuit.sectors;
 
   // Sector colours matching F1 official style
