@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTheme, type Theme } from "@/lib/ThemeContext";
+import { useTheme, type ColorMode, type AccentTheme } from "@/lib/ThemeContext";
 import { useFavorites } from "@/lib/FavoritesContext";
 import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
@@ -12,17 +12,17 @@ interface Props {
   availableTeams: ConstructorStanding[];
 }
 
-const BASE_THEMES = [
+const BASE_MODES = [
   {
-    id: "dark" as Theme,
+    id: "dark" as ColorMode,
     label: "Dark",
-    description: "Official F1 dark theme — true blacks with red accents",
+    description: "True blacks with red accents — the default F1 look",
     swatches: ["#101010", "#1a1a1a", "#242424", "#363636", "#e10600"],
   },
   {
-    id: "light" as Theme,
+    id: "light" as ColorMode,
     label: "Light",
-    description: "Light theme — white cards on light gray background",
+    description: "White cards on light gray — pairs with any team livery",
     swatches: ["#f4f4f4", "#e8e8e8", "#ffffff", "#d4d4d4", "#e10600"],
   },
 ];
@@ -36,7 +36,7 @@ function CheckIcon() {
 }
 
 export default function SettingsClient({ availableDrivers, availableTeams }: Props) {
-  const { theme, setTheme } = useTheme();
+  const { mode, accentTheme, setMode, setAccentTheme } = useTheme();
   const { favoriteDriverIds, favoriteTeamIds, toggleDriver, toggleTeam } = useFavorites();
 
   const [updating, setUpdating] = useState(false);
@@ -80,17 +80,17 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-1">Appearance</h2>
         <p className="text-sm text-f1-text-muted mb-4">
-          Choose a base theme or apply an official F1 team livery
+          Pick a brightness mode, then optionally apply a team livery below — they work together
         </p>
 
-        {/* Base dark / light */}
+        {/* Dark / Light mode selector */}
         <div className="grid gap-3 sm:grid-cols-2 mb-6">
-          {BASE_THEMES.map((t) => {
-            const active = theme === t.id;
+          {BASE_MODES.map((t) => {
+            const active = mode === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id)}
+                onClick={() => setMode(t.id)}
                 className={`group relative rounded-xl border-2 p-5 text-left transition-all ${
                   active
                     ? "border-f1-red bg-f1-card"
@@ -122,13 +122,16 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
         <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
           2026 Team Liveries
         </p>
+        <p className="text-xs text-f1-text-muted mb-3">
+          Click a livery to apply it — click again to remove. Works in both dark and light mode.
+        </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           {CURRENT_TEAMS.map((t) => {
-            const active = theme === t.id;
+            const active = accentTheme === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id as Theme)}
+                onClick={() => setAccentTheme(active ? "none" : (t.id as AccentTheme))}
                 className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
                   active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}
@@ -176,15 +179,15 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           Retro Liveries
         </p>
         <p className="text-xs text-f1-text-muted mb-3">
-          Iconic historical colour schemes from legendary F1 teams
+          Iconic historical colour schemes — also toggle-able with the dark/light mode above
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {RETRO_THEMES.map((t) => {
-            const active = theme === t.id;
+            const active = accentTheme === t.id;
             return (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id as Theme)}
+                onClick={() => setAccentTheme(active ? "none" : (t.id as AccentTheme))}
                 className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
                   active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
                 }`}

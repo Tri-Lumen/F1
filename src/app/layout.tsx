@@ -46,7 +46,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" data-mode="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -59,9 +59,13 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
-                  var t = localStorage.getItem('f1-theme');
-                  if (t === 'light' || t === 'dark' || (t && (t.startsWith('team-') || t.startsWith('retro-')))) {
-                    document.documentElement.setAttribute('data-theme', t);
+                  var m = localStorage.getItem('f1-mode');
+                  var a = localStorage.getItem('f1-accent');
+                  if (m === 'light' || m === 'dark') {
+                    document.documentElement.setAttribute('data-mode', m);
+                  }
+                  if (a && (a.startsWith('team-') || a.startsWith('retro-'))) {
+                    document.documentElement.setAttribute('data-theme', a);
                   }
                 } catch(e) {}
               })();
