@@ -60,7 +60,7 @@ export default async function RootLayout({
               (function() {
                 try {
                   var t = localStorage.getItem('f1-theme');
-                  if (t === 'light' || t === 'dark' || (t && t.startsWith('team-'))) {
+                  if (t === 'light' || t === 'dark' || (t && (t.startsWith('team-') || t.startsWith('retro-')))) {
                     document.documentElement.setAttribute('data-theme', t);
                   }
                 } catch(e) {}

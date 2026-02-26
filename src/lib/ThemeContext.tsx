@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { TEAM_THEMES } from "./teamThemes";
 
-/** All valid theme identifiers: base modes + one per constructor */
-export type Theme = "dark" | "light" | `team-${string}`;
+/** All valid theme identifiers: base modes + team liveries + retro liveries */
+export type Theme = "dark" | "light" | `team-${string}` | `retro-${string}`;
 
 interface ThemeContextValue {
   theme: Theme;

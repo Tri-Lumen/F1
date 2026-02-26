@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTheme, type Theme } from "@/lib/ThemeContext";
 import { useFavorites } from "@/lib/FavoritesContext";
-import { TEAM_THEMES } from "@/lib/teamThemes";
+import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
 
@@ -120,10 +120,10 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
 
         {/* Team liveries */}
         <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
-          Team Liveries
+          2026 Team Liveries
         </p>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TEAM_THEMES.map((t) => {
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          {CURRENT_TEAMS.map((t) => {
             const active = theme === t.id;
             return (
               <button
@@ -147,6 +147,61 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                 <div className="p-3">
                   <p className="font-bold text-sm leading-tight">{t.name}</p>
                   {/* accent dots */}
+                  <div className="mt-1.5 flex items-center gap-1.5">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accent }}
+                    />
+                    <span
+                      className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"
+                      style={{ backgroundColor: t.colors.accentSecondary }}
+                    />
+                  </div>
+                </div>
+                {active && (
+                  <span
+                    className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full text-white shadow"
+                    style={{ backgroundColor: t.colors.accent }}
+                  >
+                    <CheckIcon />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Retro liveries */}
+        <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
+          Retro Liveries
+        </p>
+        <p className="text-xs text-f1-text-muted mb-3">
+          Iconic historical colour schemes from legendary F1 teams
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {RETRO_THEMES.map((t) => {
+            const active = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id as Theme)}
+                className={`relative rounded-xl border-2 overflow-hidden text-left transition-all ${
+                  active ? "" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
+                }`}
+                style={
+                  active
+                    ? { borderColor: t.colors.accent, backgroundColor: t.colors.card }
+                    : {}
+                }
+              >
+                {/* 5-segment livery colour bar */}
+                <div className="flex h-10 w-full">
+                  {t.previewColors.map((c, i) => (
+                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+                <div className="p-3">
+                  <p className="font-bold text-sm leading-tight">{t.name}</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
                     <span
                       className="h-2.5 w-2.5 rounded-full ring-1 ring-white/10"

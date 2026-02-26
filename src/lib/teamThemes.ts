@@ -29,7 +29,7 @@ export interface TeamTheme {
  * the app (buttons, active nav indicator, links, etc.).
  * accentSecondary is drawn from the team's secondary livery colour.
  */
-export const TEAM_THEMES: TeamTheme[] = [
+export const CURRENT_TEAMS: TeamTheme[] = [
   {
     id: "team-red_bull",
     constructorId: "red_bull",
@@ -242,6 +242,95 @@ export const TEAM_THEMES: TeamTheme[] = [
   },
 ];
 
+/**
+ * Retro livery themes based on iconic historical F1 teams.
+ * IDs use the "retro-" prefix to distinguish them from current constructors.
+ */
+export const RETRO_THEMES: TeamTheme[] = [
+  {
+    id: "retro-jordan",
+    constructorId: "jordan",
+    name: "Jordan Grand Prix",
+    // bg, card, border, accent (yellow), accentSecondary (green)
+    previewColors: ["#1A1400", "#332A00", "#665500", "#FFD700", "#00A550"],
+    colors: {
+      bg: "#1A1400",
+      dark: "#2E2400",
+      card: "#332A00",
+      cardHover: "#4A3C00",
+      border: "#665500",
+      text: "#FFFDE0",
+      textMuted: "#B0A060",
+      accent: "#FFD700",
+      accentDark: "#CC9900",
+      accentSecondary: "#00A550",
+    },
+  },
+  {
+    id: "retro-lotus-jps",
+    constructorId: "lotus",
+    name: "Lotus JPS",
+    // bg, card, border, accent (gold), accentSecondary (light gold)
+    // John Player Special black-and-gold livery era (1972–1986)
+    previewColors: ["#0A0A0A", "#141414", "#2A2A2A", "#C9A84C", "#E8D68A"],
+    colors: {
+      bg: "#0A0A0A",
+      dark: "#0E0E0E",
+      card: "#141414",
+      cardHover: "#1C1C1C",
+      border: "#2A2A2A",
+      text: "#F5F5F0",
+      textMuted: "#8A8070",
+      accent: "#C9A84C",
+      accentDark: "#A88030",
+      accentSecondary: "#E8D68A",
+    },
+  },
+  {
+    id: "retro-benetton",
+    constructorId: "benetton",
+    name: "Benetton Formula",
+    // bg, card, border, accent (cobalt blue), accentSecondary (yellow)
+    // Benetton B192/B193 era with Schumacher
+    previewColors: ["#040C1C", "#0C1C3C", "#1A3060", "#1E6FFF", "#FFD700"],
+    colors: {
+      bg: "#040C1C",
+      dark: "#08142C",
+      card: "#0C1C3C",
+      cardHover: "#102244",
+      border: "#1A3060",
+      text: "#E8F0FF",
+      textMuted: "#6080B0",
+      accent: "#1E6FFF",
+      accentDark: "#0047AB",
+      accentSecondary: "#FFD700",
+    },
+  },
+  {
+    id: "retro-mclaren-honda",
+    constructorId: "mclaren_honda",
+    name: "McLaren Honda",
+    // bg, card, border, accent (Marlboro red), accentSecondary (silver)
+    // Marlboro McLaren MP4/4 era with Senna & Prost (1988–1992)
+    previewColors: ["#100808", "#280E0E", "#4A1C1C", "#CC0000", "#C0C0C0"],
+    colors: {
+      bg: "#100808",
+      dark: "#1C0A0A",
+      card: "#280E0E",
+      cardHover: "#341212",
+      border: "#4A1C1C",
+      text: "#FFF5F5",
+      textMuted: "#A08080",
+      accent: "#CC0000",
+      accentDark: "#990000",
+      accentSecondary: "#C0C0C0",
+    },
+  },
+];
+
+/** All themes combined — used by ThemeContext to validate stored preferences */
+export const TEAM_THEMES: TeamTheme[] = [...CURRENT_TEAMS, ...RETRO_THEMES];
+
 export function getTeamThemeByConstructorId(constructorId: string): TeamTheme | undefined {
-  return TEAM_THEMES.find((t) => t.constructorId === constructorId);
+  return CURRENT_TEAMS.find((t) => t.constructorId === constructorId);
 }

@@ -205,6 +205,68 @@ body {
   --color-f1-accent-secondary: #C8001C;
 }
 
+/* ── Retro livery themes ── */
+
+/* Jordan Grand Prix — yellow/green Eddie Jordan era */
+[data-theme="retro-jordan"] {
+  --color-f1-black: #1A1400;
+  --color-f1-dark: #2E2400;
+  --color-f1-card: #332A00;
+  --color-f1-card-hover: #4A3C00;
+  --color-f1-border: #665500;
+  --color-f1-text: #FFFDE0;
+  --color-f1-text-muted: #B0A060;
+  --color-f1-red: #FFD700;
+  --color-f1-red-dark: #CC9900;
+  --color-f1-accent: #FFD700;
+  --color-f1-accent-secondary: #00A550;
+}
+
+/* Lotus JPS — John Player Special black-and-gold livery (1972–1986) */
+[data-theme="retro-lotus-jps"] {
+  --color-f1-black: #0A0A0A;
+  --color-f1-dark: #0E0E0E;
+  --color-f1-card: #141414;
+  --color-f1-card-hover: #1C1C1C;
+  --color-f1-border: #2A2A2A;
+  --color-f1-text: #F5F5F0;
+  --color-f1-text-muted: #8A8070;
+  --color-f1-red: #C9A84C;
+  --color-f1-red-dark: #A88030;
+  --color-f1-accent: #C9A84C;
+  --color-f1-accent-secondary: #E8D68A;
+}
+
+/* Benetton Formula — cobalt blue with yellow highlights, Schumacher era */
+[data-theme="retro-benetton"] {
+  --color-f1-black: #040C1C;
+  --color-f1-dark: #08142C;
+  --color-f1-card: #0C1C3C;
+  --color-f1-card-hover: #102244;
+  --color-f1-border: #1A3060;
+  --color-f1-text: #E8F0FF;
+  --color-f1-text-muted: #6080B0;
+  --color-f1-red: #1E6FFF;
+  --color-f1-red-dark: #0047AB;
+  --color-f1-accent: #1E6FFF;
+  --color-f1-accent-secondary: #FFD700;
+}
+
+/* McLaren Honda — Marlboro MP4/4 era with Senna & Prost (1988–1992) */
+[data-theme="retro-mclaren-honda"] {
+  --color-f1-black: #100808;
+  --color-f1-dark: #1C0A0A;
+  --color-f1-card: #280E0E;
+  --color-f1-card-hover: #341212;
+  --color-f1-border: #4A1C1C;
+  --color-f1-text: #FFF5F5;
+  --color-f1-text-muted: #A08080;
+  --color-f1-red: #CC0000;
+  --color-f1-red-dark: #990000;
+  --color-f1-accent: #CC0000;
+  --color-f1-accent-secondary: #C0C0C0;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

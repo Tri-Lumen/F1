@@ -16,10 +16,23 @@ const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
 const OPENF1_BASE = "https://api.openf1.org/v1";
 const CURRENT_SEASON = "2026";
 
+/** Historical seasons available in the archive section */
+export const ARCHIVE_SEASONS = [
+  "2025", "2024", "2023", "2022", "2021",
+  "2020", "2019", "2018", "2017", "2016",
+];
+
 // --- Ergast / Jolpica API ---
 
 async function fetchErgast<T>(path: string): Promise<T> {
   const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 300 } });
+  if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
+  return res.json();
+}
+
+/** Historical data fetch — 24 h cache since completed seasons never change */
+async function fetchErgastArchive<T>(path: string): Promise<T> {
+  const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
   if (!res.ok) throw new Error(`Ergast API error: ${res.status}`);
   return res.json();
 }
@@ -138,6 +151,23 @@ export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
   return res.json();
 }
 
+// --- Archive API (historical seasons, 24 h cache) ---
+
+export async function getSeasonDriverStandings(season: string): Promise<DriverStanding[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/driverstandings/?limit=100`);
+  return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
+}
+
+export async function getSeasonConstructorStandings(season: string): Promise<ConstructorStanding[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/constructorstandings/?limit=100`);
+  return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
+}
+
+export async function getSeasonSchedule(season: string): Promise<Race[]> {
+  const data = await fetchErgastArchive<any>(`/${season}/?limit=30`);
+  return data?.MRData?.RaceTable?.Races ?? [];
+}
+
 // --- Next scheduled session (from Ergast calendar) ---
 
 export interface ScheduledSession {
@@ -232,7 +262,15 @@ export function getTeamColor(constructorId: string): string {
     cadillac: "#b8941c",
     andretti_cadillac: "#b8941c",
   };
-  return colors[constructorId] ?? "#888888";
+  if (colors[constructorId]) return colors[constructorId];
+
+  // Deterministic HSL color for any mid-season newcomer not yet in the map
+  let hash = 0;
+  for (let i = 0; i < constructorId.length; i++) {
+    hash = constructorId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 65%, 55%)`;
 }
 
 export function getF1TVRaceUrl(race: Race): string {
