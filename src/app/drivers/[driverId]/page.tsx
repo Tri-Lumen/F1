@@ -305,11 +305,13 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
   );
 }
 
-export default function DriverProfilePage({
+export default async function DriverProfilePage({
   params,
 }: {
-  params: { driverId: string };
+  params: Promise<{ driverId: string }>;
 }) {
+  const { driverId } = await params;
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
@@ -335,7 +337,7 @@ export default function DriverProfilePage({
           </div>
         }
       >
-        <DriverProfileContent driverId={params.driverId} />
+        <DriverProfileContent driverId={driverId} />
       </Suspense>
     </div>
   );

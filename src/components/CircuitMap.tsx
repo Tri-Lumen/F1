@@ -339,8 +339,10 @@ const FALLBACK: CircuitData = {
  *   - Las Vegas: API uses "las_vegas" (confirmed from 2023–2025 seasons).
  */
 const CIRCUIT_ID_ALIASES: Record<string, string> = {
-  madring: "madrid",       // Jolpica/Ergast ID from Wikipedia "Madring" article
-  ifema_madrid: "madrid",  // Older reference name before official rebrand
+  madring: "madrid",                       // Jolpica/Ergast ID from Wikipedia "Madring" article
+  ifema_madrid: "madrid",                  // Older reference name before official rebrand
+  las_vegas_street_circuit: "las_vegas",   // Alternative Jolpica ID for Las Vegas Strip Circuit
+  las_vegas_strip_circuit: "las_vegas",    // Another possible API variant
 };
 
 interface CircuitMapProps {
