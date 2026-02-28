@@ -1,6 +1,7 @@
 import { getNextScheduledSession, getCountryFlagByCountry } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 import CountdownTimer from "@/components/CountdownTimer";
+import NotifyButton from "@/components/NotifyButton";
 
 export default async function NextSessionCard() {
   const session = await getNextScheduledSession();
@@ -72,6 +73,15 @@ export default async function NextSessionCard() {
               Starts In
             </p>
             <CountdownTimer target={dateStr} />
+          </div>
+
+          {/* Notification opt-in */}
+          <div className="pt-3 border-t border-f1-border/50">
+            <NotifyButton
+              sessionDate={dateStr}
+              sessionType={session.type}
+              raceName={session.raceName}
+            />
           </div>
         </div>
       </div>

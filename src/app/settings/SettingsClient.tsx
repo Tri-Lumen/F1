@@ -46,11 +46,40 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   const [mvHost, setMvHost] = useState("localhost:10101");
   const [mvSaved, setMvSaved] = useState(false);
 
-  // Load saved MultiViewer host from localStorage on mount
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifyLead, setNotifyLead] = useState(10);
+  const [notifyPermission, setNotifyPermission] = useState<string>("default");
+
+  // Load saved MultiViewer host and notification prefs from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("f1-multiviewer-host");
     if (saved) setMvHost(saved);
+    if (typeof Notification !== "undefined") {
+      setNotifyPermission(Notification.permission);
+    }
+    setNotifyEnabled(localStorage.getItem("f1-notify") === "true");
+    setNotifyLead(parseInt(localStorage.getItem("f1-notify-lead") ?? "10") || 10);
   }, []);
+
+  async function toggleNotify() {
+    if (!notifyEnabled) {
+      if (notifyPermission !== "granted") {
+        const result = await Notification.requestPermission();
+        setNotifyPermission(result);
+        if (result !== "granted") return;
+      }
+      localStorage.setItem("f1-notify", "true");
+      setNotifyEnabled(true);
+    } else {
+      localStorage.setItem("f1-notify", "false");
+      setNotifyEnabled(false);
+    }
+  }
+
+  function saveNotifyLead(minutes: number) {
+    setNotifyLead(minutes);
+    localStorage.setItem("f1-notify-lead", String(minutes));
+  }
 
   function saveMvHost() {
     localStorage.setItem("f1-multiviewer-host", mvHost.trim() || "localhost:10101");
@@ -403,6 +432,57 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
               );
             })}
           </div>
+        )}
+      </section>
+
+      {/* ── Session Notifications ── */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-1">Session Notifications</h2>
+        <p className="text-sm text-f1-text-muted mb-4">
+          Get a browser notification before upcoming sessions start. The{" "}
+          <span className="text-f1-text font-medium">Notify me</span> button on
+          the home page countdown card enables per-session alerts.
+        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <button
+            onClick={toggleNotify}
+            disabled={notifyPermission === "denied"}
+            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              notifyEnabled
+                ? "border-f1-accent/40 bg-f1-accent/10 text-f1-accent"
+                : "border-f1-border bg-f1-dark text-f1-text-muted hover:border-f1-text-muted hover:text-f1-text"
+            }`}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {notifyPermission === "denied"
+              ? "Blocked by browser"
+              : notifyEnabled
+              ? "Notifications on"
+              : "Enable notifications"}
+          </button>
+
+          {notifyEnabled && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-f1-text-muted">Alert</span>
+              <select
+                value={notifyLead}
+                onChange={(e) => saveNotifyLead(parseInt(e.target.value))}
+                className="rounded-lg border border-f1-border bg-f1-dark px-2 py-2 text-sm text-f1-text focus:border-f1-accent focus:outline-none"
+              >
+                {[5, 10, 15, 30].map((m) => (
+                  <option key={m} value={m}>{m} minutes</option>
+                ))}
+              </select>
+              <span className="text-sm text-f1-text-muted">before session</span>
+            </div>
+          )}
+        </div>
+        {notifyPermission === "denied" && (
+          <p className="mt-2 text-xs text-f1-text-muted/60">
+            Notifications are blocked. Enable them in your browser&apos;s site settings for this page.
+          </p>
         )}
       </section>
 

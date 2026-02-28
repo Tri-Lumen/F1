@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RefreshButton from "@/components/RefreshButton";
+import TeammateH2H from "@/components/TeammateH2H";
 
 interface TeamStats {
   podiums: number;
@@ -111,6 +112,9 @@ async function TeamsContent() {
         </div>
         <ConstructorStandingsTable standings={constructorStandings} />
       </div>
+
+      {/* Teammate H2H */}
+      <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
 
       {/* Team Cards */}
       <h2 className="mb-4 text-lg font-bold text-f1-text-muted">
