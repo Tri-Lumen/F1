@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Race } from "@/lib/types";
 import { getCountryFlagByCountry, getF1TVRaceUrl, getRaceDate } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
+import LocalRaceTime from "@/components/LocalRaceTime";
 
 function formatDate(dateStr: string, timeStr?: string): string {
   const d = new Date(timeStr ? `${dateStr}T${timeStr}` : dateStr);
@@ -70,6 +71,7 @@ export default function RaceCard({ race }: { race: Race }) {
           <p className="mt-1 text-sm text-f1-text-muted">
             {formatDate(race.date, race.time)}
           </p>
+          <LocalRaceTime date={race.date} time={race.time} />
         </div>
 
         {/* Circuit map */}

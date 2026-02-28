@@ -202,36 +202,57 @@ async function TeamsContent() {
 
                 {/* Drivers */}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {drivers.map((d) => (
+                  {drivers.map((d) => {
+                    const teamPts = parseFloat(s.points);
+                    const driverPts = parseFloat(d.points);
+                    const pct = teamPts > 0 ? Math.round((driverPts / teamPts) * 100) : 0;
+                    return (
                     <Link
                       key={d.Driver.driverId}
                       href={`/drivers/${d.Driver.driverId}`}
-                      className="flex items-center justify-between rounded-lg bg-f1-dark p-3 transition-colors hover:bg-f1-border"
+                      className="flex flex-col rounded-lg bg-f1-dark p-3 transition-colors hover:bg-f1-border"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">
-                          {getCountryFlag(d.Driver.nationality)}
-                        </span>
-                        <div>
-                          <p className="font-medium">
-                            {d.Driver.givenName}{" "}
-                            <span className="font-bold uppercase">
-                              {d.Driver.familyName}
-                            </span>
-                          </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {getCountryFlag(d.Driver.nationality)}
+                          </span>
+                          <div>
+                            <p className="font-medium">
+                              {d.Driver.givenName}{" "}
+                              <span className="font-bold uppercase">
+                                {d.Driver.familyName}
+                              </span>
+                            </p>
+                            <p className="text-xs text-f1-text-muted">
+                              #{d.Driver.permanentNumber}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{d.points} pts</p>
                           <p className="text-xs text-f1-text-muted">
-                            #{d.Driver.permanentNumber}
+                            P{d.position} &middot; {d.wins} wins
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold">{d.points} pts</p>
-                        <p className="text-xs text-f1-text-muted">
-                          P{d.position} &middot; {d.wins} wins
-                        </p>
-                      </div>
+                      {teamPts > 0 && (
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs text-f1-text-muted mb-1">
+                            <span>Contribution</span>
+                            <span>{pct}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-f1-border overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${pct}%`, backgroundColor: teamColor }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
