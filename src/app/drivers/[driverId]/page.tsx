@@ -11,6 +11,8 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
+import { DriverImage } from "@/components/ProfileImage";
+import { getDriverImageUrl } from "@/lib/profileImages";
 
 function positionBadge(pos: string, status: string) {
   const p = parseInt(pos);
@@ -99,6 +101,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
       : 0;
 
   const last5 = races.slice(-5);
+  const driverImageUrl = getDriverImageUrl(driver.driverId);
 
   const age = driver.dateOfBirth
     ? Math.floor(
@@ -135,19 +138,28 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
                 <p className="mt-1 text-sm font-medium" style={{ color: teamColor }}>
                   {constructor?.name ?? ""}
                 </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span
+                    className="text-4xl font-black leading-none opacity-20"
+                    style={{ color: teamColor }}
+                  >
+                    {driver.permanentNumber || "#"}
+                  </span>
+                  <span className="text-xs text-f1-text-muted font-mono">
+                    {driver.code}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <span
-                className="text-6xl font-black leading-none opacity-20"
-                style={{ color: teamColor }}
-              >
-                {driver.permanentNumber || "#"}
-              </span>
-              <p className="text-xs text-f1-text-muted mt-1 font-mono">
-                {driver.code}
-              </p>
-            </div>
+            {driverImageUrl && (
+              <div className="shrink-0 self-end">
+                <DriverImage
+                  src={driverImageUrl}
+                  alt={`${driver.givenName} ${driver.familyName}`}
+                  className="h-44 w-auto object-contain object-bottom drop-shadow-lg"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -12,6 +12,8 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
+import { CarImage, DriverImage } from "@/components/ProfileImage";
+import { getTeamCarImageUrl, getDriverImageUrl } from "@/lib/profileImages";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -42,6 +44,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   if (!standing) notFound();
 
   const teamColor = getTeamColor(constructorId);
+  const carImageUrl = getTeamCarImageUrl(constructorId);
   const drivers = driverStandings.filter(
     (d) => d.Constructors[0]?.constructorId === constructorId
   );
@@ -94,12 +97,12 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
         <div className="h-1.5 w-full" style={{ backgroundColor: teamColor }} />
         <div className="p-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4 min-w-0">
               <div
                 className="w-1.5 self-stretch rounded-full shrink-0"
                 style={{ backgroundColor: teamColor }}
               />
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-f1-text-muted">
                   {standing.Constructor.nationality} Constructor
                 </p>
@@ -122,6 +125,15 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                 </div>
               </div>
             </div>
+            {carImageUrl && (
+              <div className="shrink-0 self-end">
+                <CarImage
+                  src={carImageUrl}
+                  alt={`${standing.Constructor.name} car`}
+                  className="h-28 w-auto object-contain object-right drop-shadow-lg sm:h-36"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -150,42 +162,49 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
 
       {/* Drivers */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
-        {drivers.map((d) => (
-          <Link
-            key={d.Driver.driverId}
-            href={`/drivers/${d.Driver.driverId}`}
-            className="group rounded-xl border border-f1-border bg-f1-card p-4 transition-all hover:bg-f1-card-hover hover:border-f1-accent/30"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span
-                  className="text-3xl font-black opacity-25"
-                  style={{ color: teamColor }}
-                >
-                  {d.Driver.permanentNumber}
-                </span>
-                <div>
-                  <p className="text-sm text-f1-text-muted">
-                    {getCountryFlag(d.Driver.nationality)} {d.Driver.code}
-                  </p>
-                  <p className="font-black uppercase tracking-tight">
-                    {d.Driver.givenName}{" "}
-                    <span style={{ color: teamColor }}>{d.Driver.familyName}</span>
-                  </p>
+        {drivers.map((d) => {
+          const driverImg = getDriverImageUrl(d.Driver.driverId);
+          return (
+            <Link
+              key={d.Driver.driverId}
+              href={`/drivers/${d.Driver.driverId}`}
+              className="group rounded-xl border border-f1-border bg-f1-card overflow-hidden transition-all hover:bg-f1-card-hover hover:border-f1-accent/30"
+            >
+              <div className="flex items-end justify-between gap-2 px-4 pt-4">
+                <div className="flex items-center gap-3 pb-4">
+                  <span
+                    className="text-3xl font-black opacity-25"
+                    style={{ color: teamColor }}
+                  >
+                    {d.Driver.permanentNumber}
+                  </span>
+                  <div>
+                    <p className="text-sm text-f1-text-muted">
+                      {getCountryFlag(d.Driver.nationality)} {d.Driver.code}
+                    </p>
+                    <p className="font-black uppercase tracking-tight">
+                      {d.Driver.givenName}{" "}
+                      <span style={{ color: teamColor }}>{d.Driver.familyName}</span>
+                    </p>
+                    <p className="mt-1 text-xl font-black">{d.points} <span className="text-xs font-normal text-f1-text-muted">pts · P{d.position} · {d.wins}W</span></p>
+                  </div>
                 </div>
+                {driverImg && (
+                  <DriverImage
+                    src={driverImg}
+                    alt={`${d.Driver.givenName} ${d.Driver.familyName}`}
+                    className="h-28 w-auto object-contain object-bottom shrink-0"
+                  />
+                )}
               </div>
-              <div className="text-right">
-                <p className="text-xl font-black">{d.points}</p>
-                <p className="text-xs text-f1-text-muted">
-                  P{d.position} &middot; {d.wins}W
+              <div className="border-t border-f1-border/50 px-4 py-2">
+                <p className="text-xs text-f1-accent group-hover:underline">
+                  View Profile &rarr;
                 </p>
               </div>
-            </div>
-            <p className="mt-2 text-xs text-f1-accent group-hover:underline">
-              View Profile &rarr;
-            </p>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Race-by-Race Table */}
