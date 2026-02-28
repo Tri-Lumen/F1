@@ -54,13 +54,13 @@ async function DashboardContent() {
 
       {/* Season Progress */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Season
           </p>
           <p className="mt-1 text-2xl font-black">{CURRENT_YEAR}</p>
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Races Completed
           </p>
@@ -71,7 +71,7 @@ async function DashboardContent() {
             </span>
           </p>
         </div>
-        <div className="rounded-xl border border-f1-border border-t-2 border-t-f1-accent bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Championship Leader
           </p>
@@ -81,7 +81,7 @@ async function DashboardContent() {
               : "TBD"}
           </p>
         </div>
-        <div className="rounded-xl border border-f1-border border-t-2 border-t-f1-accent-secondary bg-f1-card p-4">
+        <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent-secondary bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Top Constructor
           </p>
@@ -105,8 +105,8 @@ async function DashboardContent() {
       {/* Main Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Driver Standings */}
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="flex items-center justify-between border-b border-f1-border p-4">
+        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic">
+          <div className="flex items-center justify-between border-b border-f1-border/40 p-4">
             <h2 className="flex items-center gap-2 font-bold">
               <span className="w-1 h-4 rounded-full bg-f1-accent" />
               Driver Standings
@@ -122,8 +122,8 @@ async function DashboardContent() {
         </div>
 
         {/* Constructor Standings */}
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="flex items-center justify-between border-b border-f1-border p-4">
+        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic">
+          <div className="flex items-center justify-between border-b border-f1-border/40 p-4">
             <h2 className="flex items-center gap-2 font-bold">
               <span className="w-1 h-4 rounded-full bg-f1-accent-secondary" />
               Constructor Standings
@@ -183,7 +183,7 @@ export default function Home() {
       {/* Next session countdown with circuit map */}
       <Suspense
         fallback={
-          <div className="mb-8 h-60 rounded-xl bg-f1-card animate-pulse" />
+          <div className="mb-8 h-60 rounded-xl bg-f1-card/60 animate-pulse" />
         }
       >
         <NextSessionCard />

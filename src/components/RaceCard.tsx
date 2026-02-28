@@ -35,18 +35,18 @@ export default function RaceCard({ race }: { race: Race }) {
 
   return (
     <div
-      className={`rounded-xl border p-4 transition-all ${
+      className={`rounded-xl border p-4 transition-all acrylic ${
         live
-          ? "border-f1-accent bg-f1-accent/5 shadow-lg shadow-f1-accent/15"
+          ? "border-f1-accent/60 bg-f1-accent/8 shadow-lg shadow-f1-accent/20"
           : past
-          ? "border-f1-border/50 bg-f1-card/50"
-          : "border-f1-border bg-f1-card hover:bg-f1-card-hover hover:border-f1-accent/30"
+          ? "border-f1-border/30 bg-f1-card/40"
+          : "border-f1-border/50 bg-f1-card/60 hover:bg-f1-card-hover/60 hover:border-f1-accent/30"
       }`}
     >
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="rounded bg-f1-dark px-2 py-0.5 text-xs font-bold text-f1-text-muted">
+            <span className="rounded bg-f1-dark/60 px-2 py-0.5 text-xs font-bold text-f1-text-muted">
               R{race.round}
             </span>
             {live && (
@@ -87,7 +87,7 @@ export default function RaceCard({ race }: { race: Race }) {
         {past && (
           <Link
             href={`/race/${race.round}`}
-            className="rounded-lg bg-f1-dark px-3 py-1.5 text-xs font-medium text-f1-text hover:bg-f1-border transition-colors"
+            className="rounded-lg bg-f1-dark/60 acrylic px-3 py-1.5 text-xs font-medium text-f1-text hover:bg-f1-border/60 transition-colors"
           >
             View Results
           </Link>
@@ -104,7 +104,7 @@ export default function RaceCard({ race }: { race: Race }) {
           href={getF1TVRaceUrl(race)}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg bg-f1-dark px-3 py-1.5 text-xs font-medium text-f1-accent hover:bg-f1-border transition-colors"
+          className="rounded-lg bg-f1-dark/60 acrylic px-3 py-1.5 text-xs font-medium text-f1-accent hover:bg-f1-border/60 transition-colors"
         >
           Watch on F1TV &rarr;
         </a>

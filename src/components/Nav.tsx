@@ -77,7 +77,7 @@ function SessionPill({
   }
 
   return (
-    <div className="flex items-center gap-1.5 rounded-full bg-f1-card border border-f1-border px-3 py-1 text-xs font-semibold text-f1-text-muted">
+    <div className="flex items-center gap-1.5 rounded-full bg-f1-card/60 acrylic border border-f1-border/50 px-3 py-1 text-xs font-semibold text-f1-text-muted">
       <svg
         className="h-3 w-3 flex-shrink-0"
         fill="none"
@@ -189,7 +189,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-f1-border bg-f1-black/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-f1-border/40 bg-f1-black/60 acrylic-lg">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
@@ -281,7 +281,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
               </button>
 
               {moreOpen && (
-                <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-xl border border-f1-border bg-f1-card py-1 shadow-xl z-50">
+                <div className="absolute left-0 top-full mt-1 min-w-[140px] rounded-xl border border-f1-border/50 bg-f1-card/80 acrylic py-1 shadow-xl z-50">
                   {overflowLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -347,7 +347,7 @@ export default function Nav({ nextSession = null, isLive = false }: NavProps) {
 
       {/* Mobile full menu */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-f1-border bg-f1-black/98 backdrop-blur-sm">
+        <div className="sm:hidden border-t border-f1-border/40 bg-f1-black/75 acrylic-lg">
           <nav className="mx-auto max-w-7xl px-4 py-2 sm:px-6">
             {links.map((link) => (
               <Link
