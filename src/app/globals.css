@@ -35,7 +35,7 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* Subtle accent radial wash at the top of the page — changes with theme */
+/* Primary accent radial wash at the top of the page — changes with theme */
 body::before {
   content: "";
   pointer-events: none;
@@ -43,16 +43,42 @@ body::before {
   inset: 0;
   z-index: 0;
   background: radial-gradient(
-    ellipse 80% 35% at 50% -5%,
-    color-mix(in srgb, var(--color-f1-accent) 9%, transparent),
+    ellipse 80% 40% at 50% -5%,
+    color-mix(in srgb, var(--color-f1-accent) 14%, transparent),
     transparent 70%
   );
 }
 
-/* Ensure page content sits above the gradient */
+/* Secondary ambient gradient — bottom-right corner, secondary accent colour */
+body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 55% 45% at 95% 105%,
+    color-mix(in srgb, var(--color-f1-accent-secondary) 8%, transparent),
+    transparent 65%
+  );
+}
+
+/* Ensure page content sits above the gradients */
 #__next, main {
   position: relative;
   z-index: 1;
+}
+
+/* ── Acrylic material utilities ── */
+/* Frosted-glass backdrop filter — apply alongside a semi-transparent bg */
+.acrylic {
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+
+.acrylic-lg {
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
 }
 
 /* ── Light mode overrides (no team accent) ── */

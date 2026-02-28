@@ -22,7 +22,7 @@ export default async function NextSessionCard() {
   const isRace = session.type === "Race";
 
   return (
-    <div className="mb-8 rounded-xl border border-f1-accent/25 bg-f1-card overflow-hidden">
+    <div className="mb-8 rounded-xl border border-f1-accent/35 bg-f1-card/60 acrylic-lg overflow-hidden">
       <div className="grid lg:grid-cols-[1fr_1.2fr]">
         {/* Circuit map panel — accent-tinted background */}
         <div className="relative flex items-center justify-center p-8 min-h-[200px]"
@@ -76,7 +76,7 @@ export default async function NextSessionCard() {
           </div>
 
           {/* Notification opt-in */}
-          <div className="pt-3 border-t border-f1-border/50">
+          <div className="pt-3 border-t border-f1-border/30">
             <NotifyButton
               sessionDate={dateStr}
               sessionType={session.type}
