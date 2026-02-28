@@ -1,19 +1,8 @@
 import type { LiveStint, LiveTimingDriver } from "@/lib/types";
-
-const COMPOUND_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  SOFT: { bg: "bg-red-500", text: "text-red-400", label: "S" },
-  MEDIUM: { bg: "bg-yellow-500", text: "text-yellow-400", label: "M" },
-  HARD: { bg: "bg-slate-300", text: "text-slate-300", label: "H" },
-  INTERMEDIATE: { bg: "bg-green-500", text: "text-green-400", label: "I" },
-  WET: { bg: "bg-blue-500", text: "text-blue-400", label: "W" },
-};
+import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
 
 function CompoundBadge({ compound }: { compound: string }) {
-  const c = COMPOUND_COLORS[compound.toUpperCase()] ?? {
-    bg: "bg-gray-500",
-    text: "text-gray-400",
-    label: "?",
-  };
+  const c = COMPOUND_COLORS[compound.toUpperCase()] ?? COMPOUND_FALLBACK;
 
   return (
     <span
@@ -123,7 +112,7 @@ export default function TireStrategy({
                   const width = ((end - start) / maxLap) * 100;
                   const c =
                     COMPOUND_COLORS[stint.compound?.toUpperCase()] ??
-                    COMPOUND_COLORS.MEDIUM;
+                    COMPOUND_FALLBACK;
                   const laps = end - start;
                   const totalAge = stint.tyre_age_at_start + laps;
 

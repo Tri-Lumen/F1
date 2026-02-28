@@ -33,9 +33,18 @@ export default function CountdownTimer({ target, compact = false }: Props) {
 
   useEffect(() => {
     const targetDate = new Date(target);
-    setTime(calcTimeLeft(targetDate));
-    const id = setInterval(() => setTime(calcTimeLeft(targetDate)), 1000);
-    return () => clearInterval(id);
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    function tick() {
+      const t = calcTimeLeft(targetDate);
+      setTime(t);
+      // Use 60s intervals when more than 1 hour remains (seconds don't matter at that scale)
+      const interval = t.total > 3_600_000 ? 60_000 : 1_000;
+      timeoutId = setTimeout(tick, interval);
+    }
+
+    tick();
+    return () => clearTimeout(timeoutId);
   }, [target]);
 
   // Avoid hydration mismatch — render nothing until client-side mounts

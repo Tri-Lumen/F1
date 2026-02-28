@@ -347,7 +347,6 @@ const CIRCUIT_ID_ALIASES: Record<string, string> = {
 
 interface CircuitMapProps {
   circuitId: string;
-  circuitName?: string;
   className?: string;
   /** Show sector colours (default true) */
   showSectors?: boolean;

@@ -9,9 +9,11 @@ import {
   getCountryFlag,
   getCountryFlagByCountry,
   getF1TVRaceUrl,
+  getRaceDate,
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
+import QualifyingGapChart from "@/components/QualifyingGapChart";
 
 async function RaceContent({ round }: { round: string }) {
   const [race, qualifying] = await Promise.all([
@@ -58,9 +60,7 @@ async function RaceContent({ round }: { round: string }) {
               {race.Circuit.Location.country}
             </p>
             <p className="mt-1 text-sm text-f1-text-muted">
-              {new Date(
-                race.time ? `${race.date}T${race.time}` : race.date
-              ).toLocaleDateString("en-US", {
+              {getRaceDate(race).toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
                 day: "numeric",
@@ -225,6 +225,9 @@ async function RaceContent({ round }: { round: string }) {
           </div>
         </div>
       )}
+
+      {/* Qualifying Gap Chart */}
+      <QualifyingGapChart qualifying={qualifying} />
 
       {/* Qualifying Results */}
       {qualifying.length > 0 && (

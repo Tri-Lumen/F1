@@ -319,6 +319,11 @@ export function getTeamColor(constructorId: string): string {
   return `hsl(${hue}, 65%, 55%)`;
 }
 
+/** Returns the Date when a race takes place, handling optional UTC time. */
+export function getRaceDate(race: Race): Date {
+  return new Date(race.time ? `${race.date}T${race.time}` : race.date);
+}
+
 export function getF1TVRaceUrl(race: Race): string {
   const query = encodeURIComponent(race.raceName);
   return `https://f1tv.formula1.com/search?q=${query}&filter_objectSubtype=Replay&filter_year=${race.season}&orderBy=meeting_Number&sortOrder=asc`;

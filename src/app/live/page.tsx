@@ -15,6 +15,7 @@ import TireStrategy from "@/components/TireStrategy";
 import TeamRadioFeed from "@/components/TeamRadioFeed";
 import RefreshButton from "@/components/RefreshButton";
 import NextSessionCard from "@/components/NextSessionCard";
+import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
 
 async function LiveContent() {
   const session = await getLatestSession();
@@ -65,19 +66,13 @@ async function LiveContent() {
     });
   }
 
-  // Get current stint (latest) for each driver
+  // Get current stint (latest) for each driver — O(n) single pass
   const currentStints = new Map<number, { compound: string; age: number }>();
+  const latestStintNums = new Map<number, number>();
   for (const stint of stints) {
-    const existing = currentStints.get(stint.driver_number);
-    if (
-      !existing ||
-      stint.stint_number >
-        (stints.find(
-          (s) =>
-            s.driver_number === stint.driver_number &&
-            s.compound === existing.compound
-        )?.stint_number ?? 0)
-    ) {
+    const prev = latestStintNums.get(stint.driver_number) ?? -1;
+    if (stint.stint_number > prev) {
+      latestStintNums.set(stint.driver_number, stint.stint_number);
       const lapEnd = stint.lap_end ?? stint.lap_start + 5;
       currentStints.set(stint.driver_number, {
         compound: stint.compound,
@@ -92,22 +87,6 @@ async function LiveContent() {
     const posB = latestPositions.get(b.driver_number) ?? 99;
     return posA - posB;
   });
-
-  const COMPOUND_COLORS: Record<string, string> = {
-    SOFT: "bg-red-500",
-    MEDIUM: "bg-yellow-500",
-    HARD: "bg-slate-300",
-    INTERMEDIATE: "bg-green-500",
-    WET: "bg-blue-500",
-  };
-
-  const COMPOUND_LABELS: Record<string, string> = {
-    SOFT: "S",
-    MEDIUM: "M",
-    HARD: "H",
-    INTERMEDIATE: "I",
-    WET: "W",
-  };
 
   return (
     <>
@@ -183,13 +162,11 @@ async function LiveContent() {
                 const pos = latestPositions.get(driver.driver_number);
                 const iv = latestIntervals.get(driver.driver_number);
                 const tire = currentStints.get(driver.driver_number);
-                const compoundBg = tire
-                  ? COMPOUND_COLORS[tire.compound?.toUpperCase()] ??
-                    "bg-gray-500"
+                const compound = tire
+                  ? (COMPOUND_COLORS[tire.compound?.toUpperCase()] ?? COMPOUND_FALLBACK)
                   : null;
-                const compoundLabel = tire
-                  ? COMPOUND_LABELS[tire.compound?.toUpperCase()] ?? "?"
-                  : null;
+                const compoundBg = compound?.bg ?? null;
+                const compoundLabel = compound?.label ?? null;
 
                 return (
                   <tr
