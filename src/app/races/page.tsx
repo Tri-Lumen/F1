@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { getRaceSchedule, CURRENT_YEAR } from "@/lib/api";
+import { getRaceSchedule, getRaceDate, CURRENT_YEAR } from "@/lib/api";
 import RaceCard from "@/components/RaceCard";
 import RefreshButton from "@/components/RefreshButton";
 
@@ -9,16 +9,8 @@ async function RacesContent() {
   const races = await getRaceSchedule();
 
   const now = new Date();
-  const upcoming = races.filter((r) => {
-    const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
-    return raceDate > now;
-  });
-  const completed = races
-    .filter((r) => {
-      const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
-      return raceDate <= now;
-    })
-    .reverse();
+  const upcoming = races.filter((r) => getRaceDate(r) > now);
+  const completed = races.filter((r) => getRaceDate(r) <= now).reverse();
 
   return (
     <>

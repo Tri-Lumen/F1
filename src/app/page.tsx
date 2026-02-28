@@ -6,6 +6,7 @@ import {
   getDriverStandings,
   getConstructorStandings,
   getRaceSchedule,
+  getRaceDate,
   CURRENT_YEAR,
 } from "@/lib/api";
 import StandingsTable from "@/components/StandingsTable";
@@ -37,25 +38,13 @@ async function DashboardContent() {
 
   // Find next race (event-level, not session-level)
   const now = new Date();
-  const nextRace = races.find((r) => {
-    const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
-    return raceDate > now;
-  });
+  const nextRace = races.find((r) => getRaceDate(r) > now);
 
-  // Recent completed races (last 3)
-  const completedRaces = races
-    .filter((r) => {
-      const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
-      return raceDate <= now;
-    })
-    .reverse()
-    .slice(0, 3);
-
+  // Completed races — single filter pass for both display and count
+  const allCompleted = races.filter((r) => getRaceDate(r) <= now);
+  const completedRaces = allCompleted.slice(-3).reverse();
   const totalRaces = races.length;
-  const completedCount = races.filter((r) => {
-    const raceDate = new Date(r.time ? `${r.date}T${r.time}` : r.date);
-    return raceDate <= now;
-  }).length;
+  const completedCount = allCompleted.length;
 
   return (
     <>

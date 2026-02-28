@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme, type ColorMode, type AccentTheme } from "@/lib/ThemeContext";
 import { useFavorites } from "@/lib/FavoritesContext";
 import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
@@ -47,12 +47,10 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   const [mvSaved, setMvSaved] = useState(false);
 
   // Load saved MultiViewer host from localStorage on mount
-  useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("f1-multiviewer-host");
-      if (saved) setMvHost(saved);
-    }
-  });
+  useEffect(() => {
+    const saved = localStorage.getItem("f1-multiviewer-host");
+    if (saved) setMvHost(saved);
+  }, []);
 
   function saveMvHost() {
     localStorage.setItem("f1-multiviewer-host", mvHost.trim() || "localhost:10101");

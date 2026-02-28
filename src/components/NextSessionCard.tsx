@@ -28,7 +28,6 @@ export default async function NextSessionCard() {
           style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-f1-accent) 12%, var(--color-f1-dark)) 0%, var(--color-f1-dark) 100%)" }}>
           <CircuitMap
             circuitId={session.circuitId}
-            circuitName={session.circuitName}
             className="w-full max-w-[260px] h-40 text-f1-accent"
           />
           <p className="absolute bottom-3 left-4 text-xs text-f1-text-muted font-medium">

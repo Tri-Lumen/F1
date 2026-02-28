@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Race } from "@/lib/types";
-import { getCountryFlagByCountry, getF1TVRaceUrl } from "@/lib/api";
+import { getCountryFlagByCountry, getF1TVRaceUrl, getRaceDate } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 
 function formatDate(dateStr: string, timeStr?: string): string {
@@ -13,10 +13,7 @@ function formatDate(dateStr: string, timeStr?: string): string {
 }
 
 function isRacePast(race: Race): boolean {
-  const raceDate = new Date(
-    race.time ? `${race.date}T${race.time}` : race.date
-  );
-  return raceDate < new Date();
+  return getRaceDate(race) < new Date();
 }
 
 function isRaceWeekend(race: Race): boolean {
@@ -24,9 +21,7 @@ function isRaceWeekend(race: Race): boolean {
   const firstDay = race.FirstPractice
     ? new Date(`${race.FirstPractice.date}T${race.FirstPractice.time}`)
     : new Date(race.date);
-  const raceDay = new Date(
-    race.time ? `${race.date}T${race.time}` : race.date
-  );
+  const raceDay = getRaceDate(race);
   // Add 3 hours after race for "live" window
   const endWindow = new Date(raceDay.getTime() + 3 * 60 * 60 * 1000);
   return now >= firstDay && now <= endWindow;
