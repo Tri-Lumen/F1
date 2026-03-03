@@ -38,17 +38,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Two options for deploying via [Portainer](https://portainer.io):
 
-**Option 1 — Deploy from Git (recommended):**
-
-1. In Portainer, go to **Stacks → Add stack**
-2. Choose **Repository** as the build method
-3. Set the repository URL to this repo (e.g. `https://github.com/Tri-Lumen/F1`)
-4. Set the **Compose path** to `docker-compose.yml`
-5. Click **Deploy the stack**
-
-The dashboard will be available on port `3000` of your host.
-
-**Option 2 — Web editor:**
+**Option 1 — Pre-built image via Web editor (recommended):**
 
 1. In Portainer, go to **Stacks → Add stack**
 2. Choose **Web editor**
@@ -66,7 +56,17 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
 ```
 
-> If you don't have a pre-built image, use `build: .` instead of `image:` and point Portainer at the Git repo as shown in Option 1.
+The image is built automatically on every push to `main` via GitHub Actions and published to the GitHub Container Registry. No git credentials or build step required.
+
+**Option 2 — Deploy from Git:**
+
+1. In Portainer, go to **Stacks → Add stack**
+2. Choose **Repository** as the build method
+3. Set the repository URL to `https://github.com/Tri-Lumen/F1.git`
+4. Set the **Compose path** to `docker-compose.yml`
+5. Click **Deploy the stack**
+
+> **Note:** Portainer's built-in git client (go-git) can fail to clone from GitHub with an HTTP 500 error. If this happens, use the pre-built image method above instead.
 
 ## Production Build
 
