@@ -26,6 +26,45 @@ export function DriverImage({ src, alt, className }: DriverImageProps) {
   );
 }
 
+interface DriverNumberProps {
+  src: string;
+  number: string;
+  /** Tailwind classes applied to the wrapper */
+  className?: string;
+  /** Color to use for the fallback text number */
+  color?: string;
+}
+
+/**
+ * Official F1 stylized driver number logo with a bold-italic text fallback.
+ * Falls back to a styled <span> if the CDN image fails to load.
+ */
+export function DriverNumber({ src, number, className, color }: DriverNumberProps) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <span
+        className={`font-black italic leading-none select-none ${className ?? ""}`}
+        style={{ color: color ?? "currentColor", fontStyle: "italic" }}
+      >
+        {number}
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={`#${number}`}
+      className={className}
+      onError={() => setFailed(true)}
+      style={{ objectFit: "contain" }}
+    />
+  );
+}
+
 interface CarImageProps {
   src: string;
   alt: string;

@@ -145,9 +145,11 @@ async function LiveContent() {
             <thead>
               <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
                 <th className="px-3 py-3 w-12">Pos</th>
+                <th className="px-3 py-3 hidden xs:table-cell w-10 text-center">#</th>
                 <th className="px-3 py-3">Driver</th>
                 <th className="px-3 py-3 hidden sm:table-cell">Team</th>
                 <th className="px-3 py-3 text-center">Tire</th>
+                <th className="px-3 py-3 text-center hidden sm:table-cell w-14">Age</th>
                 <th className="px-3 py-3 text-right hidden md:table-cell">
                   Interval
                 </th>
@@ -175,6 +177,9 @@ async function LiveContent() {
                   >
                     <td className="px-3 py-3 font-bold text-f1-text-muted">
                       {pos}
+                    </td>
+                    <td className="px-3 py-3 hidden xs:table-cell text-center text-xs font-mono text-f1-text-muted/50">
+                      {driver.driver_number}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-2">
@@ -207,6 +212,15 @@ async function LiveContent() {
                         >
                           {compoundLabel}
                         </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-center hidden sm:table-cell">
+                      {tire && tire.age != null ? (
+                        <span className={`text-xs font-mono font-bold ${tire.age > 25 ? "text-orange-400" : tire.age > 15 ? "text-yellow-400" : "text-f1-text-muted"}`}>
+                          {tire.age}L
+                        </span>
+                      ) : (
+                        <span className="text-xs text-f1-text-muted/40">—</span>
                       )}
                     </td>
                     <td className="px-3 py-3 text-right hidden md:table-cell text-f1-text-muted font-mono text-xs">

@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   getRaceWithResults,
   getQualifyingResults,
+  getSprintResults,
+  getPitStops,
   getTeamColor,
   getCountryFlag,
   getCountryFlagByCountry,
@@ -16,9 +18,11 @@ import RefreshButton from "@/components/RefreshButton";
 import QualifyingGapChart from "@/components/QualifyingGapChart";
 
 async function RaceContent({ round }: { round: string }) {
-  const [race, qualifying] = await Promise.all([
+  const [race, qualifying, sprint, pitStops] = await Promise.all([
     getRaceWithResults(round),
     getQualifyingResults(round),
+    getSprintResults(round),
+    getPitStops(round),
   ]);
 
   if (!race) {
@@ -222,6 +226,153 @@ async function RaceContent({ round }: { round: string }) {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Sprint Race Results */}
+      {sprint.length > 0 && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+          <div className="border-b border-f1-border p-4 flex items-center gap-2">
+            <span className="rounded bg-orange-500/20 px-2 py-0.5 text-xs font-bold text-orange-400">SPRINT</span>
+            <h3 className="font-bold text-lg">Sprint Race Results</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                  <th className="px-3 py-3 w-12">Pos</th>
+                  <th className="px-3 py-3">Driver</th>
+                  <th className="px-3 py-3 hidden sm:table-cell">Team</th>
+                  <th className="px-3 py-3 text-center">Grid</th>
+                  <th className="px-3 py-3 hidden md:table-cell text-center">Laps</th>
+                  <th className="px-3 py-3">Time / Status</th>
+                  <th className="px-3 py-3 text-right">Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sprint.map((r) => {
+                  const teamColor = getTeamColor(r.Constructor.constructorId);
+                  const gridDiff = parseInt(r.grid) - parseInt(r.position);
+                  return (
+                    <tr
+                      key={r.Driver.driverId}
+                      className="border-b border-f1-border/50 transition-colors hover:bg-f1-card/50"
+                    >
+                      <td className="px-3 py-3 font-bold">{r.position}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="h-6 w-1 rounded-full" style={{ backgroundColor: teamColor }} />
+                          <span>
+                            {getCountryFlag(r.Driver.nationality)}{" "}
+                            {r.Driver.givenName}{" "}
+                            <span className="font-bold uppercase">{r.Driver.familyName}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">{r.Constructor.name}</td>
+                      <td className="px-3 py-3 text-center">
+                        <span>{r.grid}</span>
+                        {gridDiff !== 0 && (
+                          <span className={`ml-1 text-xs ${gridDiff > 0 ? "text-green-400" : "text-red-400"}`}>
+                            {gridDiff > 0 ? `+${gridDiff}` : gridDiff}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-3 hidden md:table-cell text-center text-f1-text-muted">{r.laps}</td>
+                      <td className="px-3 py-3 text-f1-text-muted">{r.Time?.time ?? r.status}</td>
+                      <td className="px-3 py-3 text-right font-bold">{r.points !== "0" ? r.points : ""}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Pit Stop Statistics */}
+      {pitStops.length > 0 && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+          <div className="border-b border-f1-border p-4">
+            <h3 className="font-bold text-lg">Pit Stop Analysis</h3>
+          </div>
+          <div className="p-4">
+            {(() => {
+              // Find fastest pit stop
+              const sorted = [...pitStops].sort((a, b) => parseFloat(a.duration) - parseFloat(b.duration));
+              const fastest = sorted[0];
+              // Group by driver
+              const byDriver = new Map<string, typeof pitStops>();
+              for (const p of pitStops) {
+                const arr = byDriver.get(p.driverId) ?? [];
+                arr.push(p);
+                byDriver.set(p.driverId, arr);
+              }
+              const driverSummaries = [...byDriver.entries()]
+                .map(([id, stops]) => ({
+                  driverId: id,
+                  stops: stops.length,
+                  fastest: stops.reduce((best, s) => parseFloat(s.duration) < parseFloat(best.duration) ? s : best),
+                }))
+                .sort((a, b) => parseFloat(a.fastest.duration) - parseFloat(b.fastest.duration));
+
+              return (
+                <>
+                  {/* Fastest stop highlight */}
+                  {fastest && (
+                    <div className="mb-4 rounded-lg bg-f1-dark p-3 flex items-center gap-4">
+                      <div>
+                        <p className="text-xs text-f1-text-muted uppercase tracking-wider font-bold mb-0.5">Fastest Pit Stop</p>
+                        <p className="font-bold text-f1-accent">{fastest.driverId.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</p>
+                      </div>
+                      <div className="ml-auto text-right">
+                        <p className="text-2xl font-black">{parseFloat(fastest.duration).toFixed(3)}s</p>
+                        <p className="text-xs text-f1-text-muted">Lap {fastest.lap} &middot; Stop {fastest.stop}</p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Per-driver summary */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                          <th className="px-2 py-2">Driver</th>
+                          <th className="px-2 py-2 text-center">Stops</th>
+                          <th className="px-2 py-2 text-right">Fastest Stop</th>
+                          <th className="px-2 py-2 text-right hidden sm:table-cell">On Lap</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {driverSummaries.map((d) => {
+                          // Match to race results for team color
+                          const raceResult = results.find((r) => r.Driver.driverId === d.driverId);
+                          const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "#888";
+                          const isFastest = d.driverId === fastest?.driverId;
+                          return (
+                            <tr key={d.driverId} className={`border-b border-f1-border/50 ${isFastest ? "bg-f1-accent/5" : ""}`}>
+                              <td className="px-2 py-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-5 w-1 rounded-full" style={{ backgroundColor: color }} />
+                                  <span className="capitalize">{d.driverId.replace(/_/g, " ")}</span>
+                                </div>
+                              </td>
+                              <td className="px-2 py-2 text-center">{d.stops}</td>
+                              <td className={`px-2 py-2 text-right font-mono font-bold ${isFastest ? "text-f1-accent" : ""}`}>
+                                {parseFloat(d.fastest.duration).toFixed(3)}s
+                              </td>
+                              <td className="px-2 py-2 text-right hidden sm:table-cell text-f1-text-muted">
+                                {d.fastest.lap}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

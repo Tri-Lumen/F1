@@ -1,12 +1,41 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import { getRaceSchedule, getRaceDate, CURRENT_YEAR } from "@/lib/api";
+import { getRaceSchedule, getAllSeasonResults, getRaceDate, CURRENT_YEAR } from "@/lib/api";
 import RaceCard from "@/components/RaceCard";
+import type { RaceResultSummary } from "@/components/RaceCard";
 import RefreshButton from "@/components/RefreshButton";
 
 async function RacesContent() {
-  const races = await getRaceSchedule();
+  const [races, allResults] = await Promise.all([
+    getRaceSchedule(),
+    getAllSeasonResults(),
+  ]);
+
+  // Build result summary map keyed by round
+  const resultSummaryMap = new Map<string, RaceResultSummary>();
+  for (const race of allResults) {
+    const results = race.Results ?? [];
+    const winner = results.find((r: any) => r.position === "1");
+    const pole = results.find((r: any) => r.grid === "1");
+    const fl = results.find((r: any) => r.FastestLap?.rank === "1");
+    resultSummaryMap.set(race.round, {
+      winner: winner ? {
+        name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,
+        constructorId: winner.Constructor.constructorId,
+        time: winner.Time?.time,
+      } : undefined,
+      pole: pole ? {
+        name: `${pole.Driver.givenName} ${pole.Driver.familyName}`,
+        constructorId: pole.Constructor.constructorId,
+      } : undefined,
+      fastestLap: fl?.FastestLap ? {
+        name: `${fl.Driver.givenName} ${fl.Driver.familyName}`,
+        constructorId: fl.Constructor.constructorId,
+        time: fl.FastestLap.Time.time,
+      } : undefined,
+    });
+  }
 
   const now = new Date();
   const upcoming = races.filter((r) => getRaceDate(r) > now);
@@ -60,7 +89,11 @@ async function RacesContent() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {completed.map((race) => (
-              <RaceCard key={race.round} race={race} />
+              <RaceCard
+                key={race.round}
+                race={race}
+                resultSummary={resultSummaryMap.get(race.round)}
+              />
             ))}
           </div>
         </div>

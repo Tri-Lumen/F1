@@ -1,8 +1,14 @@
 import Link from "next/link";
 import type { Race } from "@/lib/types";
-import { getCountryFlagByCountry, getF1TVRaceUrl, getRaceDate } from "@/lib/api";
+import { getCountryFlagByCountry, getF1TVRaceUrl, getRaceDate, getTeamColor } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 import LocalRaceTime from "@/components/LocalRaceTime";
+
+export interface RaceResultSummary {
+  winner?: { name: string; constructorId: string; time?: string };
+  pole?: { name: string; constructorId: string };
+  fastestLap?: { name: string; constructorId: string; time: string };
+}
 
 function formatDate(dateStr: string, timeStr?: string): string {
   const d = new Date(timeStr ? `${dateStr}T${timeStr}` : dateStr);
@@ -28,7 +34,7 @@ function isRaceWeekend(race: Race): boolean {
   return now >= firstDay && now <= endWindow;
 }
 
-export default function RaceCard({ race }: { race: Race }) {
+export default function RaceCard({ race, resultSummary }: { race: Race; resultSummary?: RaceResultSummary }) {
   const past = isRacePast(race);
   const live = isRaceWeekend(race);
   const flag = getCountryFlagByCountry(race.Circuit.Location.country);
@@ -114,6 +120,40 @@ export default function RaceCard({ race }: { race: Race }) {
           </span>
         )}
       </div>
+
+      {/* Race result summary for completed races */}
+      {past && resultSummary && (resultSummary.winner || resultSummary.pole || resultSummary.fastestLap) && (
+        <div className="mt-3 pt-3 border-t border-f1-border/30 grid grid-cols-3 gap-2">
+          {resultSummary.winner && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-f1-text-muted mb-0.5">Winner</p>
+              <p className="text-xs font-bold truncate" style={{ color: getTeamColor(resultSummary.winner.constructorId) }}>
+                {resultSummary.winner.name.split(" ").at(-1)?.toUpperCase()}
+              </p>
+              {resultSummary.winner.time && (
+                <p className="text-[10px] text-f1-text-muted font-mono">{resultSummary.winner.time}</p>
+              )}
+            </div>
+          )}
+          {resultSummary.pole && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-f1-text-muted mb-0.5">Pole</p>
+              <p className="text-xs font-bold truncate" style={{ color: getTeamColor(resultSummary.pole.constructorId) }}>
+                {resultSummary.pole.name.split(" ").at(-1)?.toUpperCase()}
+              </p>
+            </div>
+          )}
+          {resultSummary.fastestLap && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-purple-400 mb-0.5">Fastest Lap</p>
+              <p className="text-xs font-bold text-purple-400 truncate">
+                {resultSummary.fastestLap.name.split(" ").at(-1)?.toUpperCase()}
+              </p>
+              <p className="text-[10px] text-purple-400/70 font-mono">{resultSummary.fastestLap.time}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

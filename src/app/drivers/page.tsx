@@ -14,6 +14,8 @@ import {
 import StandingsTable from "@/components/StandingsTable";
 import RefreshButton from "@/components/RefreshButton";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
+import { DriverNumber } from "@/components/ProfileImage";
+import { getDriverNumberUrl } from "@/lib/profileImages";
 
 interface DriverStats {
   podiums: number;
@@ -286,10 +288,19 @@ async function DriversContent() {
                     {s.Constructors[0]?.name ?? ""}
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-3xl font-black text-f1-text-muted/30">
-                    {s.Driver.permanentNumber || "#"}
-                  </span>
+                <div className="text-right flex items-start">
+                  {getDriverNumberUrl(s.Driver.driverId) ? (
+                    <DriverNumber
+                      src={getDriverNumberUrl(s.Driver.driverId)!}
+                      number={s.Driver.permanentNumber || "#"}
+                      className="h-9 w-auto opacity-30"
+                      color={teamColor}
+                    />
+                  ) : (
+                    <span className="text-3xl font-black italic text-f1-text-muted/30">
+                      {s.Driver.permanentNumber || "#"}
+                    </span>
+                  )}
                 </div>
               </div>
 

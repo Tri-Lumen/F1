@@ -151,3 +151,12 @@ export interface TeamRadio {
   recording_url: string;
   date: string;
 }
+
+// Pit stop data from Ergast
+export interface PitStop {
+  driverId: string;
+  lap: string;
+  stop: string;
+  time: string;
+  duration: string;
+}
