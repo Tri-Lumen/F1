@@ -11,8 +11,8 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
-import { DriverImage } from "@/components/ProfileImage";
-import { getDriverImageUrl } from "@/lib/profileImages";
+import { DriverImage, DriverNumber } from "@/components/ProfileImage";
+import { getDriverImageUrl, getDriverNumberUrl } from "@/lib/profileImages";
 
 function positionBadge(pos: string, status: string) {
   const p = parseInt(pos);
@@ -102,6 +102,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
 
   const last5 = races.slice(-5);
   const driverImageUrl = getDriverImageUrl(driver.driverId);
+  const driverNumberUrl = getDriverNumberUrl(driver.driverId);
 
   const age = driver.dateOfBirth
     ? Math.floor(
@@ -138,13 +139,19 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
                 <p className="mt-1 text-sm font-medium" style={{ color: teamColor }}>
                   {constructor?.name ?? ""}
                 </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span
-                    className="text-4xl font-black leading-none opacity-20"
-                    style={{ color: teamColor }}
-                  >
-                    {driver.permanentNumber || "#"}
-                  </span>
+                <div className="mt-2 flex items-center gap-3">
+                  {driverNumberUrl ? (
+                    <DriverNumber
+                      src={driverNumberUrl}
+                      number={driver.permanentNumber || "#"}
+                      className="h-10 w-auto opacity-80"
+                      color={teamColor}
+                    />
+                  ) : (
+                    <span className="text-4xl font-black italic leading-none opacity-25" style={{ color: teamColor }}>
+                      {driver.permanentNumber || "#"}
+                    </span>
+                  )}
                   <span className="text-xs text-f1-text-muted font-mono">
                     {driver.code}
                   </span>
@@ -186,6 +193,65 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
           </div>
         ))}
       </div>
+
+      {/* Position Trajectory Sparkline */}
+      {races.length >= 2 && (() => {
+        const racePositions = races
+          .map((race) => {
+            const r = race.Results?.[0];
+            if (!r) return null;
+            const isDNF = r.status !== "Finished" && !r.status.startsWith("+");
+            return { round: race.round, pos: isDNF ? 21 : parseInt(r.position), isDNF, isWin: r.position === "1", isPodium: parseInt(r.position) <= 3 };
+          })
+          .filter(Boolean) as { round: string; pos: number; isDNF: boolean; isWin: boolean; isPodium: boolean }[];
+
+        if (racePositions.length < 2) return null;
+
+        const W = 600, H = 84;
+        const PAD = { top: 6, right: 8, bottom: 18, left: 26 };
+        const cW = W - PAD.left - PAD.right;
+        const cH = H - PAD.top - PAD.bottom;
+        const n = racePositions.length;
+        const xOf = (i: number) => PAD.left + (n === 1 ? cW / 2 : (i / (n - 1)) * cW);
+        const yOf = (pos: number) => PAD.top + ((Math.min(pos, 20) - 1) / 19) * cH;
+
+        const pathD = racePositions
+          .map((p, i) => `${i === 0 ? "M" : "L"} ${xOf(i).toFixed(1)},${yOf(p.pos).toFixed(1)}`)
+          .join(" ");
+
+        return (
+          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-5">
+            <h2 className="text-sm font-bold text-f1-text-muted mb-3 uppercase tracking-wider">
+              Position Trajectory
+            </h2>
+            <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }} aria-hidden="true">
+              {[1, 5, 10, 15, 20].map((v) => (
+                <g key={v}>
+                  <line x1={PAD.left} y1={yOf(v)} x2={W - PAD.right} y2={yOf(v)}
+                    stroke="currentColor" strokeOpacity={v === 1 ? 0.15 : 0.06} strokeWidth="1" />
+                  <text x={PAD.left - 4} y={yOf(v)} textAnchor="end" dominantBaseline="middle"
+                    fontSize="8" fill="currentColor" fillOpacity="0.35">P{v}</text>
+                </g>
+              ))}
+              <path d={pathD} fill="none" stroke={teamColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.6" />
+              {racePositions.map((p, i) => (
+                <g key={i}>
+                  <circle cx={xOf(i)} cy={yOf(p.pos)} r="4"
+                    fill={p.isDNF ? "#ef4444" : p.isWin ? "#eab308" : p.isPodium ? "#9ca3af" : teamColor}
+                    fillOpacity="0.9" />
+                  <text x={xOf(i)} y={H - PAD.bottom + 12} textAnchor="middle"
+                    fontSize="7.5" fill="currentColor" fillOpacity="0.3">R{p.round}</text>
+                </g>
+              ))}
+            </svg>
+            <div className="mt-1 flex items-center gap-4 text-xs text-f1-text-muted">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" />Win</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />Podium</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" />DNF</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Recent Form */}
       {last5.length > 0 && (

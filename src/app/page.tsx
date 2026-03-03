@@ -59,35 +59,69 @@ async function DashboardContent() {
             Season
           </p>
           <p className="mt-1 text-2xl font-black">{CURRENT_YEAR}</p>
-        </div>
-        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-            Races Completed
-          </p>
-          <p className="mt-1 text-2xl font-black">
-            {completedCount}
-            <span className="text-sm font-normal text-f1-text-muted">
-              /{totalRaces}
-            </span>
-          </p>
+          <div className="mt-2 h-1 rounded-full bg-f1-dark overflow-hidden">
+            <div
+              className="h-full rounded-full bg-f1-red"
+              style={{ width: `${totalRaces > 0 ? (completedCount / totalRaces) * 100 : 0}%` }}
+            />
+          </div>
+          <p className="mt-1 text-xs text-f1-text-muted">{completedCount}/{totalRaces} races</p>
         </div>
         <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Championship Leader
           </p>
-          <p className="mt-1 text-lg font-black text-f1-accent">
-            {driverStandings[0]
-              ? `${driverStandings[0].Driver.givenName} ${driverStandings[0].Driver.familyName}`
-              : "TBD"}
-          </p>
+          {driverStandings[0] ? (
+            <>
+              <p className="mt-1 text-base font-black text-f1-accent leading-tight">
+                {driverStandings[0].Driver.familyName.toUpperCase()}
+              </p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{driverStandings[0].points} pts</p>
+              {driverStandings[1] && (
+                <p className="text-xs text-f1-text-muted/60">
+                  +{(parseFloat(driverStandings[0].points) - parseFloat(driverStandings[1].points)).toFixed(0)} over {driverStandings[1].Driver.familyName}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="mt-1 text-lg font-black text-f1-accent">TBD</p>
+          )}
         </div>
         <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent-secondary bg-f1-card/60 acrylic p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Top Constructor
           </p>
-          <p className="mt-1 text-lg font-black text-f1-accent-secondary">
-            {constructorStandings[0]?.Constructor.name ?? "TBD"}
+          {constructorStandings[0] ? (
+            <>
+              <p className="mt-1 text-base font-black text-f1-accent-secondary leading-tight">
+                {constructorStandings[0].Constructor.name}
+              </p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{constructorStandings[0].points} pts</p>
+              {constructorStandings[1] && (
+                <p className="text-xs text-f1-text-muted/60">
+                  +{(parseFloat(constructorStandings[0].points) - parseFloat(constructorStandings[1].points)).toFixed(0)} over {constructorStandings[1].Constructor.name.split(" ").at(-1)}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="mt-1 text-lg font-black text-f1-accent-secondary">TBD</p>
+          )}
+        </div>
+        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
+          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
+            Wins Leader
           </p>
+          {driverStandings[0] ? (
+            <>
+              <p className="mt-1 text-2xl font-black">
+                {parseInt(driverStandings[0].wins)}
+                <span className="text-sm font-normal text-f1-text-muted ml-1">wins</span>
+              </p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{driverStandings[0].Driver.familyName}</p>
+            </>
+          ) : (
+            <p className="mt-1 text-2xl font-black">—</p>
+          )}
         </div>
       </div>
 

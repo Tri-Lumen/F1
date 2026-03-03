@@ -56,8 +56,42 @@ export const TEAM_CAR_IMAGES: Record<string, string> = {
   andretti_cadillac: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/cadillac.png`,
 };
 
+/**
+ * Official F1 CDN slugs for driver number logo images.
+ * URL pattern: {F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/{slug}.png
+ */
+const DRIVER_NUMBER_SLUGS: Record<string, string> = {
+  verstappen:  "VERSTAPPENMAX01",
+  hamilton:    "HAMILTONLEW01",
+  leclerc:     "LECLERCHA01",
+  norris:      "NORRISLAN01",
+  piastri:     "PIASTRIOS01",
+  russell:     "RUSSELLGE01",
+  antonelli:   "ANTONELKI01",
+  alonso:      "ALONSOFER01",
+  stroll:      "STROLLLAN01",
+  gasly:       "GASLYPIE01",
+  doohan:      "DOOHANJAC01",
+  albon:       "ALBONALE01",
+  sainz:       "SAINZCAR01",
+  colapinto:   "COLAPFRA01",
+  ocon:        "OCONEST01",
+  bearman:     "BEARMANOL01",
+  hulkenberg:  "HULKENNIC01",
+  bortoleto:   "BORTOLEG01",
+  tsunoda:     "TSUNODAYU01",
+  hadjar:      "HADJARIS01",
+  lawson:      "LAWSONLIA01",
+};
+
 export function getDriverImageUrl(driverId: string): string | undefined {
   return DRIVER_IMAGES[driverId];
+}
+
+export function getDriverNumberUrl(driverId: string): string | undefined {
+  const slug = DRIVER_NUMBER_SLUGS[driverId];
+  if (!slug) return undefined;
+  return `${F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png`;
 }
 
 export function getTeamCarImageUrl(constructorId: string): string | undefined {
