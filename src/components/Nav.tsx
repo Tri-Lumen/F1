@@ -11,6 +11,8 @@ const BASE_LINKS = [
   { href: "/drivers", label: "Drivers" },
   { href: "/teams", label: "Teams" },
   { href: "/races", label: "Races" },
+  { href: "/fastest-laps", label: "Fastest Laps" },
+  { href: "/stats", label: "Stats" },
   { href: "/archive", label: "Archive" },
   { href: "/compare", label: "Compare" },
   { href: "/settings", label: "Settings" },

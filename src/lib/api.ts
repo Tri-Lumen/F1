@@ -10,6 +10,7 @@ import type {
   LiveInterval,
   LiveStint,
   TeamRadio,
+  PitStop,
 } from "./types";
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -125,6 +126,16 @@ export async function getConstructorResults(constructorId: string): Promise<Race
 export async function getAllSeasonResults(): Promise<Race[]> {
   const data = await fetchErgast<any>(`/${CURRENT_SEASON}/results/?limit=500`);
   return data?.MRData?.RaceTable?.Races ?? [];
+}
+
+export async function getSprintResults(round: string): Promise<RaceResult[]> {
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`);
+  return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
+}
+
+export async function getPitStops(round: string): Promise<PitStop[]> {
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`);
+  return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
 }
 
 // --- OpenF1 Live API ---

@@ -13,6 +13,7 @@ import {
 import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RefreshButton from "@/components/RefreshButton";
 import TeammateH2H from "@/components/TeammateH2H";
+import ConstructorPointsChart from "@/components/ConstructorPointsChart";
 
 interface TeamStats {
   podiums: number;
@@ -112,6 +113,17 @@ async function TeamsContent() {
         </div>
         <ConstructorStandingsTable standings={constructorStandings} />
       </div>
+
+      {/* Constructor Points Progression */}
+      {allRaces.filter((r) => (r.Results?.length ?? 0) > 0).length > 0 && (
+        <div className="mb-10">
+          <ConstructorPointsChart
+            completedRaces={allRaces.filter((r) => (r.Results?.length ?? 0) > 0)}
+            constructorStandings={constructorStandings}
+            getTeamColor={getTeamColor}
+          />
+        </div>
+      )}
 
       {/* Teammate H2H */}
       <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
