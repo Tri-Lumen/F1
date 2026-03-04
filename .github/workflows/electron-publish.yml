@@ -8,7 +8,7 @@ on:
     tags:
       - 'v*'
     branches:
-      - 'claude/update-runner-versions-*'
+      - 'claude/exe-packaging-feasibility-*'
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
           - os: macos-latest
             platform: mac
             artifact: dist-electron/*.dmg
-          - os: ubuntu-22.04
+          - os: ubuntu-20.04   # Use 20.04 for broadest GLIBC compatibility
             platform: linux
             artifact: dist-electron/*.AppImage
 
@@ -47,7 +47,7 @@ jobs:
 
       # Linux: install system libraries required by Electron / AppImage builder
       - name: Install Linux build dependencies
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.os == 'ubuntu-20.04'
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
