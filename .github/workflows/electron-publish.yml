@@ -1,10 +1,14 @@
 name: Build and publish Electron app
 
-# Trigger on version tags (e.g. v1.2.3) or manual dispatch.
+# Trigger on version tags (e.g. v1.2.3), manual dispatch, or an explicit
+# branch push.  The branch trigger is used to kick off the first release
+# from the feature branch before it is merged to main.
 on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'claude/exe-packaging-feasibility-*'
   workflow_dispatch:
 
 permissions:
@@ -65,6 +69,10 @@ jobs:
         run: npx electron-builder --${{ matrix.platform }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # When triggered by a branch push (not a tag), tell electron-builder
+          # which release tag to publish to.  On tag pushes GITHUB_REF already
+          # contains refs/tags/vX.Y.Z so this override is a no-op.
+          GITHUB_REF: ${{ startsWith(github.ref, 'refs/tags/') && github.ref || format('refs/tags/v{0}', '1.0.0') }}
           # ----------------------------------------------------------------
           # macOS code signing (requires secrets set in repository settings)
           # Leave unset for unsigned development builds — Gatekeeper will
