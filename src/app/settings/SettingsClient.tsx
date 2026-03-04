@@ -87,6 +87,10 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     setTimeout(() => setMvSaved(false), 2000);
   }
 
+  const isElectron =
+    typeof window !== "undefined" &&
+    !!(window as unknown as { electronApp?: { isElectron?: boolean } }).electronApp?.isElectron;
+
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<{
     success: boolean;
@@ -98,11 +102,23 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     setUpdating(true);
     setUpdateResult(null);
     try {
-      const res = await fetch("/api/update", { method: "POST" });
-      const data = await res.json();
-      setUpdateResult(data);
-      if (data.success && data.updated) {
-        setTimeout(() => window.location.reload(), 3000);
+      if (isElectron) {
+        const electronApp = (window as unknown as { electronApp: { checkForUpdates: () => Promise<{ triggered: boolean; error?: string }> } }).electronApp;
+        const result = await electronApp.checkForUpdates();
+        setUpdateResult({
+          success: result.triggered,
+          updated: false,
+          steps: result.triggered
+            ? [{ step: "update check", output: "Check started — you will be notified if an update is available." }]
+            : [{ step: "error", output: result.error ?? "Auto-update is not available in this build." }],
+        });
+      } else {
+        const res = await fetch("/api/update", { method: "POST" });
+        const data = await res.json();
+        setUpdateResult(data);
+        if (data.success && data.updated) {
+          setTimeout(() => window.location.reload(), 3000);
+        }
       }
     } catch {
       setUpdateResult({
@@ -536,8 +552,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
       <section>
         <h2 className="text-lg font-bold mb-2">Application Update</h2>
         <p className="text-sm text-f1-text-muted mb-4">
-          Pull the latest changes from GitHub and rebuild. Only works when
-          running inside the Docker container with git available.
+          {isElectron
+            ? "Check for a new release of the desktop app. You will receive an OS notification if an update is available."
+            : "Pull the latest changes from GitHub and rebuild. Only works when running inside the Docker container with git available."}
         </p>
 
         <button
@@ -573,7 +590,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           >
             <p className="font-bold mb-2">
               {updateResult.success
-                ? updateResult.updated
+                ? isElectron
+                  ? "Update check started"
+                  : updateResult.updated
                   ? "Update applied — reloading…"
                   : "Already up to date"
                 : "Update failed"}
