@@ -16,7 +16,9 @@
 /out/
 
 # production
-/build
+# /build is intentionally NOT ignored — it holds Electron icon assets.
+# Electron distributable output is excluded instead:
+/dist-electron
 
 # misc
 .DS_Store
