@@ -14,11 +14,17 @@
  * button, adjusting window chrome styles).
  */
 
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronApp', {
   /** true when running inside Electron (useful for feature detection in the UI) */
   isElectron: true,
   /** host OS: 'win32' | 'darwin' | 'linux' */
   platform: process.platform,
+  /**
+   * Ask the main process to trigger autoUpdater.checkForUpdatesAndNotify().
+   * Returns { triggered: true } on success or { triggered: false, error: string } if
+   * auto-update is not configured in this build.
+   */
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
 });

@@ -8,13 +8,13 @@ import { useFavorites } from "@/lib/FavoritesContext";
 const BASE_LINKS = [
   { href: "/", label: "Dashboard" },
   { href: "/live", label: "Live" },
+  { href: "/races", label: "Races" },
   { href: "/drivers", label: "Drivers" },
   { href: "/teams", label: "Teams" },
-  { href: "/races", label: "Races" },
-  { href: "/fastest-laps", label: "Fastest Laps" },
   { href: "/stats", label: "Stats" },
-  { href: "/archive", label: "Archive" },
+  { href: "/fastest-laps", label: "Fastest Laps" },
   { href: "/compare", label: "Compare" },
+  { href: "/archive", label: "Archive" },
   { href: "/settings", label: "Settings" },
 ];
 

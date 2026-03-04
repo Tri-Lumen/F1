@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, shell, dialog, Menu } = require('electron');
+const { app, BrowserWindow, shell, dialog, Menu, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
@@ -289,6 +289,20 @@ async function createWindow() {
 
   mainWindow.on('closed', () => { mainWindow = null; });
 }
+
+// ---------------------------------------------------------------------------
+// IPC handlers
+// ---------------------------------------------------------------------------
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const { autoUpdater } = require('electron-updater');
+    await autoUpdater.checkForUpdatesAndNotify();
+    return { triggered: true };
+  } catch (err) {
+    return { triggered: false, error: err?.message ?? 'Auto-update is not configured for this build.' };
+  }
+});
 
 // ---------------------------------------------------------------------------
 // App event handlers
