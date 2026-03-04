@@ -38,6 +38,22 @@ async function fixRemoteForDocker(cwd: string): Promise<void> {
 }
 
 export async function POST() {
+  // When running inside an Electron packaged app the source tree, git history,
+  // and devDependencies are not present — git pull / npm build cannot work.
+  // The Electron main process sets ELECTRON_RUN=1 before spawning this server.
+  if (process.env.ELECTRON_RUN === "1") {
+    return NextResponse.json(
+      {
+        success: false,
+        electron: true,
+        message:
+          "Self-update via git is not available in the desktop app. " +
+          "Use Help → Check for Updates to install a new release.",
+      },
+      { status: 409 }
+    );
+  }
+
   const cwd = process.cwd();
   const steps: { step: string; output: string }[] = [];
 
