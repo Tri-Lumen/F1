@@ -2,6 +2,18 @@
 
 Live-updating dashboard for the 2026 Formula 1 season — standings, race results, live timing, stats, and historical data for every driver and team.
 
+## Download
+
+Pre-built desktop apps are available on the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest).
+
+| Platform | Download |
+|---|---|
+| Windows | [F1 Dashboard Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-Setup.exe) |
+| macOS | [F1 Dashboard.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.dmg) |
+| Linux | [F1 Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.AppImage) |
+
+> Desktop builds are published automatically on every release. The app includes automatic update notifications.
+
 ## Quick Start
 
 ```bash
