@@ -10,6 +10,7 @@ on:
     branches:
       - 'claude/exe-packaging-feasibility-*'
       - 'claude/setup-npm-ci-*'
+      - 'claude/fix-build-errors-*'
   workflow_dispatch:
 
 permissions:
