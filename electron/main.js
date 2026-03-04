@@ -68,13 +68,17 @@ function startNextServer(port) {
     HOSTNAME: '127.0.0.1',
     NEXT_TELEMETRY_DISABLED: '1',
     ELECTRON_RUN: '1',
+    // When packaged, tell the Electron binary to behave as a plain Node.js
+    // runtime so it can run the Next.js standalone server without needing a
+    // separately-bundled node binary (which would be platform-specific and
+    // would require shipping a large extra resource on every platform).
+    ...(isPackaged ? { ELECTRON_RUN_AS_NODE: '1' } : {}),
   };
 
-  // When packaged, use the node binary bundled as an extraResource.
-  // In development, fall back to 'node' on PATH.
-  const nodeBin = isPackaged
-    ? path.join(process.resourcesPath, 'node')
-    : 'node';
+  // In packaged mode use the Electron binary itself as the Node.js runtime
+  // (works cross-platform via ELECTRON_RUN_AS_NODE).  In dev just use the
+  // system `node` so the plain Next.js dev server keeps working.
+  const nodeBin = isPackaged ? process.execPath : 'node';
 
   nextServer = spawn(nodeBin, [serverScript], {
     cwd: serverRoot,

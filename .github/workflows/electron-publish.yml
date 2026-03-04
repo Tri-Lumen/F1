@@ -9,6 +9,7 @@ on:
       - 'v*'
     branches:
       - 'claude/exe-packaging-feasibility-*'
+      - 'claude/setup-npm-ci-*'
   workflow_dispatch:
 
 permissions:
