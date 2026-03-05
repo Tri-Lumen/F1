@@ -12,6 +12,31 @@ const net = require('net');
 
 const isPackaged = app.isPackaged;
 
+// ---------------------------------------------------------------------------
+// Auto-updater setup
+// ---------------------------------------------------------------------------
+
+let autoUpdaterConfigured = false;
+
+function getConfiguredAutoUpdater() {
+  const { autoUpdater } = require('electron-updater');
+  if (!autoUpdaterConfigured) {
+    autoUpdater.autoDownload = false;
+    autoUpdater.allowPrerelease = false;
+    // Explicitly set the GitHub feed so electron-updater uses the API
+    // rather than the /releases HTML page (which returns 406 when the
+    // client sends an Accept header that expects JSON/atom).
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'Tri-Lumen',
+      repo: 'F1',
+      releaseType: 'release',
+    });
+    autoUpdaterConfigured = true;
+  }
+  return autoUpdater;
+}
+
 // In production the Next.js standalone build is placed in resources/app/.
 // In development we run against the local .next/standalone build.
 const serverRoot = isPackaged
@@ -167,15 +192,15 @@ function buildMenu(port) {
         { type: 'separator' },
         {
           label: 'Check for Updates…',
-          click() {
+          async click() {
             try {
-              const { autoUpdater } = require('electron-updater');
-              autoUpdater.checkForUpdatesAndNotify();
-            } catch {
+              const updater = getConfiguredAutoUpdater();
+              await updater.checkForUpdatesAndNotify();
+            } catch (err) {
               dialog.showMessageBox(mainWindow, {
                 type: 'info',
                 title: 'Updates',
-                message: 'Auto-update is not configured for this build.',
+                message: err?.message ?? 'Auto-update is not configured for this build.',
               });
             }
           },
@@ -296,18 +321,8 @@ async function createWindow() {
 
 ipcMain.handle('check-for-updates', async () => {
   try {
-    const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = false;
-    autoUpdater.allowPrerelease = false;
-    // Use the GitHub releases atom feed directly to avoid 406 errors
-    // on the /releases HTML page when electron-updater negotiates content type.
-    autoUpdater.setFeedURL({
-      provider: 'github',
-      owner: 'Tri-Lumen',
-      repo: 'F1',
-      releaseType: 'release',
-    });
-    await autoUpdater.checkForUpdatesAndNotify();
+    const updater = getConfiguredAutoUpdater();
+    await updater.checkForUpdatesAndNotify();
     return { triggered: true };
   } catch (err) {
     return { triggered: false, error: err?.message ?? 'Auto-update is not configured for this build.' };
