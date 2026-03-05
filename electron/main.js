@@ -297,6 +297,16 @@ async function createWindow() {
 ipcMain.handle('check-for-updates', async () => {
   try {
     const { autoUpdater } = require('electron-updater');
+    autoUpdater.autoDownload = false;
+    autoUpdater.allowPrerelease = false;
+    // Use the GitHub releases atom feed directly to avoid 406 errors
+    // on the /releases HTML page when electron-updater negotiates content type.
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'Tri-Lumen',
+      repo: 'F1',
+      releaseType: 'release',
+    });
     await autoUpdater.checkForUpdatesAndNotify();
     return { triggered: true };
   } catch (err) {
