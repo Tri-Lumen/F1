@@ -12,6 +12,56 @@ const net = require('net');
 
 const isPackaged = app.isPackaged;
 
+// ---------------------------------------------------------------------------
+// Update check via GitHub JSON API
+//
+// electron-updater's GitHub provider calls GET /releases (the HTML page) with
+// Accept: application/json when it cannot resolve /releases/latest to a tag.
+// GitHub returns 406 for that combination.  We bypass electron-updater
+// entirely and hit api.github.com directly, which always returns JSON and
+// never 406s on public repos.
+// ---------------------------------------------------------------------------
+
+function isNewerVersion(latest, current) {
+  const a = latest.replace(/^v/i, '').split('.').map(Number);
+  const b = current.replace(/^v/i, '').split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if ((a[i] || 0) > (b[i] || 0)) return true;
+    if ((a[i] || 0) < (b[i] || 0)) return false;
+  }
+  return false;
+}
+
+function fetchLatestRelease() {
+  const https = require('https');
+  const currentVersion = app.getVersion();
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      'https://api.github.com/repos/Tri-Lumen/F1/releases/latest',
+      {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          'User-Agent': `F1-Dashboard/${currentVersion}`,
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`GitHub API returned ${res.statusCode}`));
+            return;
+          }
+          try { resolve(JSON.parse(data)); }
+          catch { reject(new Error('Failed to parse release data from GitHub')); }
+        });
+      }
+    );
+    req.on('error', reject);
+    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Update check timed out')); });
+  });
+}
+
 // In production the Next.js standalone build is placed in resources/app/.
 // In development we run against the local .next/standalone build.
 const serverRoot = isPackaged
@@ -167,15 +217,33 @@ function buildMenu(port) {
         { type: 'separator' },
         {
           label: 'Check for Updates…',
-          click() {
+          async click() {
             try {
-              const { autoUpdater } = require('electron-updater');
-              autoUpdater.checkForUpdatesAndNotify();
-            } catch {
+              const release = await fetchLatestRelease();
+              const latestTag = release.tag_name;
+              const currentVersion = app.getVersion();
+              if (isNewerVersion(latestTag, currentVersion)) {
+                const { response } = await dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: 'Update Available',
+                  message: `F1 Dashboard ${latestTag} is available`,
+                  detail: `You are running v${currentVersion}. Click Download to open the releases page.`,
+                  buttons: ['Download', 'Later'],
+                  defaultId: 0,
+                });
+                if (response === 0) shell.openExternal(release.html_url);
+              } else {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: 'F1 Dashboard is up to date',
+                  message: `You are running the latest version (v${currentVersion}).`,
+                });
+              }
+            } catch (err) {
               dialog.showMessageBox(mainWindow, {
-                type: 'info',
-                title: 'Updates',
-                message: 'Auto-update is not configured for this build.',
+                type: 'error',
+                title: 'Update Check Failed',
+                message: err?.message ?? 'Failed to check for updates.',
               });
             }
           },
@@ -296,21 +364,13 @@ async function createWindow() {
 
 ipcMain.handle('check-for-updates', async () => {
   try {
-    const { autoUpdater } = require('electron-updater');
-    autoUpdater.autoDownload = false;
-    autoUpdater.allowPrerelease = false;
-    // Use the GitHub releases atom feed directly to avoid 406 errors
-    // on the /releases HTML page when electron-updater negotiates content type.
-    autoUpdater.setFeedURL({
-      provider: 'github',
-      owner: 'Tri-Lumen',
-      repo: 'F1',
-      releaseType: 'release',
-    });
-    await autoUpdater.checkForUpdatesAndNotify();
-    return { triggered: true };
+    const release = await fetchLatestRelease();
+    const latestTag = release.tag_name;
+    const currentVersion = app.getVersion();
+    const hasUpdate = isNewerVersion(latestTag, currentVersion);
+    return { triggered: true, hasUpdate, latestVersion: latestTag, releaseUrl: release.html_url };
   } catch (err) {
-    return { triggered: false, error: err?.message ?? 'Auto-update is not configured for this build.' };
+    return { triggered: false, error: err?.message ?? 'Failed to check for updates.' };
   }
 });
 
