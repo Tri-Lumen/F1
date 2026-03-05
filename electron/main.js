@@ -48,6 +48,10 @@ function fetchLatestRelease() {
         let data = '';
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', () => {
+          if (res.statusCode === 404) {
+            resolve(null); // No releases published yet
+            return;
+          }
           if (res.statusCode !== 200) {
             reject(new Error(`GitHub API returned ${res.statusCode}`));
             return;
@@ -220,6 +224,14 @@ function buildMenu(port) {
           async click() {
             try {
               const release = await fetchLatestRelease();
+              if (!release) {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info',
+                  title: 'F1 Dashboard is up to date',
+                  message: 'No releases have been published yet.',
+                });
+                return;
+              }
               const latestTag = release.tag_name;
               const currentVersion = app.getVersion();
               if (isNewerVersion(latestTag, currentVersion)) {
@@ -365,6 +377,9 @@ async function createWindow() {
 ipcMain.handle('check-for-updates', async () => {
   try {
     const release = await fetchLatestRelease();
+    if (!release) {
+      return { triggered: true, hasUpdate: false, latestVersion: null, releaseUrl: null };
+    }
     const latestTag = release.tag_name;
     const currentVersion = app.getVersion();
     const hasUpdate = isNewerVersion(latestTag, currentVersion);
