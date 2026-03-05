@@ -96,6 +96,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     success: boolean;
     updated: boolean;
     steps: { step: string; output: string }[];
+    releaseUrl?: string;
   } | null>(null);
 
   async function handleUpdate() {
@@ -103,15 +104,28 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     setUpdateResult(null);
     try {
       if (isElectron) {
-        const electronApp = (window as unknown as { electronApp: { checkForUpdates: () => Promise<{ triggered: boolean; error?: string }> } }).electronApp;
+        const electronApp = (window as unknown as { electronApp: { checkForUpdates: () => Promise<{ triggered: boolean; error?: string; hasUpdate?: boolean; latestVersion?: string; releaseUrl?: string }> } }).electronApp;
         const result = await electronApp.checkForUpdates();
-        setUpdateResult({
-          success: result.triggered,
-          updated: false,
-          steps: result.triggered
-            ? [{ step: "update check", output: "Check started — you will be notified if an update is available." }]
-            : [{ step: "error", output: result.error ?? "Auto-update is not available in this build." }],
-        });
+        if (!result.triggered) {
+          setUpdateResult({
+            success: false,
+            updated: false,
+            steps: [{ step: "error", output: result.error ?? "Auto-update is not available in this build." }],
+          });
+        } else if (result.hasUpdate) {
+          setUpdateResult({
+            success: true,
+            updated: false,
+            steps: [{ step: "update available", output: `${result.latestVersion} is available — download from GitHub Releases.` }],
+            releaseUrl: result.releaseUrl,
+          });
+        } else {
+          setUpdateResult({
+            success: true,
+            updated: false,
+            steps: [{ step: "up to date", output: "You are running the latest version." }],
+          });
+        }
       } else {
         const res = await fetch("/api/update", { method: "POST" });
         const data = await res.json();
@@ -591,7 +605,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
             <p className="font-bold mb-2">
               {updateResult.success
                 ? isElectron
-                  ? "Update check started"
+                  ? updateResult.releaseUrl
+                    ? "Update available"
+                    : "Already up to date"
                   : updateResult.updated
                   ? "Update applied — reloading…"
                   : "Already up to date"
@@ -605,6 +621,16 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                 </div>
               ))}
             </div>
+            {updateResult.releaseUrl && (
+              <a
+                href={updateResult.releaseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-f1-red hover:underline"
+              >
+                Download from GitHub Releases →
+              </a>
+            )}
           </div>
         )}
       </section>
