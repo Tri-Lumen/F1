@@ -1,12 +1,11 @@
 name: Build and publish Electron app
 
-# Trigger on version tags (e.g. v1.2.3), every merge to main, or manual dispatch.
+# Trigger on version tags (e.g. v1.2.3) or manual dispatch.
+# Always use lowercase v prefix (e.g. v1.2.3) to ensure electron-updater can parse the tag.
 on:
   push:
     tags:
-      - 'v*'
-    branches:
-      - main
+      - 'v[0-9]*'
   workflow_dispatch:
 
 permissions:
@@ -83,10 +82,6 @@ jobs:
         run: npx electron-builder --${{ matrix.platform }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # When triggered by a branch push (not a tag), tell electron-builder
-          # which release tag to publish to.  On tag pushes GITHUB_REF already
-          # contains refs/tags/vX.Y.Z so this override is a no-op.
-          GITHUB_REF: ${{ startsWith(github.ref, 'refs/tags/') && github.ref || 'refs/tags/latest' }}
           # macOS signing vars are set conditionally by the step above.
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
