@@ -64,7 +64,18 @@ export async function POST() {
     // 1. Pull latest from remote.
     // Pass safe.directory inline so git doesn't reject /app due to the WORKDIR
     // being owned by root while the container process runs as the nextjs user.
-    const pull = await run(`git -c safe.directory=${cwd} pull --ff-only 2>&1`, cwd);
+    // Resolve the current branch name first so we can pass it explicitly to
+    // `git pull origin <branch>` — this avoids the "no tracking information"
+    // error that occurs when the local branch has no upstream configured.
+    const branchResult = await run(
+      `git -c safe.directory=${cwd} rev-parse --abbrev-ref HEAD 2>&1`,
+      cwd
+    );
+    const branch = branchResult.stdout.trim();
+    const pull = await run(
+      `git -c safe.directory=${cwd} pull --ff-only origin ${branch} 2>&1`,
+      cwd
+    );
     steps.push({ step: "git pull", output: pull.stdout.trim() || pull.stderr.trim() });
 
     const alreadyUpToDate = pull.stdout.includes("Already up to date");
