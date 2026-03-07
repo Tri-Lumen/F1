@@ -13,7 +13,7 @@ import {
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
 import { CarImage, DriverImage } from "@/components/ProfileImage";
-import { getTeamCarImageUrl, getDriverImageUrl } from "@/lib/profileImages";
+import { getTeamCarImageUrls, getDriverImageUrl } from "@/lib/profileImages";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -44,7 +44,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   if (!standing) notFound();
 
   const teamColor = getTeamColor(constructorId);
-  const carImageUrl = getTeamCarImageUrl(constructorId);
+  const carImageUrls = getTeamCarImageUrls(constructorId);
   const drivers = driverStandings.filter(
     (d) => d.Constructors[0]?.constructorId === constructorId
   );
@@ -125,10 +125,11 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                 </div>
               </div>
             </div>
-            {carImageUrl && (
+            {carImageUrls && carImageUrls.length > 0 && (
               <div className="shrink-0 self-end">
                 <CarImage
-                  src={carImageUrl}
+                  src={carImageUrls[0]}
+                  fallbackUrls={carImageUrls.slice(1)}
                   alt={`${standing.Constructor.name} car`}
                   className="h-28 w-auto object-contain object-right drop-shadow-lg sm:h-36"
                 />

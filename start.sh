@@ -2,7 +2,7 @@
 set -e
 
 echo "================================"
-echo "  F1 Dashboard - 2025 Season"
+echo "  F1 Dashboard - 2026 Season"
 echo "================================"
 echo ""
 
@@ -17,6 +17,17 @@ NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
 if [ "$NODE_VERSION" -lt 18 ]; then
   echo "Error: Node.js v18+ required (found v$NODE_VERSION)"
   exit 1
+fi
+
+# Auto-update from git if available
+if [ -d ".git" ] && command -v git &> /dev/null; then
+  echo "Checking for updates..."
+  if git pull --ff-only origin main 2>/dev/null; then
+    echo "Updated to latest version."
+  else
+    echo "Already up to date (or manual merge needed)."
+  fi
+  echo ""
 fi
 
 # Install dependencies if needed

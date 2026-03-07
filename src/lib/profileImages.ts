@@ -5,55 +5,66 @@
  * `d_driver_fallback_image.png` overlay — if a driver's photo doesn't exist
  * at the given path, Cloudinary automatically serves a silhouette placeholder.
  *
+ * The CDN organises drivers by the first letter of their given name and uses
+ * a code built from the first 3 chars of first + last name (e.g. MAXVER01).
+ *
  * Team car images are transparent-background renders from the F1 official CDN.
  */
 
 const F1_CDN = "https://media.formula1.com";
-const DRIVER_YEAR = "2025";
-const CAR_YEAR = "2025";
+const CAR_YEAR = "2026";
+const CAR_YEAR_FALLBACK = "2025";
+
+/**
+ * Build a driver headshot URL using the current F1 CDN pattern.
+ * Pattern: /drivers/{FirstInitial}/{CODE}_{Given_Family}/{code}.png
+ */
+function driverUrl(firstInitial: string, code: string, givenName: string, familyName: string): string {
+  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png`;
+}
 
 /** Maps Ergast driverId -> F1 official race-suit headshot URL */
 export const DRIVER_IMAGES: Record<string, string> = {
-  verstappen: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/VERSTAPPENMAX01_Max_Verstappen/VERSTAPPENMAX01.png`,
-  hamilton: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/HAMILTONLEW01_Lewis_Hamilton/HAMILTONLEW01.png`,
-  leclerc: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/LECLERCHA01_Charles_Leclerc/LECLERCHA01.png`,
-  norris: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/NORRISLAN01_Lando_Norris/NORRISLAN01.png`,
-  piastri: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/PIASTRIOS01_Oscar_Piastri/PIASTRIOS01.png`,
-  russell: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/RUSSELLGE01_George_Russell/RUSSELLGE01.png`,
-  antonelli: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/ANTONELKI01_Kimi_Antonelli/ANTONELKI01.png`,
-  alonso: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/ALONSOFER01_Fernando_Alonso/ALONSOFER01.png`,
-  stroll: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/STROLLLAN01_Lance_Stroll/STROLLLAN01.png`,
-  gasly: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/GASLYPIE01_Pierre_Gasly/GASLYPIE01.png`,
-  doohan: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/DOOHANJAC01_Jack_Doohan/DOOHANJAC01.png`,
-  albon: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/ALBONALE01_Alex_Albon/ALBONALE01.png`,
-  sainz: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/SAINZCAR01_Carlos_Sainz/SAINZCAR01.png`,
-  colapinto: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/COLAPFRA01_Franco_Colapinto/COLAPFRA01.png`,
-  ocon: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/OCONEST01_Esteban_Ocon/OCONEST01.png`,
-  bearman: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/BEARMANOL01_Oliver_Bearman/BEARMANOL01.png`,
-  hulkenberg: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/HULKENNIC01_Nico_Hulkenberg/HULKENNIC01.png`,
-  bortoleto: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/BORTOLEG01_Gabriel_Bortoleto/BORTOLEG01.png`,
-  tsunoda: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/TSUNODAYU01_Yuki_Tsunoda/TSUNODAYU01.png`,
-  hadjar: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/HADJARIS01_Isack_Hadjar/HADJARIS01.png`,
-  lawson: `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${DRIVER_YEAR}/LAWSONLIA01_Liam_Lawson/LAWSONLIA01.png`,
+  verstappen: driverUrl("M", "MAXVER01", "Max", "Verstappen"),
+  hamilton:   driverUrl("L", "LEWHAM01", "Lewis", "Hamilton"),
+  leclerc:    driverUrl("C", "CHALEC01", "Charles", "Leclerc"),
+  norris:     driverUrl("L", "LANNOR01", "Lando", "Norris"),
+  piastri:    driverUrl("O", "OSCPIA01", "Oscar", "Piastri"),
+  russell:    driverUrl("G", "GEORUS01", "George", "Russell"),
+  antonelli:  driverUrl("K", "KIMANT01", "Kimi", "Antonelli"),
+  alonso:     driverUrl("F", "FERALO01", "Fernando", "Alonso"),
+  stroll:     driverUrl("L", "LANSTR01", "Lance", "Stroll"),
+  gasly:      driverUrl("P", "PIEGAS01", "Pierre", "Gasly"),
+  doohan:     driverUrl("J", "JACDOO01", "Jack", "Doohan"),
+  albon:      driverUrl("A", "ALEALB01", "Alex", "Albon"),
+  sainz:      driverUrl("C", "CARSAI01", "Carlos", "Sainz"),
+  colapinto:  driverUrl("F", "FRACOL01", "Franco", "Colapinto"),
+  ocon:       driverUrl("E", "ESTOCO01", "Esteban", "Ocon"),
+  bearman:    driverUrl("O", "OLIBEA01", "Oliver", "Bearman"),
+  hulkenberg: driverUrl("N", "NICHUL01", "Nico", "Hulkenberg"),
+  bortoleto:  driverUrl("G", "GABBOR01", "Gabriel", "Bortoleto"),
+  tsunoda:    driverUrl("Y", "YUKTSU01", "Yuki", "Tsunoda"),
+  hadjar:     driverUrl("I", "ISAHAD01", "Isack", "Hadjar"),
+  lawson:     driverUrl("L", "LIALAW01", "Liam", "Lawson"),
 };
 
 /** Maps Ergast constructorId -> F1 official transparent car-render PNG */
-export const TEAM_CAR_IMAGES: Record<string, string> = {
-  red_bull: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/red-bull-racing.png`,
-  ferrari: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/ferrari.png`,
-  mclaren: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/mclaren.png`,
-  mercedes: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/mercedes.png`,
-  aston_martin: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/aston-martin.png`,
-  alpine: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/alpine.png`,
-  williams: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/williams.png`,
-  haas: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/haas.png`,
-  rb: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/rb.png`,
-  // Audi rebranded from Kick Sauber for 2026 — use the most recent available slug
-  audi: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`,
-  kick_sauber: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`,
-  sauber: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`,
-  cadillac: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/cadillac.png`,
-  andretti_cadillac: `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/cadillac.png`,
+export const TEAM_CAR_IMAGES: Record<string, string[]> = {
+  red_bull:          [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/red-bull-racing.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/red-bull-racing.png`],
+  ferrari:           [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/ferrari.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/ferrari.png`],
+  mclaren:           [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/mclaren.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/mclaren.png`],
+  mercedes:          [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/mercedes.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/mercedes.png`],
+  aston_martin:      [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/aston-martin.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/aston-martin.png`],
+  alpine:            [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/alpine.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/alpine.png`],
+  williams:          [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/williams.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/williams.png`],
+  haas:              [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/haas.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/haas.png`],
+  rb:                [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/racing-bulls.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/rb.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/rb.png`],
+  racing_bulls:      [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/racing-bulls.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/rb.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/rb.png`],
+  audi:              [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/audi.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/kick-sauber.png`],
+  kick_sauber:       [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/audi.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/kick-sauber.png`],
+  sauber:            [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/audi.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/kick-sauber.png`, `${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR_FALLBACK}/kick-sauber.png`],
+  cadillac:          [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/cadillac.png`],
+  andretti_cadillac: [`${F1_CDN}/content/dam/fom-website/teams/${CAR_YEAR}/cadillac.png`],
 };
 
 /**
@@ -61,27 +72,27 @@ export const TEAM_CAR_IMAGES: Record<string, string> = {
  * URL pattern: {F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/{slug}.png
  */
 const DRIVER_NUMBER_SLUGS: Record<string, string> = {
-  verstappen:  "VERSTAPPENMAX01",
-  hamilton:    "HAMILTONLEW01",
-  leclerc:     "LECLERCHA01",
-  norris:      "NORRISLAN01",
-  piastri:     "PIASTRIOS01",
-  russell:     "RUSSELLGE01",
-  antonelli:   "ANTONELKI01",
-  alonso:      "ALONSOFER01",
-  stroll:      "STROLLLAN01",
-  gasly:       "GASLYPIE01",
-  doohan:      "DOOHANJAC01",
-  albon:       "ALBONALE01",
-  sainz:       "SAINZCAR01",
-  colapinto:   "COLAPFRA01",
-  ocon:        "OCONEST01",
-  bearman:     "BEARMANOL01",
-  hulkenberg:  "HULKENNIC01",
-  bortoleto:   "BORTOLEG01",
-  tsunoda:     "TSUNODAYU01",
-  hadjar:      "HADJARIS01",
-  lawson:      "LAWSONLIA01",
+  verstappen:  "MAXVER01",
+  hamilton:    "LEWHAM01",
+  leclerc:     "CHALEC01",
+  norris:      "LANNOR01",
+  piastri:     "OSCPIA01",
+  russell:     "GEORUS01",
+  antonelli:   "KIMANT01",
+  alonso:      "FERALO01",
+  stroll:      "LANSTR01",
+  gasly:       "PIEGAS01",
+  doohan:      "JACDOO01",
+  albon:       "ALEALB01",
+  sainz:       "CARSAI01",
+  colapinto:   "FRACOL01",
+  ocon:        "ESTOCO01",
+  bearman:     "OLIBEA01",
+  hulkenberg:  "NICHUL01",
+  bortoleto:   "GABBOR01",
+  tsunoda:     "YUKTSU01",
+  hadjar:      "ISAHAD01",
+  lawson:      "LIALAW01",
 };
 
 export function getDriverImageUrl(driverId: string): string | undefined {
@@ -94,6 +105,17 @@ export function getDriverNumberUrl(driverId: string): string | undefined {
   return `${F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png`;
 }
 
-export function getTeamCarImageUrl(constructorId: string): string | undefined {
+/**
+ * Returns an array of candidate URLs for the team car image, ordered by
+ * preference (2026 first, then 2025 fallback). The CarImage component
+ * tries each URL until one loads successfully.
+ */
+export function getTeamCarImageUrls(constructorId: string): string[] | undefined {
   return TEAM_CAR_IMAGES[constructorId];
+}
+
+/** Returns the first (preferred) URL for backwards compatibility. */
+export function getTeamCarImageUrl(constructorId: string): string | undefined {
+  const urls = TEAM_CAR_IMAGES[constructorId];
+  return urls?.[0];
 }

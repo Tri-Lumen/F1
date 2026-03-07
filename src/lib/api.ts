@@ -337,7 +337,7 @@ export function getRaceDate(race: Race): Date {
 
 export function getF1TVRaceUrl(race: Race): string {
   const query = encodeURIComponent(race.raceName);
-  return `https://f1tv.formula1.com/search?q=${query}&filter_objectSubtype=Replay&filter_year=${race.season}&orderBy=meeting_Number&sortOrder=asc`;
+  return `https://f1tv.formula1.com/search?query=${query}&filter_objectSubtype=Replay&filter_orderByFom=Y&filter_year=${race.season}&orderBy=meeting_Number&sortOrder=asc`;
 }
 
 export function getCountryFlag(nationality: string): string {
