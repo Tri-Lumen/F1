@@ -67,12 +67,16 @@ export function DriverNumber({ src, number, className, color }: DriverNumberProp
 
 interface CarImageProps {
   src: string;
+  /** Optional fallback URLs to try if the primary src fails to load */
+  fallbackUrls?: string[];
   alt: string;
   className?: string;
 }
 
-/** Team car cutout with graceful hide-on-error behaviour. */
-export function CarImage({ src, alt, className }: CarImageProps) {
+/** Team car cutout with automatic fallback to alternative URLs. */
+export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [fallbackIndex, setFallbackIndex] = useState(0);
   const [failed, setFailed] = useState(false);
 
   if (failed) return null;
@@ -80,10 +84,17 @@ export function CarImage({ src, alt, className }: CarImageProps) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
       className={className}
-      onError={() => setFailed(true)}
+      onError={() => {
+        if (fallbackUrls && fallbackIndex < fallbackUrls.length) {
+          setCurrentSrc(fallbackUrls[fallbackIndex]);
+          setFallbackIndex((i) => i + 1);
+        } else {
+          setFailed(true);
+        }
+      }}
     />
   );
 }
