@@ -20,7 +20,9 @@ COPY . .
 RUN apk add --no-cache git && \
     if [ ! -d .git ]; then \
       git init && \
-      git remote add origin "$(node -e "process.stdout.write(require('./package.json').repository.url)")" ; \
+      git remote add origin "$(node -e "process.stdout.write(require('./package.json').repository.url)")" && \
+      git fetch origin main && \
+      git reset --mixed origin/main ; \
     fi
 
 RUN npm run build

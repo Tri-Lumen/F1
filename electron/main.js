@@ -35,35 +35,51 @@ function isNewerVersion(latest, current) {
 function fetchLatestRelease() {
   const https = require('https');
   const currentVersion = app.getVersion();
-  return new Promise((resolve, reject) => {
-    const req = https.get(
-      'https://api.github.com/repos/Tri-Lumen/F1/releases/latest',
-      {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': `F1-Dashboard/${currentVersion}`,
+
+  function doFetch(url, redirectsLeft = 3) {
+    return new Promise((resolve, reject) => {
+      const req = https.get(
+        url,
+        {
+          headers: {
+            Accept: 'application/vnd.github.v3+json',
+            'User-Agent': `F1-Dashboard/${currentVersion}`,
+          },
         },
-      },
-      (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          if (res.statusCode === 404) {
-            resolve(null); // No releases published yet
+        (res) => {
+          // Follow redirects (301, 302, 307, 308)
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            res.resume(); // drain the response
+            if (redirectsLeft <= 0) {
+              reject(new Error('Too many redirects'));
+              return;
+            }
+            doFetch(res.headers.location, redirectsLeft - 1).then(resolve, reject);
             return;
           }
-          if (res.statusCode !== 200) {
-            reject(new Error(`GitHub API returned ${res.statusCode}`));
-            return;
-          }
-          try { resolve(JSON.parse(data)); }
-          catch { reject(new Error('Failed to parse release data from GitHub')); }
-        });
-      }
-    );
-    req.on('error', reject);
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('Update check timed out')); });
-  });
+
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            if (res.statusCode === 404) {
+              resolve(null); // No releases published yet
+              return;
+            }
+            if (res.statusCode !== 200) {
+              reject(new Error(`GitHub API returned ${res.statusCode}: ${data.slice(0, 200)}`));
+              return;
+            }
+            try { resolve(JSON.parse(data)); }
+            catch { reject(new Error('Failed to parse release data from GitHub')); }
+          });
+        }
+      );
+      req.on('error', reject);
+      req.setTimeout(15000, () => { req.destroy(); reject(new Error('Update check timed out')); });
+    });
+  }
+
+  return doFetch('https://api.github.com/repos/Tri-Lumen/F1/releases/latest');
 }
 
 // In production the Next.js standalone build is placed in resources/app/.

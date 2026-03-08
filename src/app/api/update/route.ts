@@ -67,11 +67,26 @@ export async function POST() {
     // Resolve the current branch name first so we can pass it explicitly to
     // `git pull origin <branch>` — this avoids the "no tracking information"
     // error that occurs when the local branch has no upstream configured.
-    const branchResult = await run(
-      `git -c safe.directory=${cwd} rev-parse --abbrev-ref HEAD 2>&1`,
-      cwd
-    );
-    const branch = branchResult.stdout.trim();
+    let branch: string;
+    try {
+      const branchResult = await run(
+        `git -c safe.directory=${cwd} rev-parse --abbrev-ref HEAD 2>&1`,
+        cwd
+      );
+      branch = branchResult.stdout.trim();
+    } catch {
+      // HEAD is unresolvable (empty repo from docker init) — fetch and set up main
+      await run(
+        `git -c safe.directory=${cwd} fetch origin main 2>&1`,
+        cwd
+      );
+      await run(
+        `git -c safe.directory=${cwd} reset --mixed origin/main 2>&1`,
+        cwd
+      );
+      branch = "main";
+      steps.push({ step: "init", output: "Initialized repository from remote" });
+    }
     const pull = await run(
       `git -c safe.directory=${cwd} pull --ff-only origin ${branch} 2>&1`,
       cwd
