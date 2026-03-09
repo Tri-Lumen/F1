@@ -162,7 +162,8 @@ async function RaceContent({ round }: { round: string }) {
               <tbody>
                 {results.map((r) => {
                   const teamColor = getTeamColor(r.Constructor.constructorId);
-                  const gridDiff = parseInt(r.grid) - parseInt(r.position);
+                  const gridPos = parseInt(r.grid);
+                  const gridDiff = gridPos > 0 ? gridPos - parseInt(r.position) : 0;
                   const isFastestLap = r.FastestLap?.rank === "1";
 
                   return (
@@ -253,7 +254,8 @@ async function RaceContent({ round }: { round: string }) {
               <tbody>
                 {sprint.map((r) => {
                   const teamColor = getTeamColor(r.Constructor.constructorId);
-                  const gridDiff = parseInt(r.grid) - parseInt(r.position);
+                  const gridPos = parseInt(r.grid);
+                  const gridDiff = gridPos > 0 ? gridPos - parseInt(r.position) : 0;
                   return (
                     <tr
                       key={r.Driver.driverId}
