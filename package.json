@@ -19,7 +19,10 @@
     "url": "https://github.com/Tri-Lumen/F1.git"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Tri-Lumen",
+    "email": "tri-lumen@users.noreply.github.com"
+  },
   "license": "ISC",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.18",
