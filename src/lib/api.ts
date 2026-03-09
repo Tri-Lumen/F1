@@ -303,7 +303,7 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
 
 export function getTeamColor(constructorId: string): string {
   const colors: Record<string, string> = {
-    red_bull: "#b8941c",
+    red_bull: "#3671C6",
     ferrari: "#e80020",
     mclaren: "#ff8000",
     mercedes: "#27f4d2",
