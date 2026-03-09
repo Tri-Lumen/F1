@@ -57,7 +57,9 @@ jobs:
             libxtst6 \
             xauth \
             xvfb \
-            libgbm-dev
+            libgbm-dev \
+            libfuse2 \
+            fakeroot
 
       - name: Build Next.js (standalone output)
         run: npm run build
