@@ -25,7 +25,7 @@ jobs:
           - os: macos-latest
             platform: mac
             artifact: dist-electron/*.dmg
-          - os: ubuntu-20.04   # Use 20.04 for broadest GLIBC compatibility
+          - os: ubuntu-22.04
             platform: linux
             artifact: dist-electron/*.AppImage
 
@@ -46,7 +46,7 @@ jobs:
 
       # Linux: install system libraries required by Electron / AppImage builder
       - name: Install Linux build dependencies
-        if: matrix.os == 'ubuntu-20.04'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \

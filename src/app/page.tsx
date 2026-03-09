@@ -46,6 +46,13 @@ async function DashboardContent() {
   const totalRaces = races.length;
   const completedCount = allCompleted.length;
 
+  const winsLeader = driverStandings.length > 0
+    ? driverStandings.reduce((best, d) =>
+        parseInt(d.wins) > parseInt(best.wins) ? d : best,
+        driverStandings[0]
+      )
+    : null;
+
   return (
     <>
       <Suspense fallback={null}>
@@ -111,13 +118,13 @@ async function DashboardContent() {
           <p className="text-xs uppercase tracking-wider text-f1-text-muted">
             Wins Leader
           </p>
-          {driverStandings[0] ? (
+          {winsLeader ? (
             <>
               <p className="mt-1 text-2xl font-black">
-                {parseInt(driverStandings[0].wins)}
+                {parseInt(winsLeader.wins)}
                 <span className="text-sm font-normal text-f1-text-muted ml-1">wins</span>
               </p>
-              <p className="text-xs text-f1-text-muted mt-0.5">{driverStandings[0].Driver.familyName}</p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{winsLeader.Driver.familyName}</p>
             </>
           ) : (
             <p className="mt-1 text-2xl font-black">—</p>

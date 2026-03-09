@@ -38,6 +38,7 @@ function computeStats(
   let bestFinish = 99;
   let totalPosition = 0;
   let totalGrid = 0;
+  let gridRaces = 0;
   let totalPoints = 0;
   let racesEntered = 0;
   let poles = 0;
@@ -62,7 +63,11 @@ function computeStats(
           dnfs++;
 
         totalPosition += pos;
-        totalGrid += grid;
+        // Exclude pit-lane starts (grid=0) from average grid calculation
+        if (grid > 0) {
+          totalGrid += grid;
+          gridRaces++;
+        }
 
         raceResults.push({
           round: race.round,
@@ -90,8 +95,8 @@ function computeStats(
         ? Math.round((totalPosition / racesEntered) * 10) / 10
         : 0,
     avgGrid:
-      racesEntered > 0
-        ? Math.round((totalGrid / racesEntered) * 10) / 10
+      gridRaces > 0
+        ? Math.round((totalGrid / gridRaces) * 10) / 10
         : 0,
     pointsPerRace:
       racesEntered > 0
