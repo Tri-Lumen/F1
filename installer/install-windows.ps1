@@ -36,11 +36,10 @@ function Get-LatestRelease {
 
 function Find-WindowsAsset {
     param($release)
-    # Look for the NSIS .exe installer (not blockmap, not yml)
+    # Look for the NSIS Setup installer specifically (not the web bootstrapper, blockmap, or yml)
     $asset = $release.assets | Where-Object {
-        $_.name -match '\.exe$' -and
-        $_.name -notmatch 'blockmap' -and
-        $_.name -notmatch '\.yml$'
+        $_.name -match 'Setup.*\.exe$' -and
+        $_.name -notmatch 'blockmap'
     } | Select-Object -First 1
 
     if (-not $asset) {
@@ -86,7 +85,12 @@ function Install-F1Dashboard {
         Write-Host '[OK]    Download complete' -ForegroundColor Green
 
         Write-Host '[INFO]  Launching installer...' -ForegroundColor Cyan
-        Start-Process -FilePath $tempFile -Wait
+        $process = Start-Process -FilePath $tempFile -PassThru -Wait
+
+        if ($process.ExitCode -ne 0) {
+            Write-Host "[WARN]  Setup exited with code $($process.ExitCode)." -ForegroundColor Yellow
+            exit $process.ExitCode
+        }
 
         Write-Host ''
         Write-Host '========================================' -ForegroundColor Green

@@ -11,7 +11,7 @@
 ; ---- General settings -------------------------------------------------------
 Name "F1 Dashboard Installer"
 OutFile "F1-Dashboard-WebInstaller.exe"
-InstallDir "$TEMP\F1-Dashboard-Install"
+InstallDir "$TEMP\F1-Dashboard-Bootstrap"
 RequestExecutionLevel user
 ShowInstDetails show
 
@@ -20,8 +20,8 @@ ShowInstDetails show
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "F1 Dashboard — Online Installer"
 !define MUI_WELCOMEPAGE_TEXT "This installer will download and install the latest version of F1 Dashboard from GitHub.$\r$\n$\r$\nNo internet connection is required after the initial install — the app will auto-update itself.$\r$\n$\r$\nClick Next to continue."
-!define MUI_FINISHPAGE_TITLE "Download Complete"
-!define MUI_FINISHPAGE_TEXT "The F1 Dashboard installer has been downloaded and launched.$\r$\n$\r$\nFollow the prompts in the main installer to complete setup."
+!define MUI_FINISHPAGE_TITLE "Installation Complete"
+!define MUI_FINISHPAGE_TEXT "F1 Dashboard has been installed successfully.$\r$\n$\r$\nYou can now launch it from the Start Menu."
 
 ; ---- Pages -------------------------------------------------------------------
 !insertmacro MUI_PAGE_WELCOME
@@ -58,4 +58,11 @@ Section "Install"
     ; Clean up
     DetailPrint "Cleaning up..."
     RMDir /r $INSTDIR
+
+    ; Surface any failure — exit code 0 means success, anything else means the
+    ; download failed, the asset wasn't found, or the user cancelled setup.
+    IntCmp $0 0 done
+    MessageBox MB_ICONSTOP "Installation did not complete.$\r$\n$\r$\nPlease check your internet connection and try again.$\r$\n$\r$\nYou can also download the installer directly from:$\r$\nhttps://github.com/Tri-Lumen/F1/releases" /SD IDOK
+    Quit
+    done:
 SectionEnd
