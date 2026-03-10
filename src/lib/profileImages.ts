@@ -20,7 +20,7 @@ const CAR_YEAR_FALLBACK = "2025";
  * Pattern: /drivers/{FirstInitial}/{CODE}_{Given_Family}/{code}.png
  */
 function driverUrl(firstInitial: string, code: string, givenName: string, familyName: string): string {
-  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/1col/image.png`;
+  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/4col/image.png`;
 }
 
 /** Maps Ergast driverId -> F1 official race-suit headshot URL */
@@ -46,11 +46,14 @@ export const DRIVER_IMAGES: Record<string, string> = {
   tsunoda:    driverUrl("Y", "YUKTSU01", "Yuki", "Tsunoda"),
   hadjar:     driverUrl("I", "ISAHAD01", "Isack", "Hadjar"),
   lawson:     driverUrl("L", "LIALAW01", "Liam", "Lawson"),
+  // Cadillac (new 2026 entrant)
+  bottas:     driverUrl("V", "VALBOT01", "Valtteri", "Bottas"),
+  perez:      driverUrl("S", "SERPER01", "Sergio", "Perez"),
 };
 
 /** Build a team car image URL with the CDN transform suffix. */
 function carUrl(year: string, teamSlug: string): string {
-  return `${F1_CDN}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/2col/image.png`;
+  return `${F1_CDN}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/4col/image.png`;
 }
 
 /** Maps Ergast constructorId -> F1 official transparent car-render PNG */
@@ -62,7 +65,7 @@ export const TEAM_CAR_IMAGES: Record<string, string[]> = {
   aston_martin:      [carUrl(CAR_YEAR, "aston-martin"), carUrl(CAR_YEAR_FALLBACK, "aston-martin")],
   alpine:            [carUrl(CAR_YEAR, "alpine"), carUrl(CAR_YEAR_FALLBACK, "alpine")],
   williams:          [carUrl(CAR_YEAR, "williams"), carUrl(CAR_YEAR_FALLBACK, "williams")],
-  haas:              [carUrl(CAR_YEAR, "haas"), carUrl(CAR_YEAR_FALLBACK, "haas")],
+  haas:              [carUrl(CAR_YEAR, "tgr-haas"), carUrl(CAR_YEAR, "haas"), carUrl(CAR_YEAR_FALLBACK, "haas")],
   rb:                [carUrl(CAR_YEAR, "racing-bulls"), carUrl(CAR_YEAR, "rb"), carUrl(CAR_YEAR_FALLBACK, "rb")],
   racing_bulls:      [carUrl(CAR_YEAR, "racing-bulls"), carUrl(CAR_YEAR, "rb"), carUrl(CAR_YEAR_FALLBACK, "rb")],
   audi:              [carUrl(CAR_YEAR, "audi"), carUrl(CAR_YEAR, "kick-sauber"), carUrl(CAR_YEAR_FALLBACK, "kick-sauber")],
@@ -98,6 +101,9 @@ const DRIVER_NUMBER_SLUGS: Record<string, string> = {
   tsunoda:     "YUKTSU01",
   hadjar:      "ISAHAD01",
   lawson:      "LIALAW01",
+  // Cadillac (new 2026 entrant)
+  bottas:      "VALBOT01",
+  perez:       "SERPER01",
 };
 
 export function getDriverImageUrl(driverId: string): string | undefined {
