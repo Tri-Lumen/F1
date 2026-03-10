@@ -102,7 +102,13 @@ ok "Download complete"
 # ---- Install ----------------------------------------------------------------
 if [ "$ASSET_TYPE" = "deb" ]; then
     info "Installing .deb package (requires sudo)..."
-    sudo dpkg -i "$TEMP_DIR/$ASSET_NAME" || sudo apt-get install -f -y
+    if ! sudo dpkg -i "$TEMP_DIR/$ASSET_NAME"; then
+        warn "dpkg reported errors — attempting to satisfy missing dependencies..."
+        sudo apt-get install -f -y || error "Failed to resolve dependencies for .deb package"
+        # Retry the install now that dependencies are in place
+        sudo dpkg -i "$TEMP_DIR/$ASSET_NAME" \
+            || error "Failed to install .deb package. Check the output above for details."
+    fi
     ok "Package installed"
 else
     # AppImage installation

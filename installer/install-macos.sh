@@ -86,16 +86,18 @@ ok "Download complete"
 
 # ---- Mount and install ------------------------------------------------------
 info "Mounting disk image..."
-MOUNT_DIR=$(hdiutil attach "$TEMP_DIR/$DMG_NAME" -nobrowse -quiet 2>&1 | tail -1 | awk '{print $NF}') \
-    || MOUNT_DIR=$(hdiutil attach "$TEMP_DIR/$DMG_NAME" -nobrowse 2>&1 | grep '/Volumes/' | awk -F'\t' '{print $NF}')
+# hdiutil outputs tab-separated columns; the mount path is the last field on
+# the line(s) that contain /Volumes/.  Using awk -F'\t' correctly handles
+# volume names that contain spaces (e.g. "F1 Dashboard").  The previous
+# awk '{print $NF}' split on whitespace and silently returned only the last
+# word, making the subsequent find/copy steps operate on a non-existent path.
+MOUNT_OUTPUT=$(hdiutil attach "$TEMP_DIR/$DMG_NAME" -nobrowse 2>&1) \
+    || error "Failed to mount DMG. Try opening $TEMP_DIR/$DMG_NAME manually."
+
+MOUNT_DIR=$(echo "$MOUNT_OUTPUT" | grep '/Volumes/' | awk -F'\t' '{print $NF}' | tail -1 | sed 's/[[:space:]]*$//')
 
 if [ -z "$MOUNT_DIR" ] || [ ! -d "$MOUNT_DIR" ]; then
-    # Fallback: find any recently mounted volume
-    MOUNT_DIR=$(ls -dt /Volumes/*F1* /Volumes/*f1* 2>/dev/null | head -1)
-fi
-
-if [ -z "$MOUNT_DIR" ] || [ ! -d "$MOUNT_DIR" ]; then
-    error "Failed to mount DMG. Try opening $TEMP_DIR/$DMG_NAME manually."
+    error "Failed to determine DMG mount point. Try opening $TEMP_DIR/$DMG_NAME manually."
 fi
 
 APP_PATH=$(find "$MOUNT_DIR" -maxdepth 1 -name "*.app" | head -1)
