@@ -25,9 +25,12 @@ export const ARCHIVE_SEASONS = [
 
 // --- Ergast / Jolpica API ---
 
-async function fetchErgast<T>(path: string): Promise<T | null> {
+async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
   try {
-    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 300 } });
+    const fetchOptions = revalidate === false
+      ? { cache: 'no-store' as const }
+      : { next: { revalidate } };
+    const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
     if (!res.ok) return null;
     return res.json();
   } catch {
@@ -104,12 +107,12 @@ export async function getRaceResults(round: string): Promise<RaceResult[]> {
 }
 
 export async function getRaceWithResults(round: string): Promise<Race | null> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/results/?limit=30`);
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/results/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0] ?? null;
 }
 
 export async function getQualifyingResults(round: string): Promise<QualifyingResult[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/qualifying/?limit=30`);
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/qualifying/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults ?? [];
 }
 
@@ -129,12 +132,12 @@ export async function getAllSeasonResults(): Promise<Race[]> {
 }
 
 export async function getSprintResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`);
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
 }
 
 export async function getPitStops(round: string): Promise<PitStop[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`);
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
 }
 

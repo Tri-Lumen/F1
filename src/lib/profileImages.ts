@@ -25,7 +25,7 @@ function driverUrl(firstInitial: string, code: string, givenName: string, family
 
 /** Maps Ergast driverId -> F1 official race-suit headshot URL */
 export const DRIVER_IMAGES: Record<string, string> = {
-  verstappen: driverUrl("M", "MAXVER01", "Max", "Verstappen"),
+  max_verstappen: driverUrl("M", "MAXVER01", "Max", "Verstappen"),
   hamilton:   driverUrl("L", "LEWHAM01", "Lewis", "Hamilton"),
   leclerc:    driverUrl("C", "CHALEC01", "Charles", "Leclerc"),
   norris:     driverUrl("L", "LANNOR01", "Lando", "Norris"),
@@ -77,7 +77,7 @@ export const TEAM_CAR_IMAGES: Record<string, string[]> = {
  * URL pattern: {F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/{slug}.png
  */
 const DRIVER_NUMBER_SLUGS: Record<string, string> = {
-  verstappen:  "MAXVER01",
+  max_verstappen:  "MAXVER01",
   hamilton:    "LEWHAM01",
   leclerc:     "CHALEC01",
   norris:      "LANNOR01",
