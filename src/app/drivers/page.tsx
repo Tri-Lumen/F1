@@ -110,7 +110,7 @@ async function DriversContent() {
   // --- Feature 2: Championship Clinch Status ---
   const now = new Date();
   const remainingRaces = schedule.filter((r) => getRaceDate(r) > now).length;
-  const MAX_PTS_PER_RACE = 26; // 25 for win + 1 fastest lap
+  const MAX_PTS_PER_RACE = 34; // 25 for win + 1 fastest lap + 8 for sprint win
   const leader = standings[0];
   const second = standings[1];
   let clinchInfo: {
