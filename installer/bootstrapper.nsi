@@ -59,9 +59,14 @@ Section "Install"
     DetailPrint "Cleaning up..."
     RMDir /r $INSTDIR
 
-    ; Surface any failure — exit code 0 means success, anything else means the
-    ; download failed, the asset wasn't found, or the user cancelled setup.
-    IntCmp $0 0 done
+    ; Surface any failure — exit code 0 means success, anything else (including
+    ; the literal string "error" that nsExec pushes when it cannot launch the
+    ; process at all) means the download failed, the asset wasn't found, or
+    ; the user cancelled setup.  IntCmp silently coerces non-numeric strings to
+    ; 0, so we must guard against the "error" sentinel explicitly first.
+    StrCmp $0 "error" install_failed
+    IntCmp $0 0 done install_failed
+    install_failed:
     MessageBox MB_ICONSTOP "Installation did not complete.$\r$\n$\r$\nPlease check your internet connection and try again.$\r$\n$\r$\nYou can also download the installer directly from:$\r$\nhttps://github.com/Tri-Lumen/F1/releases" /SD IDOK
     Quit
     done:
