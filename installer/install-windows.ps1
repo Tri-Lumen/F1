@@ -85,7 +85,12 @@ function Install-F1Dashboard {
         Write-Host '[OK]    Download complete' -ForegroundColor Green
 
         Write-Host '[INFO]  Launching installer...' -ForegroundColor Cyan
-        Start-Process -FilePath $tempFile -Wait
+        $process = Start-Process -FilePath $tempFile -PassThru -Wait
+
+        if ($process.ExitCode -ne 0) {
+            Write-Host "[WARN]  Setup exited with code $($process.ExitCode)." -ForegroundColor Yellow
+            exit $process.ExitCode
+        }
 
         Write-Host ''
         Write-Host '========================================' -ForegroundColor Green
