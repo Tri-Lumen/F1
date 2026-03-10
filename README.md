@@ -2,19 +2,41 @@
 
 Live-updating dashboard for the 2026 Formula 1 season — standings, race results, live timing, stats, and historical data for every driver and team.
 
-## Download
+## Install
 
-Pre-built desktop apps are available on the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest).
+The quickest way to install F1 Dashboard is with the one-line installers below. They always download the **latest release** from GitHub — no need to grab a new installer after every update.
 
-| Platform | Download |
+**Windows** (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install-windows.ps1 | iex
+```
+
+**macOS** (Terminal):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install-macos.sh | bash
+```
+
+**Linux** (Terminal):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install-linux.sh | bash
+```
+
+> After the initial install, the app updates itself automatically via the built-in Electron auto-updater.
+
+### Direct Downloads
+
+You can also grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest):
+
+| Platform | Asset |
 |---|---|
-| Windows | [F1 Dashboard Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-Setup.exe) |
-| macOS | [F1 Dashboard.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.dmg) |
-| Linux | [F1 Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.AppImage) |
+| Windows | [F1-Dashboard-Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-Setup.exe) |
+| macOS | [F1-Dashboard.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.dmg) |
+| Linux | [F1-Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.AppImage) |
 
-> Desktop builds are published automatically on every release. The app includes automatic update notifications.
-
-## Quick Start
+## Run from Source
 
 ```bash
 npm install
@@ -23,27 +45,29 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## Docker
+### Production Build
 
-**Docker Compose (recommended):**
+```bash
+npm run build
+npm start
+```
+
+## Docker
 
 ```bash
 docker compose up -d
 ```
 
-**Docker directly:**
+Or build and run directly:
 
 ```bash
 docker build -t f1-dashboard .
 docker run -p 3000:3000 f1-dashboard
 ```
 
-## Portainer
+### Portainer
 
-**Option 1 — Pre-built image via Web editor (recommended):**
-
-1. Go to **Stacks → Add stack → Web editor**
-2. Paste the following and click **Deploy the stack**:
+**Pre-built image (recommended)** — Go to **Stacks → Add stack → Web editor** and paste:
 
 ```yaml
 services:
@@ -57,78 +81,47 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
 ```
 
-The image is built and published to the GitHub Container Registry automatically on every push to `main`.
+**From Git** — Go to **Stacks → Add stack → Repository**, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.
 
-**Option 2 — Deploy from Git:**
-
-1. Go to **Stacks → Add stack → Repository**
-2. Set the URL to `https://github.com/Tri-Lumen/F1.git`
-3. Set the **Compose path** to `docker-compose.yml`
-4. Click **Deploy the stack**
-
-> **Note:** Portainer's built-in git client (go-git) can fail to clone from GitHub with an HTTP 500 error. Use the pre-built image option if this happens.
-
-## Production Build
-
-```bash
-npm run build
-npm start
-```
+> Portainer's built-in git client can fail to clone from GitHub with an HTTP 500. Use the pre-built image if this happens.
 
 ## Pages
 
-### Current Season
-
 | Route | Description |
 |---|---|
-| `/` | Season overview — live banner, next session card, championship leaders, recent results, standings summaries |
-| `/live` | Live session timing — top positions, tire strategy, team radio feed, onboard camera links |
-| `/races` | Full race calendar split into upcoming and completed rounds, each with F1TV watch links |
-| `/race/:round` | Race detail — podium, full race classification with grid deltas, qualifying results, F1TV link |
-| `/drivers` | Driver championship standings table with per-driver stat cards (wins, podiums, poles, fastest laps, DNFs, avg finish, points per race) |
-| `/drivers/:driverId` | Individual driver profile — season results, points progression chart, qualifying gap chart, teammate head-to-head |
-| `/teams` | Constructor championship standings table with team cards, driver lineups, and aggregate stats |
-| `/teams/:constructorId` | Individual team profile — driver comparison, points progression, season results breakdown |
-
-### Analytics
-
-| Route | Description |
-|---|---|
-| `/stats` | Season-wide analytics — wins/podiums breakdown, points leaders, head-to-head team battles |
-| `/fastest-laps` | Fastest lap rankings for every completed race with lap time, speed, and race position |
-| `/compare` | Head-to-head driver comparison — points, wins, podiums, fastest laps, DNFs side by side |
-
-### Historical & Settings
-
-| Route | Description |
-|---|---|
-| `/archive` | Season index listing all available historical seasons |
-| `/archive/:season` | Championship standings and full race results for a past season (2016–2025) |
-| `/favorites` | Personalised view showing tracked drivers and teams *(appears in nav once favourites are set)* |
-| `/settings` | Theme selection, accent colour, and favourite driver/team preferences |
+| `/` | Season overview — live banner, next session, championship leaders, recent results |
+| `/live` | Live timing — positions, tire strategy, team radio, onboard links |
+| `/races` | Race calendar (upcoming and completed) with F1TV links |
+| `/race/:round` | Race detail — podium, classification, qualifying, F1TV link |
+| `/drivers` | Driver standings with stat cards (wins, podiums, poles, DNFs, etc.) |
+| `/drivers/:driverId` | Driver profile — results, points chart, qualifying gaps, teammate H2H |
+| `/teams` | Constructor standings with driver lineups and aggregate stats |
+| `/teams/:constructorId` | Team profile — driver comparison, points chart, results breakdown |
+| `/stats` | Season analytics — wins/podiums breakdown, points leaders, team battles |
+| `/fastest-laps` | Fastest lap rankings per race (time, speed, position) |
+| `/compare` | Head-to-head driver comparison |
+| `/archive` | Historical season index |
+| `/archive/:season` | Past season standings and results (2016–2025) |
+| `/favorites` | Personalised view of tracked drivers and teams |
+| `/settings` | Theme, accent colour, and favourite preferences |
 
 ## Features
 
-- **Live session banner** — Top 5 positions, tire compounds, and intervals during active sessions (OpenF1 API)
-- **Session countdown** — Nav pill counts down to the next scheduled session; switches to a pulsing LIVE indicator when a session is active
-- **Auto-refresh** — Countdown timer on every page triggers a full data refresh
-- **F1TV links** — Direct watch links on every race card and detail page
-- **Driver profiles** — Points progression, qualifying gap charts, and teammate H2H for every driver
-- **Team profiles** — Constructor points chart and driver-by-driver season breakdown
-- **Favorites** — Pin drivers and teams for a personalised summary page
-- **Archive** — Historical standings and results back to 2016
-- **Team colors** — Correct 2026 colors for all 10 constructors
-- **Dark / light theme** — F1-branded dark UI with red accents; switchable to light mode with custom team accent colors
-- **Responsive** — Fully functional from mobile through widescreen desktop
-
-## Data Sources
-
-- [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) — Standings, results, and schedule (Ergast successor)
-- [OpenF1 API](https://openf1.org) — Live session timing, tire stints, and team radio
+- **Live timing** — Top 5 positions, tire compounds, and intervals during active sessions
+- **Session countdown** — Nav pill counts down to the next session; pulses LIVE when active
+- **Auto-refresh** — Periodic data refresh on every page
+- **F1TV links** — Direct watch links on race cards and detail pages
+- **Driver & team profiles** — Points progression, qualifying gaps, teammate H2H
+- **Favorites** — Pin drivers and teams for a personalised summary
+- **Archive** — Historical standings and results (2016–2025)
+- **Team colors** — Correct 2026 colours for all 10 constructors
+- **Dark / light theme** — F1-branded dark UI with red accents; light mode with team accent colours
+- **Responsive** — Mobile through widescreen
 
 ## Tech Stack
 
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS 4
-- Electron 33 (desktop wrapper)
+- [Next.js 16](https://nextjs.org) (App Router) + React 19
+- TypeScript / Tailwind CSS 4
+- [Electron 33](https://www.electronjs.org) (desktop builds)
+- [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) — standings, results, schedule
+- [OpenF1 API](https://openf1.org) — live timing, tire stints, team radio
