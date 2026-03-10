@@ -36,11 +36,10 @@ function Get-LatestRelease {
 
 function Find-WindowsAsset {
     param($release)
-    # Look for the NSIS .exe installer (not blockmap, not yml)
+    # Look for the NSIS Setup installer specifically (not the web bootstrapper, blockmap, or yml)
     $asset = $release.assets | Where-Object {
-        $_.name -match '\.exe$' -and
-        $_.name -notmatch 'blockmap' -and
-        $_.name -notmatch '\.yml$'
+        $_.name -match 'Setup.*\.exe$' -and
+        $_.name -notmatch 'blockmap'
     } | Select-Object -First 1
 
     if (-not $asset) {

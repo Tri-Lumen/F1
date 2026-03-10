@@ -11,7 +11,7 @@
 ; ---- General settings -------------------------------------------------------
 Name "F1 Dashboard Installer"
 OutFile "F1-Dashboard-WebInstaller.exe"
-InstallDir "$TEMP\F1-Dashboard-Install"
+InstallDir "$TEMP\F1-Dashboard-Bootstrap"
 RequestExecutionLevel user
 ShowInstDetails show
 
