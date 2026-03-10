@@ -1,0 +1,70 @@
+name: Build bootstrapper installer
+
+# Only needs to run when the installer scripts themselves change,
+# or on manual dispatch. The bootstrapper .exe is version-agnostic —
+# it always downloads the latest release at runtime.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'installer/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-bootstrapper:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build NSIS bootstrapper
+        run: |
+          cd installer
+          & "C:\Program Files (x86)\NSIS\makensis.exe" bootstrapper.nsi
+        shell: pwsh
+
+      - name: Upload bootstrapper artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: F1-Dashboard-WebInstaller
+          path: installer/F1-Dashboard-WebInstaller.exe
+
+      - name: Upload to latest release
+        if: github.ref == 'refs/heads/main'
+        run: |
+          $tag = gh release list --limit 1 --json tagName --jq '.[0].tagName'
+          if ($tag) {
+            gh release upload $tag installer/F1-Dashboard-WebInstaller.exe --clobber
+          } else {
+            Write-Host "No existing release found — skipping upload"
+          }
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  make-scripts-executable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure shell scripts are executable
+        run: |
+          chmod +x installer/install-macos.sh
+          chmod +x installer/install-linux.sh
+
+          if git diff --quiet; then
+            echo "Scripts already executable"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add installer/install-macos.sh installer/install-linux.sh
+            git commit -m "chore: ensure installer scripts are executable"
+            git push
+          fi
