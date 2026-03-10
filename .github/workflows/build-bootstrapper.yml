@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - 'installer/**'
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -35,10 +37,14 @@ jobs:
           name: F1-Dashboard-WebInstaller
           path: installer/F1-Dashboard-WebInstaller.exe
 
-      - name: Upload to latest release
-        if: github.ref == 'refs/heads/main'
+      - name: Upload to release
+        if: github.event_name == 'release' || github.ref == 'refs/heads/main'
         run: |
-          $tag = gh release list --limit 1 --json tagName --jq '.[0].tagName'
+          if ("${{ github.event_name }}" -eq "release") {
+            $tag = "${{ github.event.release.tag_name }}"
+          } else {
+            $tag = gh release list --limit 1 --json tagName --jq '.[0].tagName'
+          }
           if ($tag) {
             gh release upload $tag installer/F1-Dashboard-WebInstaller.exe --clobber
           } else {
@@ -50,6 +56,7 @@ jobs:
 
   make-scripts-executable:
     runs-on: ubuntu-latest
+    if: github.event_name != 'release'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

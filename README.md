@@ -33,7 +33,8 @@ You can also grab a specific build from the [Releases page](https://github.com/T
 | Platform | Asset |
 |---|---|
 | Windows | [F1-Dashboard-Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-Setup.exe) |
-| macOS | [F1-Dashboard.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.dmg) |
+| macOS (Apple Silicon) | [F1-Dashboard-arm64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-arm64.dmg) |
+| macOS (Intel) | [F1-Dashboard-x64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-x64.dmg) |
 | Linux | [F1-Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.AppImage) |
 
 ## Run from Source
