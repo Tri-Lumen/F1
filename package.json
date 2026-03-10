@@ -78,7 +78,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "artifactName": "F1-Dashboard-Setup.${ext}"
     },
     "mac": {
       "target": [
@@ -89,6 +90,7 @@
       "category": "public.app-category.sports"
     },
     "dmg": {
+      "artifactName": "F1-Dashboard-${arch}.${ext}",
       "contents": [
         { "x": 130, "y": 220 },
         { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
@@ -100,7 +102,8 @@
         { "target": "deb", "arch": ["x64"] }
       ],
       "icon": "build/icon.png",
-      "category": "Network"
+      "category": "Network",
+      "artifactName": "F1-Dashboard.${ext}"
     },
     "publish": {
       "provider": "github",
