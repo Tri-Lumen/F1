@@ -20,7 +20,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Pass host Docker credentials so Watchtower can pull from private registries
       # (e.g. ghcr.io). Run docker-install.sh first to populate this file.
-      - ${HOME}/.docker/config.json:/config.json:ro
+      # ${HOME} may be unset in Portainer stacks, so fall back to /root.
+      - ${HOME:-/root}/.docker/config.json:/config.json:ro
     environment:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=3600
