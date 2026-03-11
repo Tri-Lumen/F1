@@ -1,10 +1,50 @@
 'use strict';
 
 const { app, BrowserWindow, shell, dialog, Menu, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const net = require('net');
+
+// ---------------------------------------------------------------------------
+// electron-updater configuration
+// ---------------------------------------------------------------------------
+
+autoUpdater.autoDownload = false;        // user must confirm before download
+autoUpdater.autoInstallOnAppQuit = true; // apply on next quit if downloaded
+
+let pendingUpdateInfo = null;  // UpdateInfo when a newer version is found
+let updateDownloaded   = false;
+
+// Wire up progress/completion events once so they're ready before any check.
+autoUpdater.on('download-progress', (progress) => {
+  mainWindow?.webContents.send('update-progress', {
+    percent:        Math.round(progress.percent),
+    transferred:    progress.transferred,
+    total:          progress.total,
+    bytesPerSecond: progress.bytesPerSecond,
+  });
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  updateDownloaded = true;
+  mainWindow?.webContents.send('update-downloaded', { version: info.version });
+  dialog.showMessageBox(mainWindow, {
+    type:      'info',
+    title:     'Update Ready to Install',
+    message:   `F1 Dashboard ${info.version} has been downloaded`,
+    detail:    'Restart now to apply the update, or it will be applied on the next launch.',
+    buttons:   ['Restart Now', 'Later'],
+    defaultId: 0,
+  }).then(({ response }) => {
+    if (response === 0) autoUpdater.quitAndInstall();
+  }).catch(() => {});
+});
+
+autoUpdater.on('error', (err) => {
+  mainWindow?.webContents.send('update-error', { message: err.message });
+});
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -238,41 +278,74 @@ function buildMenu(port) {
         {
           label: 'Check for Updates…',
           async click() {
-            try {
+            // If an update is already downloaded, just offer to restart.
+            if (updateDownloaded) {
+              const { response } = await dialog.showMessageBox(mainWindow, {
+                type:      'info',
+                title:     'Update Ready',
+                message:   'An update has already been downloaded.',
+                detail:    'Restart now to apply it.',
+                buttons:   ['Restart Now', 'Later'],
+                defaultId: 0,
+              });
+              if (response === 0) autoUpdater.quitAndInstall();
+              return;
+            }
+
+            // Helper: manual fallback (dev mode or when electron-updater fails).
+            async function manualCheck() {
               const release = await fetchLatestRelease();
               if (!release) {
-                dialog.showMessageBox(mainWindow, {
-                  type: 'info',
-                  title: 'F1 Dashboard is up to date',
-                  message: 'No releases have been published yet.',
+                await dialog.showMessageBox(mainWindow, {
+                  type: 'info', title: 'F1 Dashboard', message: 'No releases have been published yet.',
                 });
                 return;
               }
-              const latestTag = release.tag_name;
               const currentVersion = app.getVersion();
-              if (isNewerVersion(latestTag, currentVersion)) {
+              if (isNewerVersion(release.tag_name, currentVersion)) {
                 const { response } = await dialog.showMessageBox(mainWindow, {
-                  type: 'info',
-                  title: 'Update Available',
-                  message: `F1 Dashboard ${latestTag} is available`,
-                  detail: `You are running v${currentVersion}. Click Download to open the releases page.`,
-                  buttons: ['Download', 'Later'],
+                  type:      'info',
+                  title:     'Update Available',
+                  message:   `F1 Dashboard ${release.tag_name} is available`,
+                  detail:    `You are running v${currentVersion}. Open the releases page to download manually.`,
+                  buttons:   ['Open Releases Page', 'Later'],
                   defaultId: 0,
                 });
                 if (response === 0) shell.openExternal(release.html_url);
               } else {
                 dialog.showMessageBox(mainWindow, {
-                  type: 'info',
-                  title: 'F1 Dashboard is up to date',
+                  type: 'info', title: 'F1 Dashboard is up to date',
                   message: `You are running the latest version (v${currentVersion}).`,
                 });
               }
-            } catch (err) {
-              dialog.showMessageBox(mainWindow, {
-                type: 'error',
-                title: 'Update Check Failed',
-                message: err?.message ?? 'Failed to check for updates.',
+            }
+
+            if (!isPackaged) { try { await manualCheck(); } catch (e) { dialog.showMessageBox(mainWindow, { type: 'error', title: 'Update Check Failed', message: e?.message ?? 'Failed to check for updates.' }); } return; }
+
+            try {
+              const result = await autoUpdater.checkForUpdates();
+              const currentVersion = app.getVersion();
+              if (!result || !isNewerVersion(result.updateInfo.version, currentVersion)) {
+                dialog.showMessageBox(mainWindow, {
+                  type: 'info', title: 'F1 Dashboard is up to date',
+                  message: `You are running the latest version (v${currentVersion}).`,
+                });
+                return;
+              }
+              pendingUpdateInfo = result.updateInfo;
+              const { response } = await dialog.showMessageBox(mainWindow, {
+                type:      'info',
+                title:     'Update Available',
+                message:   `F1 Dashboard ${result.updateInfo.version} is available`,
+                detail:    `You are running v${currentVersion}. Click Download to start downloading in the background.`,
+                buttons:   ['Download', 'Later'],
+                defaultId: 0,
               });
+              if (response === 0) autoUpdater.downloadUpdate();
+            } catch {
+              // electron-updater failed (likely no latest.yml in release) — fall back.
+              try { await manualCheck(); }
+              catch (e) { dialog.showMessageBox(mainWindow, { type: 'error', title: 'Update Check Failed', message: e?.message ?? 'Failed to check for updates.' }); }
             }
           },
         },
@@ -391,18 +464,58 @@ async function createWindow() {
 // ---------------------------------------------------------------------------
 
 ipcMain.handle('check-for-updates', async () => {
-  try {
-    const release = await fetchLatestRelease();
-    if (!release) {
-      return { triggered: true, hasUpdate: false, latestVersion: null, releaseUrl: null };
-    }
-    const latestTag = release.tag_name;
-    const currentVersion = app.getVersion();
-    const hasUpdate = isNewerVersion(latestTag, currentVersion);
-    return { triggered: true, hasUpdate, latestVersion: latestTag, releaseUrl: release.html_url };
-  } catch (err) {
-    return { triggered: false, error: err?.message ?? 'Failed to check for updates.' };
+  // If the update was already downloaded in this session, report that.
+  if (updateDownloaded) {
+    return { triggered: true, hasUpdate: true, updateReady: true, latestVersion: pendingUpdateInfo?.version ?? null };
   }
+
+  // In dev (unpackaged) electron-updater doesn't work — use manual check.
+  if (!isPackaged) {
+    try {
+      const release = await fetchLatestRelease();
+      if (!release) return { triggered: true, hasUpdate: false, latestVersion: null };
+      const hasUpdate = isNewerVersion(release.tag_name, app.getVersion());
+      return { triggered: true, hasUpdate, latestVersion: release.tag_name, releaseUrl: release.html_url, devMode: true };
+    } catch (err) {
+      return { triggered: false, error: err?.message ?? 'Failed to check for updates.' };
+    }
+  }
+
+  // Packaged: try electron-updater first (enables in-app download + install).
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    if (!result) return { triggered: true, hasUpdate: false, latestVersion: null };
+    const { version } = result.updateInfo;
+    const hasUpdate = isNewerVersion(version, app.getVersion());
+    if (hasUpdate) pendingUpdateInfo = result.updateInfo;
+    return { triggered: true, hasUpdate, latestVersion: version, canDownload: hasUpdate };
+  } catch {
+    // electron-updater failed (e.g. no latest.yml in the release yet) — fall back.
+    try {
+      const release = await fetchLatestRelease();
+      if (!release) return { triggered: true, hasUpdate: false, latestVersion: null };
+      const hasUpdate = isNewerVersion(release.tag_name, app.getVersion());
+      return { triggered: true, hasUpdate, latestVersion: release.tag_name, releaseUrl: release.html_url };
+    } catch (err2) {
+      return { triggered: false, error: err2?.message ?? 'Failed to check for updates.' };
+    }
+  }
+});
+
+ipcMain.handle('download-update', () => {
+  if (!isPackaged || !pendingUpdateInfo) {
+    return { started: false, error: 'No update available to download.' };
+  }
+  try {
+    autoUpdater.downloadUpdate();
+    return { started: true };
+  } catch (err) {
+    return { started: false, error: err?.message ?? 'Download failed.' };
+  }
+});
+
+ipcMain.handle('install-update', () => {
+  if (updateDownloaded) autoUpdater.quitAndInstall();
 });
 
 // ---------------------------------------------------------------------------

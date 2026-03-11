@@ -21,10 +21,32 @@ contextBridge.exposeInMainWorld('electronApp', {
   isElectron: true,
   /** host OS: 'win32' | 'darwin' | 'linux' */
   platform: process.platform,
-  /**
-   * Ask the main process to trigger autoUpdater.checkForUpdatesAndNotify().
-   * Returns { triggered: true } on success or { triggered: false, error: string } if
-   * auto-update is not configured in this build.
-   */
+
+  /** Check for updates. Returns update status from the main process. */
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
+  /** Start downloading the update that was found by checkForUpdates. */
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+
+  /** Quit and install the downloaded update immediately. */
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+
+  /**
+   * Register a callback for download progress events.
+   * Replaces any previously registered listener to avoid accumulation.
+   * @param {(p: { percent: number, transferred: number, total: number, bytesPerSecond: number }) => void} cb
+   */
+  onUpdateProgress(cb) {
+    ipcRenderer.removeAllListeners('update-progress');
+    ipcRenderer.on('update-progress', (_event, data) => cb(data));
+  },
+
+  /**
+   * Register a one-shot callback for when the download is complete.
+   * @param {(info: { version: string }) => void} cb
+   */
+  onUpdateDownloaded(cb) {
+    ipcRenderer.removeAllListeners('update-downloaded');
+    ipcRenderer.once('update-downloaded', (_event, data) => cb(data));
+  },
 });
