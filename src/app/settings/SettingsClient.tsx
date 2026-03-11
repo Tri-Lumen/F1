@@ -97,14 +97,31 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     updated: boolean;
     steps: { step: string; output: string }[];
     releaseUrl?: string;
+    canDownload?: boolean;
+    updateReady?: boolean;
   } | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
+  const [downloadComplete, setDownloadComplete] = useState(false);
+
+  type ElectronAppAPI = {
+    checkForUpdates: () => Promise<{ triggered: boolean; error?: string; hasUpdate?: boolean; latestVersion?: string; releaseUrl?: string; canDownload?: boolean; updateReady?: boolean; }>;
+    downloadUpdate: () => Promise<{ started: boolean; error?: string }>;
+    installUpdate: () => void;
+    onUpdateProgress: (cb: (p: { percent: number }) => void) => void;
+    onUpdateDownloaded: (cb: (info: { version: string }) => void) => void;
+  };
+  const getElectronApp = () =>
+    (window as unknown as { electronApp: ElectronAppAPI }).electronApp;
 
   async function handleUpdate() {
     setUpdating(true);
     setUpdateResult(null);
+    setDownloadComplete(false);
+    setDownloadProgress(null);
     try {
       if (isElectron) {
-        const electronApp = (window as unknown as { electronApp: { checkForUpdates: () => Promise<{ triggered: boolean; error?: string; hasUpdate?: boolean; latestVersion?: string; releaseUrl?: string }> } }).electronApp;
+        const electronApp = getElectronApp();
         const result = await electronApp.checkForUpdates();
         if (!result.triggered) {
           setUpdateResult({
@@ -112,12 +129,21 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
             updated: false,
             steps: [{ step: "error", output: result.error ?? "Auto-update is not available in this build." }],
           });
+        } else if (result.updateReady) {
+          setDownloadComplete(true);
+          setUpdateResult({
+            success: true,
+            updated: false,
+            steps: [{ step: "ready to install", output: `${result.latestVersion ?? "Update"} has been downloaded and is ready to install.` }],
+            updateReady: true,
+          });
         } else if (result.hasUpdate) {
           setUpdateResult({
             success: true,
             updated: false,
-            steps: [{ step: "update available", output: `${result.latestVersion} is available — download from GitHub Releases.` }],
+            steps: [{ step: "update available", output: `${result.latestVersion} is available.` }],
             releaseUrl: result.releaseUrl,
+            canDownload: result.canDownload,
           });
         } else {
           setUpdateResult({
@@ -143,6 +169,35 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     } finally {
       setUpdating(false);
     }
+  }
+
+  async function handleDownload() {
+    const electronApp = getElectronApp();
+    setDownloading(true);
+    setDownloadProgress(0);
+
+    electronApp.onUpdateProgress((p) => setDownloadProgress(p.percent));
+    electronApp.onUpdateDownloaded(() => {
+      setDownloading(false);
+      setDownloadProgress(null);
+      setDownloadComplete(true);
+      setUpdateResult((prev) => prev
+        ? { ...prev, steps: [{ step: "ready to install", output: "Download complete. Restart to apply the update." }], updateReady: true }
+        : prev);
+    });
+
+    const result = await electronApp.downloadUpdate();
+    if (!result.started) {
+      setDownloading(false);
+      setDownloadProgress(null);
+      setUpdateResult((prev) => prev
+        ? { ...prev, success: false, steps: [{ step: "error", output: result.error ?? "Failed to start download." }] }
+        : prev);
+    }
+  }
+
+  function handleInstall() {
+    getElectronApp().installUpdate();
   }
 
   return (
@@ -594,6 +649,47 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           )}
         </button>
 
+        {/* Download progress bar */}
+        {downloading && downloadProgress !== null && (
+          <div className="mt-4 space-y-1">
+            <div className="flex justify-between text-xs text-f1-text-muted">
+              <span>Downloading update…</span>
+              <span>{downloadProgress}%</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full bg-f1-red transition-all duration-300"
+                style={{ width: `${downloadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons shown after check result */}
+        {updateResult?.canDownload && !downloadComplete && !downloading && (
+          <button
+            onClick={handleDownload}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-green-700"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download &amp; Install
+          </button>
+        )}
+
+        {(downloadComplete || updateResult?.updateReady) && (
+          <button
+            onClick={handleInstall}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-green-700"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Restart &amp; Install
+          </button>
+        )}
+
         {updateResult && (
           <div
             className={`mt-4 rounded-xl border p-4 ${
@@ -605,7 +701,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
             <p className="font-bold mb-2">
               {updateResult.success
                 ? isElectron
-                  ? updateResult.releaseUrl
+                  ? updateResult.updateReady
+                    ? "Ready to install"
+                    : updateResult.canDownload || updateResult.releaseUrl
                     ? "Update available"
                     : "Already up to date"
                   : updateResult.updated
@@ -621,7 +719,8 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                 </div>
               ))}
             </div>
-            {updateResult.releaseUrl && (
+            {/* Fallback link when auto-updater isn't available for this release */}
+            {updateResult.releaseUrl && !updateResult.canDownload && (
               <a
                 href={updateResult.releaseUrl}
                 target="_blank"
