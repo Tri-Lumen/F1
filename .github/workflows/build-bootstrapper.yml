@@ -38,18 +38,9 @@ jobs:
           path: installer/F1-Dashboard-WebInstaller.exe
 
       - name: Upload to release
-        if: github.event_name == 'release' || github.ref == 'refs/heads/main'
+        if: github.event_name == 'release'
         run: |
-          if ("${{ github.event_name }}" -eq "release") {
-            $tag = "${{ github.event.release.tag_name }}"
-          } else {
-            $tag = gh release list --limit 1 --json tagName --jq '.[0].tagName'
-          }
-          if ($tag) {
-            gh release upload $tag installer/F1-Dashboard-WebInstaller.exe --clobber
-          } else {
-            Write-Host "No existing release found — skipping upload"
-          }
+          gh release upload "${{ github.event.release.tag_name }}" installer/F1-Dashboard-WebInstaller.exe --clobber
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
