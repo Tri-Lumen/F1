@@ -67,7 +67,7 @@ Section "Install"
     StrCmp $0 "error" install_failed
     IntCmp $0 0 done install_failed
     install_failed:
-    MessageBox MB_ICONSTOP "Installation did not complete.$\r$\n$\r$\nPlease check your internet connection and try again.$\r$\n$\r$\nYou can also download the installer directly from:$\r$\nhttps://github.com/Tri-Lumen/F1/releases" /SD IDOK
+    MessageBox MB_ICONSTOP "Installation did not complete.$\r$\n$\r$\nThis usually means the installer asset is missing from the latest release (a build issue), or the download failed.$\r$\n$\r$\nPlease try again in a few minutes, or download a previous version from:$\r$\nhttps://github.com/Tri-Lumen/F1/releases" /SD IDOK
     Quit
     done:
 SectionEnd

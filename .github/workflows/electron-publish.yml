@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -102,3 +102,28 @@ jobs:
           name: f1-dashboard-${{ matrix.platform }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
+
+      # Explicitly upload all release-worthy assets to the GitHub release.
+      # electron-builder --publish should handle this, but if it silently
+      # fails (e.g. token scope, race condition) this step ensures the
+      # installers and auto-update manifests are present on the release page.
+      - name: Upload assets to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          shopt -s nullglob
+          files=(dist-electron/*.exe dist-electron/*.dmg dist-electron/*.zip dist-electron/*.AppImage dist-electron/*.deb dist-electron/*.yml)
+          shopt -u nullglob
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::warning::No release assets found in dist-electron/"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            # Skip blockmap files — they are not needed on the release page
+            [[ "$f" == *.blockmap ]] && continue
+            echo "Uploading $f to release $TAG ..."
+            gh release upload "$TAG" "$f" --clobber
+          done
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

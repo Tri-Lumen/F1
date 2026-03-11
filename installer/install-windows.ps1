@@ -45,8 +45,16 @@ function Find-WindowsAsset {
     if (-not $asset) {
         Write-Host '[ERROR] No Windows installer (.exe) found in the latest release.' -ForegroundColor Red
         Write-Host "        Release: $($release.tag_name)" -ForegroundColor Red
-        Write-Host '        Available assets:' -ForegroundColor Yellow
-        $release.assets | ForEach-Object { Write-Host "          - $($_.name)" -ForegroundColor Yellow }
+        if ($release.assets.Count -eq 0) {
+            Write-Host '        The release has no assets yet — the build may still be in progress.' -ForegroundColor Yellow
+            Write-Host '        Please wait a few minutes and try again.' -ForegroundColor Yellow
+        } else {
+            Write-Host '        Available assets:' -ForegroundColor Yellow
+            $release.assets | ForEach-Object { Write-Host "          - $($_.name)" -ForegroundColor Yellow }
+            Write-Host '' -ForegroundColor Yellow
+            Write-Host '        The Setup installer has not been uploaded to this release.' -ForegroundColor Yellow
+            Write-Host '        This is likely a CI/CD build issue — please report it or try a previous release.' -ForegroundColor Yellow
+        }
         exit 1
     }
     return $asset
