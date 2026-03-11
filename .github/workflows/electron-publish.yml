@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -102,3 +102,19 @@ jobs:
           name: f1-dashboard-${{ matrix.platform }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
+
+      # Fallback: explicitly upload installers to the GitHub release.
+      # electron-builder --publish should handle this, but if it silently
+      # fails (e.g. token scope, race condition) this step ensures the
+      # assets are present.
+      - name: Upload assets to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          for f in ${{ matrix.artifact }}; do
+            echo "Uploading $f to release $TAG ..."
+            gh release upload "$TAG" "$f" --clobber || echo "Warning: failed to upload $f"
+          done
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
