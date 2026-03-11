@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
           - os: windows-latest
@@ -101,4 +101,4 @@ jobs:
         with:
           name: f1-dashboard-${{ matrix.platform }}
           path: ${{ matrix.artifact }}
-          if-no-files-found: warn
+          if-no-files-found: error
