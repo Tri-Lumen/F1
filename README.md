@@ -1,10 +1,16 @@
 # F1 Dashboard
 
-Live-updating dashboard for the 2026 Formula 1 season — standings, race results, live timing, stats, and historical data for every driver and team.
+Real-time Formula 1 dashboard for the 2026 season. Track live sessions, standings, race results, driver and team stats, and explore historical data back to 2016 — all in a single app.
+
+![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=nextdotjs)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white)
+![Electron](https://img.shields.io/badge/Electron_33-47848F?logo=electron&logoColor=white)
 
 ## Install
 
-The quickest way to install F1 Dashboard is with the one-line installers below. They always download the **latest release** from GitHub — no need to grab a new installer after every update.
+One-line installers that always pull the latest release from GitHub.
 
 **Windows** (PowerShell):
 
@@ -24,11 +30,11 @@ curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install
 curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install-linux.sh | bash
 ```
 
-> After the initial install, the app updates itself automatically via the built-in Electron auto-updater.
+After the initial install the app updates itself automatically via the built-in Electron auto-updater.
 
 ### Direct Downloads
 
-You can also grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest):
+Grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest):
 
 | Platform | Asset |
 |---|---|
@@ -53,6 +59,13 @@ npm run build
 npm start
 ```
 
+### Electron (Desktop)
+
+```bash
+npm run electron:dev      # build + launch Electron
+npm run electron:build    # package for current platform
+```
+
 ## Docker
 
 ```bash
@@ -66,9 +79,11 @@ docker build -t f1-dashboard .
 docker run -p 3000:3000 f1-dashboard
 ```
 
+The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev/watchtower/) for automatic hourly image updates.
+
 ### Portainer
 
-**Pre-built image (recommended)** — Go to **Stacks → Add stack → Web editor** and paste:
+**Pre-built image (recommended)** — Stacks > Add stack > Web editor:
 
 ```yaml
 services:
@@ -82,47 +97,80 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
 ```
 
-**From Git** — Go to **Stacks → Add stack → Repository**, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.
+**From Git** — Stacks > Add stack > Repository, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.
 
-> Portainer's built-in git client can fail to clone from GitHub with an HTTP 500. Use the pre-built image if this happens.
+## Features
+
+### Live Timing
+- Real-time positions, intervals, and gap to leader during active sessions
+- Tire compound and age tracking with stint history visualization
+- Team radio feed with audio playback
+- One-click onboard camera links via MultiViewer
+- Auto-refresh every 15 seconds with manual refresh button
+
+### Session Awareness
+- Nav bar pill counts down to the next session with days/hours/minutes
+- Pulsing red LIVE badge when a session is active
+- Dashboard banner highlights the current live session
+
+### Standings & Results
+- Full driver and constructor championship standings
+- Race detail pages with podium, classification, qualifying, sprint, and pit stops
+- Fastest lap rankings per race with time and speed
+
+### Driver & Team Profiles
+- Points progression charts across the season
+- Qualifying gap analysis
+- Teammate head-to-head comparison
+- Win, podium, pole, and DNF stat cards
+
+### Stats & Comparison
+- Season analytics with wins/podiums breakdown and points leaders
+- Head-to-head driver comparison tool
+- Historical archive covering 2016 through 2025
+
+### Personalisation
+- Pin favorite drivers and teams for a custom summary view
+- Dark and light theme with F1-branded styling
+- Configurable accent colors per team
+
+### Cross-Platform
+- Desktop app for Windows, macOS, and Linux with automatic updates
+- Docker and Portainer deployment for self-hosting
+- Fully responsive from mobile to widescreen
 
 ## Pages
 
 | Route | Description |
 |---|---|
-| `/` | Season overview — live banner, next session, championship leaders, recent results |
-| `/live` | Live timing — positions, tire strategy, team radio, onboard links |
-| `/races` | Race calendar (upcoming and completed) with F1TV links |
-| `/race/:round` | Race detail — podium, classification, qualifying, F1TV link |
-| `/drivers` | Driver standings with stat cards (wins, podiums, poles, DNFs, etc.) |
-| `/drivers/:driverId` | Driver profile — results, points chart, qualifying gaps, teammate H2H |
-| `/teams` | Constructor standings with driver lineups and aggregate stats |
-| `/teams/:constructorId` | Team profile — driver comparison, points chart, results breakdown |
-| `/stats` | Season analytics — wins/podiums breakdown, points leaders, team battles |
-| `/fastest-laps` | Fastest lap rankings per race (time, speed, position) |
+| `/` | Season overview — live banner, next session countdown, championship leaders, recent results |
+| `/live` | Live timing — positions, intervals, tire strategy, team radio, onboard cameras |
+| `/races` | Race calendar with upcoming and completed races, F1TV watch links |
+| `/race/:round` | Race detail — podium, full classification, qualifying, sprint, pit stops |
+| `/drivers` | Driver standings with stat cards |
+| `/drivers/:id` | Driver profile — results, points chart, qualifying gaps, teammate H2H |
+| `/teams` | Constructor standings with driver lineups |
+| `/teams/:id` | Team profile — driver comparison, points chart, results breakdown |
+| `/stats` | Season analytics — wins, podiums, points leaders, team battles |
+| `/fastest-laps` | Fastest lap rankings per race |
 | `/compare` | Head-to-head driver comparison |
-| `/archive` | Historical season index |
-| `/archive/:season` | Past season standings and results (2016–2025) |
-| `/favorites` | Personalised view of tracked drivers and teams |
-| `/settings` | Theme, accent colour, and favourite preferences |
-
-## Features
-
-- **Live timing** — Top 5 positions, tire compounds, and intervals during active sessions
-- **Session countdown** — Nav pill counts down to the next session; pulses LIVE when active
-- **Auto-refresh** — Periodic data refresh on every page
-- **F1TV links** — Direct watch links on race cards and detail pages
-- **Driver & team profiles** — Points progression, qualifying gaps, teammate H2H
-- **Favorites** — Pin drivers and teams for a personalised summary
-- **Archive** — Historical standings and results (2016–2025)
-- **Team colors** — Correct 2026 colours for all 10 constructors
-- **Dark / light theme** — F1-branded dark UI with red accents; light mode with team accent colours
-- **Responsive** — Mobile through widescreen
+| `/archive` | Historical season browser (2016–2025) |
+| `/archive/:season` | Past season standings and results |
+| `/favorites` | Personalized view of pinned drivers and teams |
+| `/settings` | Theme, accent color, and favorite preferences |
 
 ## Tech Stack
 
-- [Next.js 16](https://nextjs.org) (App Router) + React 19
-- TypeScript / Tailwind CSS 4
-- [Electron 33](https://www.electronjs.org) (desktop builds)
-- [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) — standings, results, schedule
-- [OpenF1 API](https://openf1.org) — live timing, tire stints, team radio
+| | |
+|---|---|
+| **Framework** | [Next.js 16](https://nextjs.org) (App Router) + React 19 |
+| **Language** | TypeScript 5.9 |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com) |
+| **Desktop** | [Electron 33](https://www.electronjs.org) + electron-updater |
+| **Standings & Results API** | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) |
+| **Live Timing API** | [OpenF1](https://openf1.org) |
+| **Containerization** | Docker (Node 22 Alpine) + Watchtower |
+
+## License
+
+ISC

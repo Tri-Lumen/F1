@@ -145,7 +145,7 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
   const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!res.ok) return [];
   return res.json();
@@ -173,7 +173,7 @@ export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriv
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
   const res = await fetch(
     `${OPENF1_BASE}/position?session_key=${sessionKey}`,
-    { next: { revalidate: 10 } }
+    { cache: "no-store" }
   );
   if (!res.ok) return [];
   return res.json();
@@ -182,7 +182,7 @@ export async function getLivePositions(sessionKey: number): Promise<LivePosition
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
   const res = await fetch(
     `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
-    { next: { revalidate: 10 } }
+    { cache: "no-store" }
   );
   if (!res.ok) return [];
   return res.json();
@@ -191,7 +191,7 @@ export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
   const res = await fetch(
     `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
-    { next: { revalidate: 15 } }
+    { cache: "no-store" }
   );
   if (!res.ok) return [];
   return res.json();
@@ -200,7 +200,7 @@ export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
 export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
   const res = await fetch(
     `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
-    { next: { revalidate: 15 } }
+    { cache: "no-store" }
   );
   if (!res.ok) return [];
   return res.json();

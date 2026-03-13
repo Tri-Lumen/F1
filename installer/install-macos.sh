@@ -54,7 +54,7 @@ info "Fetching latest release info..."
 RELEASE_JSON=$(curl -fsSL -H "User-Agent: F1-Dashboard-Installer" "$API_URL") \
     || error "Failed to reach GitHub API. Check your internet connection."
 
-VERSION=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+VERSION=$(echo "$RELEASE_JSON" | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"\([^"]*\)"/\1/')
 info "Latest version: $VERSION"
 
 ARCH=$(detect_arch)
@@ -62,10 +62,13 @@ info "Detected architecture: $ARCH"
 
 # ---- Find the DMG asset -----------------------------------------------------
 # Prefer arch-specific DMG, fall back to universal/generic DMG
-DMG_URL=$(echo "$RELEASE_JSON" | grep '"browser_download_url"' | grep '\.dmg"' | grep -i "$ARCH" | head -1 | sed 's/.*"\(https[^"]*\)".*/\1/')
+# Note: grep -o is required because the GitHub API returns minified single-line
+# JSON — a plain grep would match the entire blob and sed would extract the
+# wrong (last) URL on the line.
+DMG_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url":"[^"]*"' | grep '\.dmg"' | grep -i "$ARCH" | head -1 | sed 's/"browser_download_url":"\([^"]*\)"/\1/')
 
 if [ -z "$DMG_URL" ]; then
-    DMG_URL=$(echo "$RELEASE_JSON" | grep '"browser_download_url"' | grep '\.dmg"' | head -1 | sed 's/.*"\(https[^"]*\)".*/\1/')
+    DMG_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url":"[^"]*"' | grep '\.dmg"' | head -1 | sed 's/"browser_download_url":"\([^"]*\)"/\1/')
 fi
 
 if [ -z "$DMG_URL" ]; then

@@ -10,6 +10,10 @@
 #Requires -Version 5.1
 $ErrorActionPreference = 'Stop'
 
+# Ensure TLS 1.2 is available for all HTTPS requests (required by GitHub).
+# PowerShell 5.1 on older Windows defaults to TLS 1.0/1.1 which GitHub rejects.
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $repo  = 'Tri-Lumen/F1'
 $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
 

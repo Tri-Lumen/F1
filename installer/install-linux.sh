@@ -61,15 +61,18 @@ else
         || error "Failed to reach GitHub API. Check your internet connection."
 fi
 
-VERSION=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+VERSION=$(echo "$RELEASE_JSON" | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"\([^"]*\)"/\1/')
 info "Latest version: $VERSION"
 
 # ---- Find AppImage asset ---------------------------------------------------
-APPIMAGE_URL=$(echo "$RELEASE_JSON" | grep '"browser_download_url"' | grep -i '\.appimage"' | head -1 | sed 's/.*"\(https[^"]*\)".*/\1/')
+# Note: grep -o is required because the GitHub API returns minified single-line
+# JSON — a plain grep would match the entire blob and sed would extract the
+# wrong (last) URL on the line.
+APPIMAGE_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url":"[^"]*"' | grep -i '\.appimage"' | head -1 | sed 's/"browser_download_url":"\([^"]*\)"/\1/')
 
 if [ -z "$APPIMAGE_URL" ]; then
     # Fall back to .deb if no AppImage
-    DEB_URL=$(echo "$RELEASE_JSON" | grep '"browser_download_url"' | grep '\.deb"' | head -1 | sed 's/.*"\(https[^"]*\)".*/\1/')
+    DEB_URL=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url":"[^"]*"' | grep '\.deb"' | head -1 | sed 's/"browser_download_url":"\([^"]*\)"/\1/')
     if [ -n "$DEB_URL" ]; then
         info "No AppImage found, downloading .deb package instead..."
         ASSET_URL="$DEB_URL"
