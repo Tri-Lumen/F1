@@ -15,12 +15,15 @@ const F1_CDN = "https://media.formula1.com";
 const CAR_YEAR = "2026";
 const CAR_YEAR_FALLBACK = "2025";
 
+/** Cache-bust suffix to force browsers to refetch images each season */
+const IMG_VERSION = `?v=${CAR_YEAR}`;
+
 /**
  * Build a driver headshot URL using the current F1 CDN pattern.
  * Pattern: /drivers/{FirstInitial}/{CODE}_{Given_Family}/{code}.png
  */
 function driverUrl(firstInitial: string, code: string, givenName: string, familyName: string): string {
-  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/4col/image.png`;
+  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/4col/image.png${IMG_VERSION}`;
 }
 
 /** Maps Ergast driverId -> F1 official race-suit headshot URL */
@@ -53,7 +56,7 @@ export const DRIVER_IMAGES: Record<string, string> = {
 
 /** Build a team car image URL with the CDN transform suffix. */
 function carUrl(year: string, teamSlug: string): string {
-  return `${F1_CDN}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/4col/image.png`;
+  return `${F1_CDN}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/4col/image.png${IMG_VERSION}`;
 }
 
 /** Maps Ergast constructorId -> F1 official transparent car-render PNG */

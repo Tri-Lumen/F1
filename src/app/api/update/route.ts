@@ -3,7 +3,11 @@ import { exec } from "child_process";
 
 function run(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    exec(cmd, { cwd, timeout: 120_000 }, (err, stdout, stderr) => {
+    exec(cmd, {
+      cwd,
+      timeout: 120_000,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+    }, (err, stdout, stderr) => {
       if (err) reject({ ...err, stdout, stderr });
       else resolve({ stdout, stderr });
     });

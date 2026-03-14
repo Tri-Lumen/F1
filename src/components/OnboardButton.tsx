@@ -30,11 +30,15 @@ export default function OnboardButton({
   const checkConnection = useCallback(async () => {
     const url = getMultiviewerUrl();
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: "{ systemInfo { version } }" }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       setMvConnected(res.ok);
     } catch {
       setMvConnected(false);
@@ -55,24 +59,56 @@ export default function OnboardButton({
     setStatus("loading");
     const url = getMultiviewerUrl();
     try {
+      // Re-check connection before sending mutation
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: `mutation {
             playerCreate(input: {
-              contentId: "ONBOARD"
+              contentType: "onboard"
               driverNumber: ${driverNumber}
             }) {
-              id
+              ... on Player { id }
             }
           }`,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (res.ok) {
-        setStatus("success");
-        setTimeout(() => setStatus("idle"), 2000);
+        const json = await res.json();
+        if (json.errors?.length) {
+          // GraphQL returned errors — try legacy mutation format
+          const retryRes = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: `mutation {
+                playerCreate(input: {
+                  contentId: "ONBOARD"
+                  driverNumber: ${driverNumber}
+                }) { id }
+              }`,
+            }),
+          });
+          if (retryRes.ok) {
+            const retryJson = await retryRes.json();
+            if (!retryJson.errors?.length) {
+              setStatus("success");
+              setTimeout(() => setStatus("idle"), 2000);
+              return;
+            }
+          }
+          setStatus("error");
+          setTimeout(() => setStatus("idle"), 3000);
+        } else {
+          setStatus("success");
+          setTimeout(() => setStatus("idle"), 2000);
+        }
       } else {
         setStatus("error");
         setTimeout(() => setStatus("idle"), 3000);

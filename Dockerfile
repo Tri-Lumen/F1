@@ -22,6 +22,7 @@ COPY . .
 # When the build context does not include .git (e.g. Docker stack deploy),
 # initialise a repo with the remote from package.json so git pull works at runtime.
 RUN apk add --no-cache git && \
+    export GIT_TERMINAL_PROMPT=0 && \
     if [ ! -d .git ]; then \
       git init && \
       git remote add origin "$(node -e "process.stdout.write(require('./package.json').repository.url)")" && \
@@ -37,6 +38,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV GIT_TERMINAL_PROMPT=0
 
 # git is needed for the in-app self-update feature
 RUN apk add --no-cache git
