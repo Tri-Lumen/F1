@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import {
   getAllSeasonResults,
+  getAllSprintResults,
   getDriverStandings,
   getConstructorStandings,
   getTeamColor,
@@ -12,15 +13,17 @@ import {
 import RefreshButton from "@/components/RefreshButton";
 
 async function StatsContent() {
-  const [allRaces, driverStandings, constructorStandings] = await Promise.all([
+  const [allRaces, sprintRaces, driverStandings, constructorStandings] = await Promise.all([
     getAllSeasonResults(),
+    getAllSprintResults(),
     getDriverStandings(),
     getConstructorStandings(),
   ]);
 
   const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
+  const completedSprints = sprintRaces.filter((r) => (r as any).SprintResults?.length > 0);
 
-  if (completedRaces.length === 0) {
+  if (completedRaces.length === 0 && completedSprints.length === 0) {
     return (
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
         <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
@@ -94,6 +97,40 @@ async function StatsContent() {
     overtakesByRace.push({ raceName: race.raceName.replace(" Grand Prix", " GP"), round: race.round, total: raceOvertakes });
   }
 
+  // Include sprint results in stats
+  for (const sprintRace of completedSprints) {
+    const results = (sprintRace as any).SprintResults ?? [];
+
+    for (const r of results) {
+      const id = r.Driver.driverId;
+      const name = `${r.Driver.givenName} ${r.Driver.familyName}`;
+      const cid = r.Constructor.constructorId;
+      const pos = parseInt(r.position);
+      const grid = parseInt(r.grid);
+      const pts = parseFloat(r.points);
+      const isDnf = r.status !== "Finished" && !r.status.startsWith("+");
+
+      totalPoints += pts;
+
+      // Position gain/loss from sprint
+      if (grid > 0 && pos > 0) {
+        const gain = grid - pos;
+        const existing = posGainMap.get(id) ?? { name, constructorId: cid, nationality: r.Driver.nationality, gained: 0, races: 0 };
+        posGainMap.set(id, { ...existing, gained: existing.gained + gain, races: existing.races + 1 });
+      }
+
+      // DNFs from sprint
+      if (isDnf) {
+        const t = teamDNFMap.get(cid) ?? { name: r.Constructor.name, constructorId: cid, dnfs: 0 };
+        teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
+      }
+
+      // PPR — count sprint as a race entry for points averaging
+      const ppr = pprMap.get(id) ?? { name, constructorId: cid, nationality: r.Driver.nationality, totalPts: 0, races: 0 };
+      pprMap.set(id, { ...ppr, totalPts: ppr.totalPts + pts, races: ppr.races + 1 });
+    }
+  }
+
   // Sorted lists
   const posGainSorted = [...posGainMap.values()]
     .map((d) => ({ ...d, avgGain: d.gained / d.races }))
@@ -118,6 +155,9 @@ async function StatsContent() {
         <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Races Complete</p>
           <p className="text-4xl font-black">{completedRaces.length}</p>
+          {completedSprints.length > 0 && (
+            <p className="text-xs text-f1-text-muted mt-0.5">+ {completedSprints.length} sprint{completedSprints.length !== 1 ? "s" : ""}</p>
+          )}
         </div>
         <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Total Points</p>

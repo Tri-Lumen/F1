@@ -136,6 +136,11 @@ export async function getSprintResults(round: string): Promise<RaceResult[]> {
   return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
 }
 
+export async function getAllSprintResults(): Promise<Race[]> {
+  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/sprint/?limit=500`);
+  return data?.MRData?.RaceTable?.Races ?? [];
+}
+
 export async function getPitStops(round: string): Promise<PitStop[]> {
   const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
@@ -152,6 +157,20 @@ export async function getLiveSessions(): Promise<LiveSession[]> {
 }
 
 export async function getLatestSession(): Promise<LiveSession | null> {
+  // Try the direct "latest" query first — most reliable for live/recent sessions
+  try {
+    const res = await fetch(`${OPENF1_BASE}/sessions?session_key=latest`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data: LiveSession[] = await res.json();
+      if (data.length > 0) return data[0];
+    }
+  } catch {
+    // Fall through to year-based query
+  }
+
+  // Fallback: fetch all sessions for the current season
   const sessions = await getLiveSessions();
   if (!sessions.length) return null;
   // Find most recent session that has already started
@@ -164,7 +183,7 @@ export async function getLatestSession(): Promise<LiveSession | null> {
 
 export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriver[]> {
   const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!res.ok) return [];
   return res.json();
