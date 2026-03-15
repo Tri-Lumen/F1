@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DriverImageProps {
   src: string;
@@ -24,7 +24,7 @@ export function DriverImage({ src, alt, className }: DriverImageProps) {
 
     return (
       <div
-        className={`flex items-end justify-center bg-gradient-to-b from-f1-border/30 to-f1-border/60 rounded-lg ${className ?? ""}`}
+        className={`relative flex items-end justify-center bg-gradient-to-b from-f1-border/30 to-f1-border/60 rounded-lg ${className ?? ""}`}
         aria-label={alt}
       >
         <svg
@@ -106,6 +106,13 @@ export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
   const [currentSrc, setCurrentSrc] = useState(src);
   const [fallbackIndex, setFallbackIndex] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  // Reset state when src prop changes (e.g. switching between drivers)
+  useEffect(() => {
+    setCurrentSrc(src);
+    setFallbackIndex(0);
+    setFailed(false);
+  }, [src]);
 
   if (failed) {
     return (

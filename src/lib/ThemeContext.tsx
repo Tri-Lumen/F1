@@ -41,17 +41,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const storedMode = localStorage.getItem("f1-mode");
-    const storedAccent = localStorage.getItem("f1-accent");
-    if (storedMode && isValidMode(storedMode)) setModeState(storedMode);
-    if (storedAccent && isValidAccent(storedAccent)) setAccentState(storedAccent);
+    try {
+      const storedMode = localStorage.getItem("f1-mode");
+      const storedAccent = localStorage.getItem("f1-accent");
+      if (storedMode && isValidMode(storedMode)) setModeState(storedMode);
+      if (storedAccent && isValidAccent(storedAccent)) setAccentState(storedAccent);
+    } catch {
+      // localStorage unavailable (e.g. Safari private browsing)
+    }
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
     document.documentElement.setAttribute("data-mode", mode);
-    localStorage.setItem("f1-mode", mode);
+    try { localStorage.setItem("f1-mode", mode); } catch {}
   }, [mode, mounted]);
 
   useEffect(() => {
@@ -61,7 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.setAttribute("data-theme", accentTheme);
     }
-    localStorage.setItem("f1-accent", accentTheme);
+    try { localStorage.setItem("f1-accent", accentTheme); } catch {}
   }, [accentTheme, mounted]);
 
   return (
