@@ -2,7 +2,7 @@ FROM node:22-alpine AS base
 
 LABEL org.opencontainers.image.source="https://github.com/Tri-Lumen/F1"
 LABEL org.opencontainers.image.description="F1 Dashboard"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="ISC"
 
 # --- Dependencies ---
 FROM base AS deps
@@ -51,7 +51,7 @@ RUN adduser --system --uid 1001 nextjs
 # directory owner doesn't match the current user.
 RUN chown nextjs:nodejs /app
 
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copy the full source + .git so the update API can git pull & rebuild
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

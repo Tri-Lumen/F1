@@ -62,7 +62,7 @@ function SessionPill({
     tick();
     const id = setInterval(tick, 30000);
     return () => clearInterval(id);
-  }, [session?.date, isLive]);
+  }, [session?.date, session?.type, isLive]);
 
   if (!label) return null;
 

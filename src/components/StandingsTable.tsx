@@ -5,7 +5,8 @@ import { getTeamColor, getCountryFlag } from "@/lib/api";
 function formDotColor(pos: number, isDnf: boolean): string {
   if (isDnf) return "#ef4444";
   if (pos === 1) return "#FFD700";
-  if (pos <= 3) return "#A8A9AD";
+  if (pos === 2) return "#A8A9AD";
+  if (pos === 3) return "#CD7F32";
   if (pos <= 10) return "#22c55e";
   return "#374151";
 }

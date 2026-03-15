@@ -354,7 +354,11 @@ export function getTeamColor(constructorId: string): string {
 
 /** Returns the Date when a race takes place, handling optional UTC time. */
 export function getRaceDate(race: Race): Date {
-  return new Date(race.time ? `${race.date}T${race.time}` : race.date);
+  if (race.time) {
+    const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
+    return new Date(`${race.date}T${timeStr}`);
+  }
+  return new Date(race.date);
 }
 
 export function getF1TVRaceUrl(race: Race): string {

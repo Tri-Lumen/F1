@@ -27,9 +27,9 @@ export default function QualifyingGapChart({
     ms: parseMs(q.Q3) ?? parseMs(q.Q2) ?? parseMs(q.Q1),
   }));
 
-  const classified = withMs.filter(
-    (q): q is typeof q & { ms: number } => q.ms !== null
-  );
+  const classified = withMs
+    .filter((q): q is typeof q & { ms: number } => q.ms !== null)
+    .sort((a, b) => a.ms - b.ms);
   if (classified.length < 2) return null;
 
   const poleMs = classified[0].ms;
