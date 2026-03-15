@@ -50,13 +50,16 @@ async function fetchErgastArchive<T>(path: string): Promise<T | null> {
 }
 
 export async function getDriverStandings(): Promise<DriverStanding[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/driverstandings/?limit=100`);
+  // Fetch standings and driver list in parallel to avoid waterfall on pre-season fallback
+  const [data, driversData] = await Promise.all([
+    fetchErgast<any>(`/${CURRENT_SEASON}/driverstandings/?limit=100`),
+    fetchErgast<any>(`/${CURRENT_SEASON}/drivers/?limit=100`),
+  ]);
   const standings: DriverStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
 
   // Pre-season fallback: if no standings yet, build entries from the driver list
   if (standings.length === 0) {
-    const driversData = await fetchErgast<any>(`/${CURRENT_SEASON}/drivers/?limit=100`);
     const drivers: any[] = driversData?.MRData?.DriverTable?.Drivers ?? [];
     if (drivers.length > 0) {
       return drivers.map((d: any, i: number) => ({
@@ -74,13 +77,16 @@ export async function getDriverStandings(): Promise<DriverStanding[]> {
 }
 
 export async function getConstructorStandings(): Promise<ConstructorStanding[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`);
+  // Fetch standings and constructor list in parallel to avoid waterfall on pre-season fallback
+  const [data, ctorData] = await Promise.all([
+    fetchErgast<any>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`),
+    fetchErgast<any>(`/${CURRENT_SEASON}/constructors/?limit=100`),
+  ]);
   const standings: ConstructorStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
 
   // Pre-season fallback: if no standings yet, build entries from the constructors list
   if (standings.length === 0) {
-    const ctorData = await fetchErgast<any>(`/${CURRENT_SEASON}/constructors/?limit=100`);
     const ctors: any[] = ctorData?.MRData?.ConstructorTable?.Constructors ?? [];
     if (ctors.length > 0) {
       return ctors.map((c: any, i: number) => ({

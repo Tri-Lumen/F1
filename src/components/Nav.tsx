@@ -38,9 +38,12 @@ function SessionPill({
   useEffect(() => {
     if (isLive) {
       setLabel("live");
-      return;
+      return undefined;
     }
-    if (!session) return;
+    if (!session) {
+      setLabel(null);
+      return undefined;
+    }
 
     const target = new Date(session.date);
 
