@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import { Suspense } from "react";
 import { getRaceSchedule, getAllSeasonResults, getRaceDate, CURRENT_YEAR } from "@/lib/api";

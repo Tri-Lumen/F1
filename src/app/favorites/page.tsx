@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import { getDriverStandings, getConstructorStandings, getAllSeasonResults } from "@/lib/api";
 import FavoritesClient from "./FavoritesClient";
