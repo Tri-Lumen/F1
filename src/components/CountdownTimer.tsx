@@ -64,7 +64,8 @@ export default function CountdownTimer({ target, compact = false }: Props) {
           {hours}h {minutes}m
         </span>
       );
-    return <span>{minutes}m</span>;
+    if (minutes > 0) return <span>{minutes}m</span>;
+    return <span>{time.seconds}s</span>;
   }
 
   const segments = [

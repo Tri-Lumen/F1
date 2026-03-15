@@ -32,7 +32,7 @@ async function fetchErgast<T>(path: string, revalidate: number | false = 300): P
       : { next: { revalidate } };
     const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
     if (!res.ok) return null;
-    return res.json();
+    return await res.json();
   } catch {
     return null;
   }
@@ -43,7 +43,7 @@ async function fetchErgastArchive<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
     if (!res.ok) return null;
-    return res.json();
+    return await res.json();
   } catch {
     return null;
   }
@@ -149,11 +149,15 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
 // --- OpenF1 Live API ---
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
-  const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function getLatestSession(): Promise<LiveSession | null> {
@@ -182,47 +186,67 @@ export async function getLatestSession(): Promise<LiveSession | null> {
 }
 
 export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriver[]> {
-  const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
-  const res = await fetch(
-    `${OPENF1_BASE}/position?session_key=${sessionKey}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/position?session_key=${sessionKey}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
-  const res = await fetch(
-    `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
-  const res = await fetch(
-    `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
-  const res = await fetch(
-    `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
-    { cache: "no-store" }
-  );
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 // --- Archive API (historical seasons, 24 h cache) ---
@@ -354,7 +378,11 @@ export function getTeamColor(constructorId: string): string {
 
 /** Returns the Date when a race takes place, handling optional UTC time. */
 export function getRaceDate(race: Race): Date {
-  return new Date(race.time ? `${race.date}T${race.time}` : race.date);
+  if (race.time) {
+    const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
+    return new Date(`${race.date}T${timeStr}`);
+  }
+  return new Date(race.date);
 }
 
 export function getF1TVRaceUrl(race: Race): string {

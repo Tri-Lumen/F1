@@ -181,5 +181,9 @@ echo ""
 # ---- Optionally launch ------------------------------------------------------
 if [ "${F1_LAUNCH:-}" = "1" ] || [ "${1:-}" = "--launch" ]; then
     info "Launching $APP_NAME..."
-    nohup "$DEST" &>/dev/null &
+    if [ "$ASSET_TYPE" = "deb" ]; then
+        nohup f1-dashboard &>/dev/null & 2>/dev/null || warn "Could not launch — open $APP_NAME from your application launcher."
+    else
+        nohup "$DEST" &>/dev/null &
+    fi
 fi

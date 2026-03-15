@@ -113,7 +113,7 @@ export default function TireStrategy({
                   const c =
                     COMPOUND_COLORS[stint.compound?.toUpperCase()] ??
                     COMPOUND_FALLBACK;
-                  const laps = end - start;
+                  const laps = end - start + 1;
                   const totalAge = stint.tyre_age_at_start + laps;
 
                   return (

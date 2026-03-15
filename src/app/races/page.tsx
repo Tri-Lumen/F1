@@ -55,7 +55,7 @@ async function RacesContent() {
           <div
             className="h-full rounded-full bg-f1-red transition-all"
             style={{
-              width: `${(completed.length / races.length) * 100}%`,
+              width: `${races.length > 0 ? (completed.length / races.length) * 100 : 0}%`,
             }}
           />
         </div>

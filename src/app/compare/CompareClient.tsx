@@ -229,12 +229,12 @@ export default function CompareClient({
       }));
   }, [statsA, statsB]);
 
-  const h2hWinsA = h2hResults.filter((r) => r.a.position < r.b.position).length;
-  const h2hWinsB = h2hResults.filter((r) => r.b.position < r.a.position).length;
+  const h2hWinsA = useMemo(() => h2hResults.filter((r) => r.a.position < r.b.position).length, [h2hResults]);
+  const h2hWinsB = useMemo(() => h2hResults.filter((r) => r.b.position < r.a.position).length, [h2hResults]);
 
   // Qualifying H2H (grid position, skip pit-lane starts where grid=0)
-  const h2hQualA = h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.a.grid < r.b.grid).length;
-  const h2hQualB = h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.b.grid < r.a.grid).length;
+  const h2hQualA = useMemo(() => h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.a.grid < r.b.grid).length, [h2hResults]);
+  const h2hQualB = useMemo(() => h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.b.grid < r.a.grid).length, [h2hResults]);
 
   // Cumulative points series for chart
   const cumulativePointsA = useMemo(() => {

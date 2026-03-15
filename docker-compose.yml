@@ -1,6 +1,7 @@
 services:
   f1-dashboard:
     image: ghcr.io/tri-lumen/f1:latest
+    container_name: f1-dashboard
     ports:
       - "3000:3000"
     restart: unless-stopped

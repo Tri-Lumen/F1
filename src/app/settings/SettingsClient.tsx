@@ -654,7 +654,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           <div className="mt-4 space-y-1">
             <div className="flex justify-between text-xs text-f1-text-muted">
               <span>Downloading update…</span>
-              <span>{downloadProgress}%</span>
+              <span>{Math.round(downloadProgress)}%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
               <div

@@ -30,16 +30,18 @@ autoUpdater.on('download-progress', (progress) => {
 autoUpdater.on('update-downloaded', (info) => {
   updateDownloaded = true;
   mainWindow?.webContents.send('update-downloaded', { version: info.version });
-  dialog.showMessageBox(mainWindow, {
-    type:      'info',
-    title:     'Update Ready to Install',
-    message:   `F1 Dashboard ${info.version} has been downloaded`,
-    detail:    'Restart now to apply the update, or it will be applied on the next launch.',
-    buttons:   ['Restart Now', 'Later'],
-    defaultId: 0,
-  }).then(({ response }) => {
-    if (response === 0) autoUpdater.quitAndInstall();
-  }).catch(() => {});
+  if (mainWindow) {
+    dialog.showMessageBox(mainWindow, {
+      type:      'info',
+      title:     'Update Ready to Install',
+      message:   `F1 Dashboard ${info.version} has been downloaded`,
+      detail:    'Restart now to apply the update, or it will be applied on the next launch.',
+      buttons:   ['Restart Now', 'Later'],
+      defaultId: 0,
+    }).then(({ response }) => {
+      if (response === 0) autoUpdater.quitAndInstall();
+    }).catch(() => {});
+  }
 });
 
 autoUpdater.on('error', (err) => {

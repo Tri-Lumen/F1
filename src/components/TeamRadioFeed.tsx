@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { TeamRadio, LiveTimingDriver } from "@/lib/types";
 
 export default function TeamRadioFeed({
@@ -13,6 +13,14 @@ export default function TeamRadioFeed({
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Clean up audio on unmount to prevent leaked playback and state updates
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
 
   const driverMap = new Map(drivers.map((d) => [d.driver_number, d]));
 

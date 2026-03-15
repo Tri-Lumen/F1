@@ -47,12 +47,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return;
-    localStorage.setItem("f1-fav-drivers", JSON.stringify(favoriteDriverIds));
+    try { localStorage.setItem("f1-fav-drivers", JSON.stringify(favoriteDriverIds)); } catch {}
   }, [favoriteDriverIds, mounted]);
 
   useEffect(() => {
     if (!mounted) return;
-    localStorage.setItem("f1-fav-teams", JSON.stringify(favoriteTeamIds));
+    try { localStorage.setItem("f1-fav-teams", JSON.stringify(favoriteTeamIds)); } catch {}
   }, [favoriteTeamIds, mounted]);
 
   function toggleDriver(driverId: string) {
