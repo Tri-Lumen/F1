@@ -25,27 +25,41 @@ export const ARCHIVE_SEASONS = [
 
 // --- Ergast / Jolpica API ---
 
+const FETCH_TIMEOUT_MS = 10_000;
+
+function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return { signal: controller.signal, clear: () => clearTimeout(timer) };
+}
+
 async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const fetchOptions = revalidate === false
-      ? { cache: 'no-store' as const }
-      : { next: { revalidate } };
+      ? { cache: 'no-store' as const, signal }
+      : { next: { revalidate }, signal };
     const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
     if (!res.ok) return null;
     return await res.json();
   } catch {
     return null;
+  } finally {
+    clear();
   }
 }
 
 /** Historical data fetch — 24 h cache since completed seasons never change */
 async function fetchErgastArchive<T>(path: string): Promise<T | null> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 } });
+    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 }, signal });
     if (!res.ok) return null;
     return await res.json();
   } catch {
     return null;
+  } finally {
+    clear();
   }
 }
 
@@ -155,22 +169,28 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
 // --- OpenF1 Live API ---
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
       cache: "no-store",
+      signal,
     });
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
 export async function getLatestSession(): Promise<LiveSession | null> {
   // Try the direct "latest" query first — most reliable for live/recent sessions
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/sessions?session_key=latest`, {
       cache: "no-store",
+      signal,
     });
     if (res.ok) {
       const data: LiveSession[] = await res.json();
@@ -178,6 +198,8 @@ export async function getLatestSession(): Promise<LiveSession | null> {
     }
   } catch {
     // Fall through to year-based query
+  } finally {
+    clear();
   }
 
   // Fallback: fetch all sessions for the current season
@@ -192,66 +214,82 @@ export async function getLatestSession(): Promise<LiveSession | null> {
 }
 
 export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriver[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
       cache: "no-store",
+      signal,
     });
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/position?session_key=${sessionKey}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
 export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
+  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
   }
 }
 
