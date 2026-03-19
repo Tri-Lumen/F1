@@ -125,9 +125,10 @@ async function StatsContent() {
         teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
       }
 
-      // PPR — count sprint as a race entry for points averaging
+      // PPR — add sprint points to the driver total but don't increment race count
+      // (sprint is part of the same race weekend, not a separate entry)
       const ppr = pprMap.get(id) ?? { name, constructorId: cid, nationality: r.Driver.nationality, totalPts: 0, races: 0 };
-      pprMap.set(id, { ...ppr, totalPts: ppr.totalPts + pts, races: ppr.races + 1 });
+      pprMap.set(id, { ...ppr, totalPts: ppr.totalPts + pts });
     }
   }
 
