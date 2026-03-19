@@ -41,7 +41,7 @@
     "typescript": "5.9.3"
   },
   "build": {
-    "appId": "com.tri-lumen.f1-dashboard",
+    "appId": "com.trilumen.f1dashboard",
     "productName": "F1 Dashboard",
     "copyright": "Copyright © 2026 Tri-Lumen",
     "directories": {
@@ -110,7 +110,11 @@
         }
       ],
       "icon": "build/icon.icns",
-      "category": "public.app-category.sports"
+      "category": "public.app-category.sports",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true
     },
     "dmg": {
       "artifactName": "F1-Dashboard-${arch}.${ext}",

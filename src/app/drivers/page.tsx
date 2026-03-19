@@ -109,8 +109,13 @@ async function DriversContent() {
 
   // --- Feature 2: Championship Clinch Status ---
   const now = new Date();
-  const remainingRaces = schedule.filter((r) => getRaceDate(r) > now).length;
-  const MAX_PTS_PER_RACE = 34; // 25 for win + 1 fastest lap + 8 for sprint win
+  const remainingSchedule = schedule.filter((r) => getRaceDate(r) > now);
+  const remainingRaces = remainingSchedule.length;
+  // 25 pts for race win; +8 for sprint win only on sprint weekends
+  const maxAvailable = remainingSchedule.reduce(
+    (sum, r) => sum + 25 + (r.Sprint ? 8 : 0),
+    0
+  );
   const leader = standings[0];
   const second = standings[1];
   let clinchInfo: {
@@ -125,13 +130,13 @@ async function DriversContent() {
     const leaderPts = parseFloat(leader.points);
     const secondPts = parseFloat(second.points);
     const gap = leaderPts - secondPts;
-    const maxSecondCanScore = secondPts + remainingRaces * MAX_PTS_PER_RACE;
+    const maxSecondCanScore = secondPts + maxAvailable;
     const leaderName = `${leader.Driver.givenName} ${leader.Driver.familyName}`;
     if (leaderPts > maxSecondCanScore) {
-      clinchInfo = { clinched: true, leaderName, gap, remaining: remainingRaces, maxAvailable: remainingRaces * MAX_PTS_PER_RACE };
+      clinchInfo = { clinched: true, leaderName, gap, remaining: remainingRaces, maxAvailable };
     } else {
       const ptsNeeded = maxSecondCanScore - leaderPts + 1;
-      clinchInfo = { clinched: false, leaderName, gap, ptsNeeded, remaining: remainingRaces, maxAvailable: remainingRaces * MAX_PTS_PER_RACE };
+      clinchInfo = { clinched: false, leaderName, gap, ptsNeeded, remaining: remainingRaces, maxAvailable };
     }
   }
 
