@@ -153,7 +153,8 @@
     "publish": {
       "provider": "github",
       "owner": "Tri-Lumen",
-      "repo": "F1"
+      "repo": "F1",
+      "releaseType": "release"
     }
   }
 }
