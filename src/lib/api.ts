@@ -42,7 +42,8 @@ async function fetchErgast<T>(path: string, revalidate: number | false = 300): P
     const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
     if (!res.ok) return null;
     return await res.json();
-  } catch {
+  } catch (err) {
+    console.error(`[API] fetchErgast failed for ${path}:`, err);
     return null;
   } finally {
     clear();
@@ -56,7 +57,8 @@ async function fetchErgastArchive<T>(path: string): Promise<T | null> {
     const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 }, signal });
     if (!res.ok) return null;
     return await res.json();
-  } catch {
+  } catch (err) {
+    console.error(`[API] fetchErgastArchive failed for ${path}:`, err);
     return null;
   } finally {
     clear();
