@@ -64,9 +64,11 @@ body::after {
 }
 
 /* Ensure page content sits above the gradients (App Router has no #__next) */
-body > *, main {
-  position: relative;
-  z-index: 1;
+@layer base {
+  body > *, main {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* ── Acrylic material utilities ── */
