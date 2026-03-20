@@ -218,7 +218,7 @@ async function RaceContent({ round }: { round: string }) {
                       <td className="px-3 py-3 text-center hidden lg:table-cell">
                         {isFastestLap && (
                           <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-bold text-purple-400">
-                            {r.FastestLap?.Time.time}
+                            {r.FastestLap?.Time?.time}
                           </span>
                         )}
                       </td>
