@@ -119,7 +119,7 @@ export default function TireStrategy({
                   return (
                     <div
                       key={stint.stint_number}
-                      className={`${c.bg}/30 border ${c.bg.replace("bg-", "border-")}/50 rounded h-full flex items-center justify-center text-[10px] font-bold ${c.text} relative`}
+                      className={`${c.bgFaded} border ${c.border} rounded h-full flex items-center justify-center text-[10px] font-bold ${c.text} relative`}
                       style={{ width: `${Math.max(width, 4)}%` }}
                       title={`${stint.compound} | Laps ${start}-${end} | Age: ${totalAge}`}
                     >

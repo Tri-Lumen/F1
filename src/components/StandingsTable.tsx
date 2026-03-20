@@ -114,8 +114,8 @@ export default function StandingsTable({
                 </td>
                 <td className="px-3 py-3 text-right hidden md:table-cell">
                   <div className="flex items-center justify-end gap-2">
-                    <span className="text-xs text-f1-text-muted w-12 text-right">
-                      {gap > 0 ? `-${gap}` : ""}
+                    <span className={`text-xs w-12 text-right font-semibold ${gap > 0 ? "text-f1-text-muted" : "text-f1-accent"}`}>
+                      {gap > 0 ? `-${gap}` : "LEADER"}
                     </span>
                     <div className="w-28 h-2 rounded-full bg-f1-dark overflow-hidden">
                       <div
