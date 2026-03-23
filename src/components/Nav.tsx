@@ -16,6 +16,7 @@ const PRIMARY_LINKS = [
 
 /** Secondary links live under the "More" dropdown */
 const SECONDARY_LINKS = [
+  { href: "/news", label: "News" },
   { href: "/stats", label: "Stats" },
   { href: "/fastest-laps", label: "Fastest Laps" },
   { href: "/compare", label: "Compare" },
