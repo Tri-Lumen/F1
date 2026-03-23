@@ -160,3 +160,21 @@ export interface PitStop {
   time: string;
   duration: string;
 }
+
+// RSS feed types
+export interface RssFeedSource {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+}
+
+export interface RssArticle {
+  title: string;
+  link: string;
+  description: string;
+  pubDate: string;
+  source: string;
+  sourceId: string;
+  imageUrl?: string;
+}
