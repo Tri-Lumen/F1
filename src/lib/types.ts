@@ -176,6 +176,21 @@ export interface WeatherData {
   wind_speed: number;
 }
 
+// Lap time data from OpenF1
+export interface LiveLap {
+  driver_number: number;
+  lap_number: number;
+  lap_duration: number | null;
+  duration_sector_1: number | null;
+  duration_sector_2: number | null;
+  duration_sector_3: number | null;
+  i1_speed: number | null;
+  i2_speed: number | null;
+  st_speed: number | null;
+  date_start: string;
+  is_pit_out_lap: boolean;
+}
+
 // Pit stop data from Ergast (duration = pit lane time, entry to exit)
 export interface PitStop {
   driverId: string;

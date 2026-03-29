@@ -14,6 +14,7 @@ import type {
   OpenF1PitStop,
   RaceControlMessage,
   WeatherData,
+  LiveLap,
 } from "./types";
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -373,6 +374,24 @@ export async function getOpenF1SessionKeyForRace(race: Race): Promise<number | n
     (s) => s.session_type === "Race" && s.date_start.startsWith(raceDateStr)
   );
   return match?.session_key ?? null;
+}
+
+/** Fetch lap-by-lap timing data for all drivers in a session. */
+export async function getLiveLaps(sessionKey: number): Promise<LiveLap[]> {
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    // Only the last 3 laps per driver is enough for current-lap display
+    const res = await fetch(
+      `${OPENF1_BASE}/laps?session_key=${sessionKey}&lap_number>=${Math.max(1, 0)}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
 }
 
 /** Fetch race control messages (flags, safety car, penalties, etc.) */
