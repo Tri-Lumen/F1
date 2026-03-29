@@ -56,8 +56,35 @@ async function DashboardContent() {
       )
     : null;
 
+  // Compute different winners count
+  const uniqueWinners = new Set<string>();
+  const winStreakMap = new Map<string, number>();
+  let currentStreakDriver = "";
+  let currentStreak = 0;
+  let longestStreak = { name: "", familyName: "", constructorId: "", count: 0 };
+
+  const completedWithResultsAll = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
+  for (const race of completedWithResultsAll) {
+    const winner = race.Results?.find((r) => r.position === "1");
+    if (winner) {
+      const id = winner.Driver.driverId;
+      const name = `${winner.Driver.givenName} ${winner.Driver.familyName}`;
+      uniqueWinners.add(id);
+
+      if (id === currentStreakDriver) {
+        currentStreak++;
+      } else {
+        currentStreakDriver = id;
+        currentStreak = 1;
+      }
+      if (currentStreak > longestStreak.count) {
+        longestStreak = { name, familyName: winner.Driver.familyName, constructorId: winner.Constructor.constructorId, count: currentStreak };
+      }
+    }
+  }
+
   // Compute movers: biggest single-race position gains in the last completed race
-  const completedWithResults = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
+  const completedWithResults = completedWithResultsAll;
   const lastRace = completedWithResults.length > 0
     ? completedWithResults[completedWithResults.length - 1]
     : null;
@@ -153,6 +180,78 @@ async function DashboardContent() {
           )}
         </div>
       </div>
+
+      {/* Extra KPI row */}
+      {completedWithResults.length > 0 && (
+        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
+            <p className="text-xs uppercase tracking-wider text-f1-text-muted">
+              Different Winners
+            </p>
+            <p className="mt-1 text-2xl font-black">{uniqueWinners.size}</p>
+            <p className="text-xs text-f1-text-muted mt-0.5">
+              in {completedWithResults.length} races
+            </p>
+          </div>
+          {longestStreak.count >= 2 && (
+            <div
+              className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4"
+              style={{ borderLeftColor: getTeamColor(longestStreak.constructorId), borderLeftWidth: 3 }}
+            >
+              <p className="text-xs uppercase tracking-wider text-f1-text-muted">
+                Best Win Streak
+              </p>
+              <p className="mt-1 text-2xl font-black">{longestStreak.count}</p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{longestStreak.familyName}</p>
+            </div>
+          )}
+          {(() => {
+            // Most podiums
+            const podiumMap = new Map<string, { name: string; familyName: string; constructorId: string; count: number }>();
+            for (const race of completedWithResults) {
+              for (const r of race.Results ?? []) {
+                if (parseInt(r.position) <= 3) {
+                  const id = r.Driver.driverId;
+                  const existing = podiumMap.get(id) ?? { name: `${r.Driver.givenName} ${r.Driver.familyName}`, familyName: r.Driver.familyName, constructorId: r.Constructor.constructorId, count: 0 };
+                  podiumMap.set(id, { ...existing, count: existing.count + 1 });
+                }
+              }
+            }
+            const podiumLeader = [...podiumMap.values()].sort((a, b) => b.count - a.count)[0];
+            if (!podiumLeader) return null;
+            return (
+              <div
+                className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4"
+                style={{ borderLeftColor: getTeamColor(podiumLeader.constructorId), borderLeftWidth: 3 }}
+              >
+                <p className="text-xs uppercase tracking-wider text-f1-text-muted">
+                  Most Podiums
+                </p>
+                <p className="mt-1 text-2xl font-black">{podiumLeader.count}</p>
+                <p className="text-xs text-f1-text-muted mt-0.5">{podiumLeader.familyName}</p>
+              </div>
+            );
+          })()}
+          {(() => {
+            // Total DNFs
+            let dnfCount = 0;
+            for (const race of completedWithResults) {
+              for (const r of race.Results ?? []) {
+                if (r.status !== "Finished" && !r.status.startsWith("+")) dnfCount++;
+              }
+            }
+            return (
+              <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
+                <p className="text-xs uppercase tracking-wider text-f1-text-muted">
+                  Season DNFs
+                </p>
+                <p className="mt-1 text-2xl font-black">{dnfCount}</p>
+                <p className="text-xs text-f1-text-muted mt-0.5">retirements</p>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Next Race (event-level context with links) */}
       {nextRace && (
