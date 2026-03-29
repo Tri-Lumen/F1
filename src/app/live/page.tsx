@@ -40,6 +40,7 @@ async function LiveContent() {
   const now = new Date();
   const isLive = now <= sessionEnd && now >= new Date(session.date_start);
 
+  // Fetch each endpoint independently so partial failures don't break the whole page
   const [drivers, positions, intervals, stints, radio] = await Promise.all([
     getLiveDrivers(session.session_key),
     getLivePositions(session.session_key),
@@ -47,6 +48,16 @@ async function LiveContent() {
     getLiveStints(session.session_key),
     getTeamRadio(session.session_key),
   ]);
+
+  // Track which data sources are available for user feedback
+  const dataStatus = {
+    drivers: drivers.length > 0,
+    positions: positions.length > 0,
+    intervals: intervals.length > 0,
+    stints: stints.length > 0,
+    radio: radio.length > 0,
+  };
+  const hasAnyData = dataStatus.drivers || dataStatus.positions;
 
   // Get latest position for each driver
   const latestPositions = new Map<number, number>();
@@ -134,6 +145,26 @@ async function LiveContent() {
           </div>
         </div>
       </div>
+
+      {/* Data availability warning */}
+      {isLive && !hasAnyData && (
+        <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
+          <p className="text-sm text-yellow-400 font-medium">
+            Unable to fetch live timing data from OpenF1. The data provider may be experiencing high traffic or the session data is not yet available. The page will automatically retry.
+          </p>
+        </div>
+      )}
+      {isLive && hasAnyData && (!dataStatus.intervals || !dataStatus.stints) && (
+        <div className="mb-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3">
+          <p className="text-xs text-yellow-400/80">
+            Some live data is temporarily unavailable ({[
+              !dataStatus.intervals && "intervals",
+              !dataStatus.stints && "tire data",
+              !dataStatus.radio && "team radio",
+            ].filter(Boolean).join(", ")}). Will retry on next refresh.
+          </p>
+        </div>
+      )}
 
       {/* Live Timing Table */}
       <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">

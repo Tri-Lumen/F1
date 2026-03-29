@@ -94,11 +94,42 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
     totalPos += pos;
   }
 
+  // Extended stats
+  let totalGrid = 0;
+  let gridRaces = 0;
+  let totalPositionsGained = 0;
+  let frontRowStarts = 0;
+  let pointsFinishes = 0;
+  let poleToWins = 0;
+  let poleCount = poles;
+
+  for (const race of races) {
+    const r = race.Results?.[0];
+    if (!r) continue;
+    const pos = parseInt(r.position);
+    const grid = parseInt(r.grid);
+    if (grid > 0) {
+      totalGrid += grid;
+      gridRaces++;
+      totalPositionsGained += grid - pos;
+      if (grid <= 2) frontRowStarts++;
+      if (grid === 1 && pos === 1) poleToWins++;
+    }
+    if (pos <= 10) pointsFinishes++;
+  }
+
   const racesEntered = races.length;
   const avgFinish =
     racesEntered > 0
       ? Math.round((totalPos / racesEntered) * 10) / 10
       : 0;
+  const avgGrid =
+    gridRaces > 0
+      ? Math.round((totalGrid / gridRaces) * 10) / 10
+      : 0;
+  const ppr = racesEntered > 0 ? totalPoints / racesEntered : 0;
+  const poleConversion = poleCount > 0 ? Math.round((poleToWins / poleCount) * 100) : null;
+  const pointsRate = racesEntered > 0 ? Math.round((pointsFinishes / racesEntered) * 100) : 0;
 
   const last5 = races.slice(-5);
   const driverImageUrl = getDriverImageUrl(driver.driverId);
@@ -182,7 +213,8 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
           { label: "FASTEST LAPS", value: fastestLaps },
           { label: "DNFs", value: dnfs },
           { label: "AVG FINISH", value: racesEntered > 0 ? avgFinish : "—" },
-          { label: "RACES", value: racesEntered },
+          { label: "AVG GRID", value: gridRaces > 0 ? avgGrid : "—" },
+          { label: "PPR", value: racesEntered > 0 ? ppr.toFixed(1) : "—" },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -193,6 +225,38 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
           </div>
         ))}
       </div>
+
+      {/* Performance Insights */}
+      {racesEntered > 0 && (
+        <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="rounded-xl border border-f1-border bg-f1-card p-3 text-center">
+            <p className="text-xs text-f1-text-muted mb-1">POSITIONS GAINED</p>
+            <p className={`text-2xl font-black ${totalPositionsGained >= 0 ? "text-green-400" : "text-red-400"}`}>
+              {totalPositionsGained >= 0 ? "+" : ""}{totalPositionsGained}
+            </p>
+            <p className="text-xs text-f1-text-muted mt-0.5">
+              avg {gridRaces > 0 ? (totalPositionsGained / gridRaces >= 0 ? "+" : "") + (totalPositionsGained / gridRaces).toFixed(1) : "0"} / race
+            </p>
+          </div>
+          <div className="rounded-xl border border-f1-border bg-f1-card p-3 text-center">
+            <p className="text-xs text-f1-text-muted mb-1">IN POINTS</p>
+            <p className="text-2xl font-black">{pointsRate}%</p>
+            <p className="text-xs text-f1-text-muted mt-0.5">{pointsFinishes} of {racesEntered} races</p>
+          </div>
+          {poleConversion !== null && (
+            <div className="rounded-xl border border-f1-border bg-f1-card p-3 text-center">
+              <p className="text-xs text-f1-text-muted mb-1">POLE CONVERSION</p>
+              <p className="text-2xl font-black">{poleConversion}%</p>
+              <p className="text-xs text-f1-text-muted mt-0.5">{poleToWins} wins from {poleCount} poles</p>
+            </div>
+          )}
+          <div className="rounded-xl border border-f1-border bg-f1-card p-3 text-center">
+            <p className="text-xs text-f1-text-muted mb-1">FRONT ROW</p>
+            <p className="text-2xl font-black">{frontRowStarts}</p>
+            <p className="text-xs text-f1-text-muted mt-0.5">P1/P2 starts</p>
+          </div>
+        </div>
+      )}
 
       {/* Position Trajectory Sparkline */}
       {races.length >= 2 && (() => {
@@ -297,6 +361,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
                   <th className="px-5 py-3 text-left">Race</th>
                   <th className="px-5 py-3 text-center">Grid</th>
                   <th className="px-5 py-3 text-center">Finish</th>
+                  <th className="px-5 py-3 text-center hidden sm:table-cell">+/-</th>
                   <th className="px-5 py-3 text-center">Pts</th>
                   <th className="px-5 py-3 text-left hidden sm:table-cell">Status</th>
                   <th className="px-5 py-3 text-center hidden sm:table-cell">FL</th>
@@ -346,6 +411,17 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
                         >
                           {isDNF ? "DNF" : `P${r.position}`}
                         </span>
+                      </td>
+                      <td className="px-5 py-3 text-center hidden sm:table-cell">
+                        {(() => {
+                          const g = parseInt(r.grid);
+                          const p = parseInt(r.position);
+                          if (g <= 0 || isDNF) return <span className="text-f1-text-muted/40">—</span>;
+                          const diff = g - p;
+                          if (diff > 0) return <span className="text-green-400 font-bold text-xs">+{diff}</span>;
+                          if (diff < 0) return <span className="text-red-400 font-bold text-xs">{diff}</span>;
+                          return <span className="text-f1-text-muted text-xs">0</span>;
+                        })()}
                       </td>
                       <td className="px-5 py-3 text-center font-bold">
                         {r.points}

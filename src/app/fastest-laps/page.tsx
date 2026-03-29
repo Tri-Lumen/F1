@@ -173,6 +173,92 @@ async function FastestLapsContent() {
         </div>
       )}
 
+      {/* Team Breakdown */}
+      {(() => {
+        const teamMap = new Map<string, { name: string; constructorId: string; count: number }>();
+        for (const e of entries) {
+          const t = teamMap.get(e.constructorId) ?? { name: e.team, constructorId: e.constructorId, count: 0 };
+          teamMap.set(e.constructorId, { ...t, count: t.count + 1 });
+        }
+        const teamSorted = [...teamMap.values()].sort((a, b) => b.count - a.count);
+        if (teamSorted.length === 0) return null;
+
+        return (
+          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+            <div className="border-b border-f1-border p-4">
+              <h2 className="font-bold text-lg">Fastest Laps by Team</h2>
+            </div>
+            <div className="p-4">
+              <div className="space-y-2">
+                {teamSorted.map((t) => {
+                  const color = getTeamColor(t.constructorId);
+                  const maxCount = teamSorted[0]?.count ?? 1;
+                  return (
+                    <div key={t.constructorId} className="flex items-center gap-3">
+                      <span className="h-5 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                      <span className="text-sm font-medium w-32 truncate flex-shrink-0">{t.name}</span>
+                      <div className="flex-1 h-5 rounded overflow-hidden bg-f1-dark flex items-center">
+                        <div
+                          className="h-full rounded flex items-center justify-end pr-1.5"
+                          style={{ width: `${Math.max(8, (t.count / maxCount) * 100)}%`, backgroundColor: color, opacity: 0.7 }}
+                        >
+                          <span className="text-xs font-bold text-white">{t.count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* FL by Race Position Analysis */}
+      {entries.length > 0 && (() => {
+        const positionBuckets = [
+          { label: "P1-P3", min: 1, max: 3, count: 0 },
+          { label: "P4-P10", min: 4, max: 10, count: 0 },
+          { label: "P11-P20", min: 11, max: 20, count: 0 },
+        ];
+        for (const e of entries) {
+          const pos = parseInt(e.racePosition);
+          for (const b of positionBuckets) {
+            if (pos >= b.min && pos <= b.max) { b.count++; break; }
+          }
+        }
+        const maxBucket = Math.max(...positionBuckets.map((b) => b.count), 1);
+
+        return (
+          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+            <div className="border-b border-f1-border p-4">
+              <h2 className="font-bold text-lg">Who Sets Fastest Laps?</h2>
+              <p className="text-xs text-f1-text-muted mt-0.5">Distribution by race finishing position — do leaders or chasers set the purple lap?</p>
+            </div>
+            <div className="p-4">
+              <div className="space-y-3">
+                {positionBuckets.map((b) => (
+                  <div key={b.label} className="flex items-center gap-3">
+                    <span className="text-sm font-bold w-16 text-f1-text-muted">{b.label}</span>
+                    <div className="flex-1 h-7 rounded overflow-hidden bg-f1-dark flex items-center">
+                      <div
+                        className="h-full rounded bg-purple-500/60 flex items-center justify-end pr-2"
+                        style={{ width: `${Math.max(5, (b.count / maxBucket) * 100)}%` }}
+                      >
+                        <span className="text-xs font-bold text-white">{b.count}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-f1-text-muted w-10 text-right">
+                      {entries.length > 0 ? `${Math.round((b.count / entries.length) * 100)}%` : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Per-race fastest laps table */}
       {entries.length > 0 && (
         <div className="rounded-xl border border-f1-border bg-f1-card">

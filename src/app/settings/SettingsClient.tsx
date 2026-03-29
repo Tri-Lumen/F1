@@ -46,11 +46,17 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   const [mvHost, setMvHost] = useState("localhost:10101");
   const [mvSaved, setMvSaved] = useState(false);
 
+  // Auto-refresh interval setting
+  const [refreshInterval, setRefreshInterval] = useState(60);
+
+  // Reset confirmation
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [notifyLead, setNotifyLead] = useState(10);
   const [notifyPermission, setNotifyPermission] = useState<string>("default");
 
-  // Load saved MultiViewer host and notification prefs from localStorage on mount
+  // Load saved preferences from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("f1-multiviewer-host");
     if (saved) setMvHost(saved);
@@ -59,7 +65,67 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     }
     setNotifyEnabled(localStorage.getItem("f1-notify") === "true");
     setNotifyLead(parseInt(localStorage.getItem("f1-notify-lead") ?? "10") || 10);
+    setRefreshInterval(parseInt(localStorage.getItem("f1-refresh-interval") ?? "60") || 60);
   }, []);
+
+  function saveRefreshInterval(seconds: number) {
+    setRefreshInterval(seconds);
+    localStorage.setItem("f1-refresh-interval", String(seconds));
+  }
+
+  function resetAllSettings() {
+    // Clear all F1 dashboard localStorage keys
+    const keysToRemove = [
+      "f1-multiviewer-host", "f1-notify", "f1-notify-lead",
+      "f1-refresh-interval", "f1-favorites-drivers", "f1-favorites-teams",
+      "f1-theme-mode", "f1-theme-accent", "f1-rss-feeds", "f1-rss-drivers",
+    ];
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
+    // Also clear any other keys starting with f1-
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("f1-")) localStorage.removeItem(key);
+    }
+    setShowResetConfirm(false);
+    window.location.reload();
+  }
+
+  function exportSettings() {
+    const data: Record<string, string | null> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith("f1-")) {
+        data[key] = localStorage.getItem(key);
+      }
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "f1-dashboard-settings.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importSettings(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith("f1-") && typeof value === "string") {
+            localStorage.setItem(key, value);
+          }
+        }
+        window.location.reload();
+      } catch {
+        alert("Invalid settings file");
+      }
+    };
+    reader.readAsText(file);
+  }
 
   async function toggleNotify() {
     if (!notifyEnabled) {
@@ -614,6 +680,98 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
               "Save"
             )}
           </button>
+        </div>
+      </section>
+
+      {/* ── Dashboard Refresh Rate ── */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-1">Dashboard Refresh Rate</h2>
+        <p className="text-sm text-f1-text-muted mb-4">
+          Control how often dashboard pages auto-refresh. Lower intervals mean fresher data but more network usage.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "15s", value: 15, desc: "Live sessions" },
+            { label: "30s", value: 30, desc: "Active weekend" },
+            { label: "60s", value: 60, desc: "Default" },
+            { label: "2m", value: 120, desc: "Low bandwidth" },
+            { label: "5m", value: 300, desc: "Background" },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => saveRefreshInterval(opt.value)}
+              className={`rounded-lg border px-4 py-2 text-sm transition-all ${
+                refreshInterval === opt.value
+                  ? "border-f1-accent bg-f1-accent/10 text-f1-accent font-bold"
+                  : "border-f1-border bg-f1-dark text-f1-text-muted hover:border-f1-text-muted hover:text-f1-text"
+              }`}
+            >
+              <span className="block font-bold">{opt.label}</span>
+              <span className="text-xs opacity-60">{opt.desc}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Data Management ── */}
+      <section className="mb-10">
+        <h2 className="text-lg font-bold mb-1">Data Management</h2>
+        <p className="text-sm text-f1-text-muted mb-4">
+          Export your settings and favourites to a file, or import from a backup.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={exportSettings}
+            className="inline-flex items-center gap-2 rounded-lg border border-f1-border bg-f1-dark px-4 py-2 text-sm font-medium text-f1-text hover:bg-f1-card transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export Settings
+          </button>
+          <label className="inline-flex items-center gap-2 rounded-lg border border-f1-border bg-f1-dark px-4 py-2 text-sm font-medium text-f1-text hover:bg-f1-card transition-colors cursor-pointer">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import Settings
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) importSettings(file);
+              }}
+            />
+          </label>
+        </div>
+
+        {/* Reset All */}
+        <div className="mt-6 pt-4 border-t border-f1-border/30">
+          {!showResetConfirm ? (
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="text-sm text-red-400 hover:text-red-300 transition-colors"
+            >
+              Reset all settings to defaults
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-red-400">This will clear all preferences, favourites, and theme settings.</p>
+              <button
+                onClick={resetAllSettings}
+                className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-bold text-white hover:bg-red-700 transition-colors"
+              >
+                Confirm Reset
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="text-sm text-f1-text-muted hover:text-f1-text transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -6,6 +6,7 @@ import {
   getAllSprintResults,
   getDriverStandings,
   getConstructorStandings,
+  getPitStops,
   getTeamColor,
   getCountryFlag,
   CURRENT_YEAR,
@@ -19,6 +20,14 @@ async function StatsContent() {
     getDriverStandings(),
     getConstructorStandings(),
   ]);
+
+  // Fetch pit stops for all completed races in parallel
+  const completedRounds = allRaces
+    .filter((r) => (r.Results?.length ?? 0) > 0)
+    .map((r) => r.round);
+  const pitStopsByRound = await Promise.all(
+    completedRounds.map(async (round) => ({ round, stops: await getPitStops(round) }))
+  );
 
   const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
   const completedSprints = sprintRaces.filter((r) => (r as any).SprintResults?.length > 0);
@@ -148,6 +157,82 @@ async function StatsContent() {
   const lapsLedSorted = [...lapsLedMap.values()].sort((a, b) => b.laps - a.laps);
 
   const overtakesByRaceSorted = [...overtakesByRace].sort((a, b) => b.total - a.total);
+
+  // --- Pit stop stats ---
+  // Build a map of driverId -> constructorId from race results
+  const driverTeamMap = new Map<string, string>();
+  const driverNameMap = new Map<string, string>();
+  for (const race of completedRaces) {
+    for (const r of race.Results ?? []) {
+      driverTeamMap.set(r.Driver.driverId, r.Constructor.constructorId);
+      driverNameMap.set(r.Driver.driverId, r.Constructor.name);
+    }
+  }
+
+  const teamPitMap = new Map<string, { name: string; constructorId: string; totalDuration: number; count: number; fastest: number }>();
+  let fastestPitStop = { driverId: "", raceName: "", duration: Infinity, constructorId: "" };
+  let totalPitStops = 0;
+
+  for (const { round, stops } of pitStopsByRound) {
+    const race = completedRaces.find((r) => r.round === round);
+    for (const stop of stops) {
+      const dur = parseFloat(stop.duration);
+      if (isNaN(dur) || dur <= 0) continue;
+      totalPitStops++;
+
+      const cid = driverTeamMap.get(stop.driverId) ?? "";
+      const cname = driverNameMap.get(stop.driverId) ?? "";
+
+      if (cid) {
+        const t = teamPitMap.get(cid) ?? { name: cname, constructorId: cid, totalDuration: 0, count: 0, fastest: Infinity };
+        teamPitMap.set(cid, {
+          ...t,
+          totalDuration: t.totalDuration + dur,
+          count: t.count + 1,
+          fastest: Math.min(t.fastest, dur),
+        });
+      }
+
+      if (dur < fastestPitStop.duration) {
+        fastestPitStop = { driverId: stop.driverId, raceName: race?.raceName ?? "", duration: dur, constructorId: cid };
+      }
+    }
+  }
+
+  const teamPitSorted = [...teamPitMap.values()]
+    .filter((t) => t.count >= 2)
+    .map((t) => ({ ...t, avg: t.totalDuration / t.count }))
+    .sort((a, b) => a.avg - b.avg);
+
+  // --- Consistency stats (finish position variance) ---
+  const consistencyMap = new Map<string, { name: string; constructorId: string; nationality: string; positions: number[] }>();
+  for (const race of completedRaces) {
+    for (const r of race.Results ?? []) {
+      const id = r.Driver.driverId;
+      const pos = parseInt(r.position);
+      const isDnf = r.status !== "Finished" && !r.status.startsWith("+");
+      if (isDnf) continue; // exclude DNFs from consistency
+      const existing = consistencyMap.get(id) ?? {
+        name: `${r.Driver.givenName} ${r.Driver.familyName}`,
+        constructorId: r.Constructor.constructorId,
+        nationality: r.Driver.nationality,
+        positions: [],
+      };
+      existing.positions.push(pos);
+      consistencyMap.set(id, existing);
+    }
+  }
+
+  const consistencySorted = [...consistencyMap.values()]
+    .filter((d) => d.positions.length >= 3)
+    .map((d) => {
+      const avg = d.positions.reduce((a, b) => a + b, 0) / d.positions.length;
+      const variance = d.positions.reduce((s, p) => s + (p - avg) ** 2, 0) / d.positions.length;
+      const stdDev = Math.sqrt(variance);
+      return { ...d, avg, stdDev };
+    })
+    .sort((a, b) => a.stdDev - b.stdDev)
+    .slice(0, 10);
 
   return (
     <div className="space-y-8">
@@ -381,6 +466,97 @@ async function StatsContent() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pit Stop Statistics */}
+      {teamPitSorted.length > 0 && (
+        <div className="rounded-xl border border-f1-border bg-f1-card">
+          <div className="border-b border-f1-border p-4">
+            <h2 className="font-bold text-lg">Pit Stop Performance by Team</h2>
+            <p className="text-xs text-f1-text-muted mt-0.5">
+              Average pit stop duration (seconds) across {totalPitStops} stops this season
+            </p>
+          </div>
+          {fastestPitStop.duration < Infinity && (
+            <div className="px-4 pt-3 pb-1">
+              <p className="text-xs text-f1-text-muted">
+                Fastest stop: <span className="font-bold text-green-400">{fastestPitStop.duration.toFixed(1)}s</span>
+                {" "}— {fastestPitStop.raceName.replace(" Grand Prix", " GP")}
+              </p>
+            </div>
+          )}
+          <div className="divide-y divide-f1-border/40">
+            {teamPitSorted.map((t, i) => {
+              const color = getTeamColor(t.constructorId);
+              const maxAvg = teamPitSorted[teamPitSorted.length - 1]?.avg ?? 1;
+              const minAvg = teamPitSorted[0]?.avg ?? 0;
+              const range = maxAvg - minAvg || 1;
+              // Invert: fastest team gets longest bar
+              const pct = Math.max(10, ((maxAvg - t.avg) / range) * 80 + 20);
+              return (
+                <div key={t.constructorId} className="px-4 py-3 flex items-center gap-3">
+                  <span className="w-5 text-xs font-bold text-f1-text-muted text-right">{i + 1}</span>
+                  <span className="h-6 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium">{t.name}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-f1-text-muted">{t.count} stops</span>
+                        <span className="text-sm font-black" style={{ color }}>{t.avg.toFixed(2)}s</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.75 }}
+                      />
+                    </div>
+                    <p className="text-xs text-f1-text-muted mt-0.5">fastest: {t.fastest.toFixed(1)}s</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Driver Consistency */}
+      {consistencySorted.length > 0 && (
+        <div className="rounded-xl border border-f1-border bg-f1-card">
+          <div className="border-b border-f1-border p-4">
+            <h2 className="font-bold text-lg">Driver Consistency</h2>
+            <p className="text-xs text-f1-text-muted mt-0.5">Lowest standard deviation in finishing position (excluding DNFs) — most consistent performers</p>
+          </div>
+          <div className="divide-y divide-f1-border/40">
+            {consistencySorted.map((d, i) => {
+              const color = getTeamColor(d.constructorId);
+              const maxStd = consistencySorted[consistencySorted.length - 1]?.stdDev ?? 1;
+              // Invert: lower stdDev = longer bar (more consistent)
+              const pct = Math.max(10, ((maxStd - d.stdDev) / (maxStd || 1)) * 80 + 20);
+              return (
+                <div key={d.name} className="px-4 py-3 flex items-center gap-3">
+                  <span className="w-5 text-xs font-bold text-f1-text-muted text-right">{i + 1}</span>
+                  <span className="h-7 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold">{getCountryFlag(d.nationality)} {d.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-f1-text-muted">avg P{d.avg.toFixed(1)}</span>
+                        <span className="text-sm font-black" style={{ color }}>&plusmn;{d.stdDev.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.7 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

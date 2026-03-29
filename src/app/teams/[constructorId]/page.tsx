@@ -7,6 +7,7 @@ import {
   getConstructorStandings,
   getDriverStandings,
   getAllSeasonResults,
+  getPitStops,
   getTeamColor,
   getCountryFlag,
   CURRENT_YEAR,
@@ -79,6 +80,42 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
 
   const avgFinish =
     resultCount > 0 ? Math.round((totalPos / resultCount) * 10) / 10 : 0;
+  const ppr = teamRaces.length > 0 ? parseFloat(standing.points) / teamRaces.length : 0;
+
+  // Reliability breakdown: categorize DNFs
+  const dnfReasons: { driver: string; status: string; raceName: string }[] = [];
+  for (const race of teamRaces) {
+    for (const r of (race.Results ?? []).filter((r: any) => r.Constructor.constructorId === constructorId)) {
+      if (r.status !== "Finished" && !r.status.startsWith("+")) {
+        dnfReasons.push({
+          driver: `${r.Driver.givenName} ${r.Driver.familyName}`,
+          status: r.status,
+          raceName: race.raceName.replace(" Grand Prix", " GP"),
+        });
+      }
+    }
+  }
+
+  // Fetch pit stops for the team
+  const pitStopData = await Promise.all(
+    teamRaces.map(async (race) => {
+      const stops = await getPitStops(race.round);
+      return stops.filter((s) =>
+        drivers.some((d) => d.Driver.driverId === s.driverId)
+      );
+    })
+  );
+  const allTeamStops = pitStopData.flat();
+  const validStops = allTeamStops.filter((s) => {
+    const dur = parseFloat(s.duration);
+    return !isNaN(dur) && dur > 0;
+  });
+  const avgPitDuration = validStops.length > 0
+    ? validStops.reduce((sum, s) => sum + parseFloat(s.duration), 0) / validStops.length
+    : 0;
+  const fastestPit = validStops.length > 0
+    ? Math.min(...validStops.map((s) => parseFloat(s.duration)))
+    : 0;
 
   // Build combined race table: for each race, get both drivers' results
   const raceRows = teamRaces.map((race) => {
@@ -206,6 +243,104 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
             </Link>
           );
         })}
+      </div>
+
+      {/* Pit Stop & Reliability */}
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+        {/* Pit Stop Performance */}
+        {validStops.length > 0 && (
+          <div className="rounded-xl border border-f1-border bg-f1-card p-5">
+            <h2 className="text-sm font-bold text-f1-text-muted mb-3 uppercase tracking-wider">
+              Pit Stop Performance
+            </h2>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <p className="text-xs text-f1-text-muted mb-0.5">Avg Stop</p>
+                <p className="text-xl font-black" style={{ color: teamColor }}>
+                  {avgPitDuration.toFixed(2)}s
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-f1-text-muted mb-0.5">Fastest</p>
+                <p className="text-xl font-black text-green-400">
+                  {fastestPit.toFixed(1)}s
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-f1-text-muted mb-0.5">Total Stops</p>
+                <p className="text-xl font-black">{validStops.length}</p>
+              </div>
+            </div>
+            {/* Per-driver pit breakdown */}
+            <div className="mt-3 pt-3 border-t border-f1-border/30 space-y-2">
+              {drivers.map((d) => {
+                const driverStops = validStops.filter((s) => s.driverId === d.Driver.driverId);
+                if (driverStops.length === 0) return null;
+                const driverAvg = driverStops.reduce((sum, s) => sum + parseFloat(s.duration), 0) / driverStops.length;
+                return (
+                  <div key={d.Driver.driverId} className="flex items-center justify-between text-xs">
+                    <span className="text-f1-text-muted">{d.Driver.code}</span>
+                    <span className="font-bold">{driverAvg.toFixed(2)}s avg ({driverStops.length} stops)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Reliability Log */}
+        {dnfReasons.length > 0 && (
+          <div className="rounded-xl border border-f1-border bg-f1-card p-5">
+            <h2 className="text-sm font-bold text-f1-text-muted mb-3 uppercase tracking-wider">
+              Reliability Log
+            </h2>
+            <p className="text-3xl font-black text-red-400 mb-3">{dnfReasons.length} <span className="text-sm font-normal text-f1-text-muted">retirements</span></p>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {dnfReasons.map((d, i) => (
+                <div key={i} className="flex items-center justify-between text-xs border-b border-f1-border/20 pb-1.5">
+                  <div>
+                    <span className="font-medium">{d.driver.split(" ").at(-1)}</span>
+                    <span className="text-f1-text-muted ml-1.5">{d.raceName}</span>
+                  </div>
+                  <span className="text-red-400 font-medium">{d.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Points per race */}
+        {teamRaces.length > 0 && (
+          <div className="rounded-xl border border-f1-border bg-f1-card p-5">
+            <h2 className="text-sm font-bold text-f1-text-muted mb-3 uppercase tracking-wider">
+              Points Per Race
+            </h2>
+            <p className="text-3xl font-black" style={{ color: teamColor }}>{ppr.toFixed(1)}</p>
+            <p className="text-xs text-f1-text-muted mt-1">
+              {standing.points} pts across {teamRaces.length} races
+            </p>
+            {/* Driver contribution */}
+            <div className="mt-3 pt-3 border-t border-f1-border/30">
+              <p className="text-xs text-f1-text-muted mb-2">Driver Contribution</p>
+              {drivers.map((d) => {
+                const dPts = parseFloat(d.points);
+                const teamPts = parseFloat(standing.points) || 1;
+                const pct = Math.round((dPts / teamPts) * 100);
+                return (
+                  <div key={d.Driver.driverId} className="mb-1.5">
+                    <div className="flex items-center justify-between text-xs mb-0.5">
+                      <span className="font-medium">{d.Driver.code}</span>
+                      <span className="text-f1-text-muted">{d.points} pts ({pct}%)</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-f1-dark overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: teamColor, opacity: 0.7 }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Race-by-Race Table */}

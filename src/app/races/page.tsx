@@ -72,7 +72,7 @@ async function RacesContent() {
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcoming.map((race) => (
-              <RaceCard key={race.round} race={race} />
+              <RaceCard key={race.round} race={race} showSchedule />
             ))}
           </div>
         </div>

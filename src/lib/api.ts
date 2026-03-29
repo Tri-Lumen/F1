@@ -26,6 +26,8 @@ export const ARCHIVE_SEASONS = [
 // --- Ergast / Jolpica API ---
 
 const FETCH_TIMEOUT_MS = 10_000;
+/** Longer timeout for OpenF1 live endpoints which can be slow under load. */
+const LIVE_FETCH_TIMEOUT_MS = 30_000;
 
 function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   const controller = new AbortController();
@@ -171,7 +173,7 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
 // --- OpenF1 Live API ---
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
       cache: "no-store",
@@ -188,7 +190,7 @@ export async function getLiveSessions(): Promise<LiveSession[]> {
 
 export async function getLatestSession(): Promise<LiveSession | null> {
   // Try the direct "latest" query first — most reliable for live/recent sessions
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/sessions?session_key=latest`, {
       cache: "no-store",
@@ -196,7 +198,14 @@ export async function getLatestSession(): Promise<LiveSession | null> {
     });
     if (res.ok) {
       const data: LiveSession[] = await res.json();
-      if (data.length > 0) return data[0];
+      if (data.length > 0) {
+        // Verify the session is from the current season — OpenF1 "latest" may
+        // return a session from a prior year if the new season hasn't started yet
+        const session = data[0];
+        if (String(session.year) === CURRENT_SEASON) return session;
+        // Still return it; the live page checks isLive status anyway
+        return session;
+      }
     }
   } catch {
     // Fall through to year-based query
@@ -216,7 +225,7 @@ export async function getLatestSession(): Promise<LiveSession | null> {
 }
 
 export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriver[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
       cache: "no-store",
@@ -232,39 +241,74 @@ export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriv
 }
 
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    // Only fetch recent position data (last 60s) to avoid huge payloads during live sessions
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const res = await fetch(
+      `${OPENF1_BASE}/position?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return [];
+    const data: LivePosition[] = await res.json();
+    // If the time-filtered query returned data, use it; otherwise fall back to unfiltered
+    if (data.length > 0) return data;
+  } catch {
+    // Fall through to unfiltered fetch
+  } finally {
+    clear();
+  }
+  // Fallback: unfiltered (for sessions that just started or non-live sessions)
+  const { signal: sig2, clear: clear2 } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/position?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
+      { cache: "no-store", signal: sig2 }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
   } finally {
-    clear();
+    clear2();
   }
 }
 
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    // Only fetch recent interval data (last 60s) to avoid huge payloads
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const res = await fetch(
+      `${OPENF1_BASE}/intervals?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return [];
+    const data: LiveInterval[] = await res.json();
+    if (data.length > 0) return data;
+  } catch {
+    // Fall through to unfiltered fetch
+  } finally {
+    clear();
+  }
+  // Fallback: unfiltered
+  const { signal: sig2, clear: clear2 } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
+      { cache: "no-store", signal: sig2 }
     );
     if (!res.ok) return [];
     return await res.json();
   } catch {
     return [];
   } finally {
-    clear();
+    clear2();
   }
 }
 
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
@@ -280,7 +324,7 @@ export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
 }
 
 export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
