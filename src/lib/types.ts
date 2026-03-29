@@ -152,13 +152,46 @@ export interface TeamRadio {
   date: string;
 }
 
-// Pit stop data from Ergast
+// Race control messages from OpenF1
+export interface RaceControlMessage {
+  date: string;
+  category: string;
+  flag?: string;
+  message: string;
+  scope?: string;
+  driver_number?: number;
+  lap_number?: number;
+  sector?: number;
+}
+
+// Weather data from OpenF1
+export interface WeatherData {
+  date: string;
+  air_temperature: number;
+  humidity: number;
+  pressure: number;
+  rainfall: number;
+  track_temperature: number;
+  wind_direction: number;
+  wind_speed: number;
+}
+
+// Pit stop data from Ergast (duration = pit lane time, entry to exit)
 export interface PitStop {
   driverId: string;
   lap: string;
   stop: string;
   time: string;
   duration: string;
+}
+
+// Pit stop data from OpenF1 (pit_duration = pit box time, stationary)
+export interface OpenF1PitStop {
+  driver_number: number;
+  pit_duration: number | null;
+  lap_number: number;
+  date: string;
+  session_key: number;
 }
 
 // RSS feed types

@@ -4,7 +4,7 @@ import Nav from "@/components/Nav";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
-import { getNextScheduledSession, getLatestSession } from "@/lib/api";
+import { getNextScheduledSession, getLatestSession, isSessionLive } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "F1 Dashboard — 2026 Season",
@@ -37,10 +37,7 @@ export default async function RootLayout({
     }
 
     if (latestSession) {
-      const now = new Date();
-      isLive =
-        now >= new Date(latestSession.date_start) &&
-        now <= new Date(latestSession.date_end);
+      isLive = isSessionLive(latestSession);
     }
   } catch {
     // Non-fatal — nav will render without the countdown

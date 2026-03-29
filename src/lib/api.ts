@@ -11,6 +11,9 @@ import type {
   LiveStint,
   TeamRadio,
   PitStop,
+  OpenF1PitStop,
+  RaceControlMessage,
+  WeatherData,
 } from "./types";
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -243,8 +246,9 @@ export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriv
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
   const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
-    // Only fetch recent position data (last 60s) to avoid huge payloads during live sessions
-    const since = new Date(Date.now() - 60_000).toISOString();
+    // Fetch recent position data (last 5 min) — wide enough to survive safety-car gaps
+    // while still avoiding full-session payloads.
+    const since = new Date(Date.now() - 5 * 60_000).toISOString();
     const res = await fetch(
       `${OPENF1_BASE}/position?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
       { cache: "no-store", signal }
@@ -277,8 +281,8 @@ export async function getLivePositions(sessionKey: number): Promise<LivePosition
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
   const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
-    // Only fetch recent interval data (last 60s) to avoid huge payloads
-    const since = new Date(Date.now() - 60_000).toISOString();
+    // Fetch recent interval data (last 5 min) — matches the position window
+    const since = new Date(Date.now() - 5 * 60_000).toISOString();
     const res = await fetch(
       `${OPENF1_BASE}/intervals?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
       { cache: "no-store", signal }
@@ -334,6 +338,74 @@ export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
     return await res.json();
   } catch {
     return [];
+  } finally {
+    clear();
+  }
+}
+
+/** Fetch pit box (stationary) times from OpenF1 for a given session. */
+export async function getOpenF1PitStops(sessionKey: number): Promise<OpenF1PitStop[]> {
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/pit?session_key=${sessionKey}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
+}
+
+/**
+ * Find the OpenF1 session key for an Ergast race round.
+ * Matches by comparing the race date from Ergast with OpenF1 sessions of type "Race".
+ */
+export async function getOpenF1SessionKeyForRace(race: Race): Promise<number | null> {
+  const sessions = await getLiveSessions();
+  if (!sessions.length) return null;
+  const raceDate = getRaceDate(race);
+  const raceDateStr = raceDate.toISOString().slice(0, 10); // YYYY-MM-DD
+  const match = sessions.find(
+    (s) => s.session_type === "Race" && s.date_start.startsWith(raceDateStr)
+  );
+  return match?.session_key ?? null;
+}
+
+/** Fetch race control messages (flags, safety car, penalties, etc.) */
+export async function getRaceControl(sessionKey: number): Promise<RaceControlMessage[]> {
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/race_control?session_key=${sessionKey}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  } finally {
+    clear();
+  }
+}
+
+/** Fetch current weather data for the session (returns the most recent entry). */
+export async function getWeather(sessionKey: number): Promise<WeatherData | null> {
+  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `${OPENF1_BASE}/weather?session_key=${sessionKey}`,
+      { cache: "no-store", signal }
+    );
+    if (!res.ok) return null;
+    const data: WeatherData[] = await res.json();
+    // Return the most recent weather reading
+    return data.length > 0 ? data[data.length - 1] : null;
+  } catch {
+    return null;
   } finally {
     clear();
   }
@@ -510,6 +582,26 @@ export function getCountryFlagByCountry(country: string): string {
     Qatar: "🇶🇦", "Las Vegas": "🇺🇸", Miami: "🇺🇸", Madrid: "🇪🇸",
   };
   return flags[country] ?? "🏁";
+}
+
+/**
+ * Determine whether a live session should be treated as "in progress".
+ *
+ * OpenF1's `date_end` is the *scheduled* end — races regularly overrun due to
+ * safety cars, red flags, or slow formations.  We add a grace period so the UI
+ * keeps showing LIVE rather than flipping to SESSION ENDED while the session
+ * is likely still on-going.
+ */
+export function isSessionLive(session: LiveSession): boolean {
+  const now = new Date();
+  const start = new Date(session.date_start);
+  const end = new Date(session.date_end);
+  // Race sessions get a 2 h grace; other sessions get 1 h
+  const graceMs =
+    session.session_type === "Race"
+      ? 2 * 60 * 60 * 1000
+      : 60 * 60 * 1000;
+  return now >= start && now <= new Date(end.getTime() + graceMs);
 }
 
 export const CURRENT_YEAR = CURRENT_SEASON;

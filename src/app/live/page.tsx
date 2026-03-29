@@ -9,10 +9,15 @@ import {
   getLiveIntervals,
   getLiveStints,
   getTeamRadio,
+  getRaceControl,
+  getWeather,
+  isSessionLive,
 } from "@/lib/api";
 import OnboardButton from "@/components/OnboardButton";
 import TireStrategy from "@/components/TireStrategy";
 import TeamRadioFeed from "@/components/TeamRadioFeed";
+import RaceControlFeed from "@/components/RaceControlFeed";
+import WeatherWidget from "@/components/WeatherWidget";
 import RefreshButton from "@/components/RefreshButton";
 import NextSessionCard from "@/components/NextSessionCard";
 import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
@@ -36,17 +41,17 @@ async function LiveContent() {
     );
   }
 
-  const sessionEnd = new Date(session.date_end);
-  const now = new Date();
-  const isLive = now <= sessionEnd && now >= new Date(session.date_start);
+  const isLive = isSessionLive(session);
 
   // Fetch each endpoint independently so partial failures don't break the whole page
-  const [drivers, positions, intervals, stints, radio] = await Promise.all([
+  const [drivers, positions, intervals, stints, radio, raceControl, weather] = await Promise.all([
     getLiveDrivers(session.session_key),
     getLivePositions(session.session_key),
     getLiveIntervals(session.session_key),
     getLiveStints(session.session_key),
     getTeamRadio(session.session_key),
+    getRaceControl(session.session_key),
+    getWeather(session.session_key),
   ]);
 
   // Track which data sources are available for user feedback
@@ -283,13 +288,19 @@ async function LiveContent() {
         </div>
       </div>
 
-      {/* Two column layout: Tire Strategy + Team Radio */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Weather + Tire Strategy row */}
+      <div className="mb-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+        <WeatherWidget weather={weather} />
         <TireStrategy
           stints={stints}
           drivers={drivers}
           latestPositions={latestPositions}
         />
+      </div>
+
+      {/* Race Control + Team Radio row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RaceControlFeed messages={raceControl} />
         <TeamRadioFeed messages={radio} drivers={drivers} />
       </div>
     </>
