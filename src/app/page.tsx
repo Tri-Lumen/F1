@@ -6,7 +6,9 @@ import {
   getDriverStandings,
   getConstructorStandings,
   getRaceSchedule,
+  getAllSeasonResults,
   getRaceDate,
+  getTeamColor,
   CURRENT_YEAR,
 } from "@/lib/api";
 import StandingsTable from "@/components/StandingsTable";
@@ -30,10 +32,11 @@ function LoadingSkeleton({ rows = 5 }: { rows?: number }) {
 }
 
 async function DashboardContent() {
-  const [driverStandings, constructorStandings, races] = await Promise.all([
+  const [driverStandings, constructorStandings, races, allResults] = await Promise.all([
     getDriverStandings(),
     getConstructorStandings(),
     getRaceSchedule(),
+    getAllSeasonResults(),
   ]);
 
   // Find next race (event-level, not session-level)
@@ -52,6 +55,25 @@ async function DashboardContent() {
         driverStandings[0]
       )
     : null;
+
+  // Compute movers: biggest single-race position gains in the last completed race
+  const completedWithResults = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
+  const lastRace = completedWithResults.length > 0
+    ? completedWithResults[completedWithResults.length - 1]
+    : null;
+  const movers = lastRace
+    ? (lastRace.Results ?? [])
+        .map((r) => ({
+          name: `${r.Driver.givenName} ${r.Driver.familyName}`,
+          familyName: r.Driver.familyName,
+          constructorId: r.Constructor.constructorId,
+          grid: parseInt(r.grid),
+          position: parseInt(r.position),
+          gain: parseInt(r.grid) > 0 ? parseInt(r.grid) - parseInt(r.position) : 0,
+        }))
+        .filter((m) => m.grid > 0)
+        .sort((a, b) => b.gain - a.gain)
+    : [];
 
   return (
     <>
@@ -199,6 +221,51 @@ async function DashboardContent() {
             {completedRaces.map((race) => (
               <RaceCard key={race.round} race={race} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Movers & Shakers */}
+      {lastRace && movers.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <span className="w-1 h-5 rounded-full bg-green-400" />
+              Movers &amp; Shakers
+            </h2>
+            <span className="text-xs text-f1-text-muted">
+              {lastRace.raceName.replace(" Grand Prix", " GP")}
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Top gainers */}
+            {movers.filter((m) => m.gain > 0).slice(0, 3).map((m) => {
+              const color = getTeamColor(m.constructorId);
+              return (
+                <div key={m.name} className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-3 flex items-center gap-3">
+                  <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{m.familyName}</p>
+                    <p className="text-xs text-f1-text-muted">P{m.grid} &#8594; P{m.position}</p>
+                  </div>
+                  <span className="text-lg font-black text-green-400">+{m.gain}</span>
+                </div>
+              );
+            })}
+            {/* Biggest loser */}
+            {movers.filter((m) => m.gain < 0).slice(-1).map((m) => {
+              const color = getTeamColor(m.constructorId);
+              return (
+                <div key={m.name} className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-3 flex items-center gap-3">
+                  <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{m.familyName}</p>
+                    <p className="text-xs text-f1-text-muted">P{m.grid} &#8594; P{m.position}</p>
+                  </div>
+                  <span className="text-lg font-black text-red-400">{m.gain}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

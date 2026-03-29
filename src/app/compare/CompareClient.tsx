@@ -17,6 +17,7 @@ interface DriverStats {
   avgGrid: number;
   pointsPerRace: number;
   racesEntered: number;
+  totalPositionsGained: number;
   raceResults: {
     round: string;
     raceName: string;
@@ -42,6 +43,7 @@ function computeStats(
   let totalPoints = 0;
   let racesEntered = 0;
   let poles = 0;
+  let totalPositionsGained = 0;
   const raceResults: DriverStats["raceResults"] = [];
 
   for (const race of allRaces) {
@@ -67,6 +69,7 @@ function computeStats(
         if (grid > 0) {
           totalGrid += grid;
           gridRaces++;
+          totalPositionsGained += grid - pos;
         }
 
         raceResults.push({
@@ -103,6 +106,7 @@ function computeStats(
         ? Math.round((totalPoints / racesEntered) * 10) / 10
         : 0,
     racesEntered,
+    totalPositionsGained,
     raceResults,
   };
 }
@@ -236,6 +240,28 @@ export default function CompareClient({
   const h2hQualA = useMemo(() => h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.a.grid < r.b.grid).length, [h2hResults]);
   const h2hQualB = useMemo(() => h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0 && r.b.grid < r.a.grid).length, [h2hResults]);
 
+  // Teammate pairs for quick-select
+  const teammatePairs = useMemo(() => {
+    const teamMap = new Map<string, DriverStanding[]>();
+    for (const s of standings) {
+      const teamId = s.Constructors[0]?.constructorId;
+      if (!teamId) continue;
+      const arr = teamMap.get(teamId) ?? [];
+      arr.push(s);
+      teamMap.set(teamId, arr);
+    }
+    return [...teamMap.entries()]
+      .filter(([, drivers]) => drivers.length >= 2)
+      .map(([teamId, drivers]) => ({
+        teamId,
+        teamName: drivers[0].Constructors[0]?.name ?? teamId,
+        driverA: drivers[0].Driver.driverId,
+        driverB: drivers[1].Driver.driverId,
+        nameA: drivers[0].Driver.familyName,
+        nameB: drivers[1].Driver.familyName,
+      }));
+  }, [standings]);
+
   // Cumulative points series for chart
   const cumulativePointsA = useMemo(() => {
     let total = 0;
@@ -248,6 +274,34 @@ export default function CompareClient({
 
   return (
     <>
+      {/* Teammate Quick-Select */}
+      {teammatePairs.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-2 font-semibold">Compare Teammates</p>
+          <div className="flex flex-wrap gap-2">
+            {teammatePairs.map((pair) => {
+              const color = getTeamColor(pair.teamId);
+              const isActive = (driverA === pair.driverA && driverB === pair.driverB) ||
+                (driverA === pair.driverB && driverB === pair.driverA);
+              return (
+                <button
+                  key={pair.teamId}
+                  onClick={() => { setDriverA(pair.driverA); setDriverB(pair.driverB); }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all border ${
+                    isActive
+                      ? "border-f1-accent bg-f1-accent/10 text-f1-text"
+                      : "border-f1-border/50 bg-f1-dark hover:bg-f1-card text-f1-text-muted hover:text-f1-text"
+                  }`}
+                >
+                  <span className="inline-block h-2 w-2 rounded-full mr-1.5" style={{ backgroundColor: color }} />
+                  {pair.nameA} vs {pair.nameB}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Driver Selectors */}
       <div className="mb-6 grid grid-cols-2 gap-4">
         <div className="rounded-xl border border-f1-border bg-f1-card p-4">
@@ -396,6 +450,23 @@ export default function CompareClient({
                 colorA={teamColorA}
                 colorB={teamColorB}
                 higherIsBetter={false}
+              />
+              <StatBar
+                label="Positions Gained"
+                valA={statsA.totalPositionsGained}
+                valB={statsB.totalPositionsGained}
+                colorA={teamColorA}
+                colorB={teamColorB}
+                format={(v) => (v >= 0 ? `+${v}` : String(v))}
+              />
+              <StatBar
+                label="Best Finish"
+                valA={statsA.bestFinish}
+                valB={statsB.bestFinish}
+                colorA={teamColorA}
+                colorB={teamColorB}
+                higherIsBetter={false}
+                format={(v) => v > 0 ? `P${v}` : "—"}
               />
             </div>
           </div>

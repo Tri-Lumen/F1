@@ -52,6 +52,73 @@ function LoadingSkeleton() {
   );
 }
 
+/** Compute extended driver stats from season results. */
+function computeDriverExtras(driverId: string, sortedRaces: Race[]) {
+  let podiums = 0;
+  let totalPts = 0;
+  let racesEntered = 0;
+  const avgPositions: number[] = [];
+
+  for (const race of sortedRaces) {
+    const r = race.Results?.find((res) => res.Driver.driverId === driverId);
+    if (!r) continue;
+    racesEntered++;
+    const pos = parseInt(r.position);
+    const pts = parseFloat(r.points);
+    totalPts += pts;
+    if (pos <= 3) podiums++;
+    avgPositions.push(pos);
+  }
+
+  // Form trend: compare average of last 3 vs previous 3
+  let trend: "up" | "down" | "stable" = "stable";
+  if (avgPositions.length >= 4) {
+    const recent = avgPositions.slice(-3);
+    const previous = avgPositions.slice(-6, -3);
+    if (previous.length >= 2) {
+      const avgRecent = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const avgPrev = previous.reduce((a, b) => a + b, 0) / previous.length;
+      // Lower position number = better, so if recent avg is lower, trending up
+      if (avgRecent < avgPrev - 0.5) trend = "up";
+      else if (avgRecent > avgPrev + 0.5) trend = "down";
+    }
+  }
+
+  const ppr = racesEntered > 0 ? totalPts / racesEntered : 0;
+  const projectedPts = racesEntered > 0 ? Math.round(ppr * 24) : 0; // ~24 races
+
+  return { podiums, ppr, trend, projectedPts, racesEntered };
+}
+
+/** Compute constructor extended stats. */
+function computeTeamExtras(constructorId: string, sortedRaces: Race[]) {
+  let podiums = 0;
+  let totalPts = 0;
+  let racesEntered = 0;
+  let doublePoints = 0; // both drivers in top 10
+
+  for (const race of sortedRaces) {
+    const teamResults = race.Results?.filter(
+      (r) => r.Constructor.constructorId === constructorId
+    ) ?? [];
+    if (teamResults.length === 0) continue;
+    racesEntered++;
+    let inPoints = 0;
+    for (const r of teamResults) {
+      const pos = parseInt(r.position);
+      const pts = parseFloat(r.points);
+      totalPts += pts;
+      if (pos <= 3) podiums++;
+      if (pos <= 10) inPoints++;
+    }
+    if (inPoints >= 2) doublePoints++;
+  }
+
+  const ppr = racesEntered > 0 ? totalPts / racesEntered : 0;
+
+  return { podiums, ppr, doublePoints, racesEntered };
+}
+
 export default function FavoritesClient({
   driverStandings,
   constructorStandings,
@@ -130,6 +197,22 @@ export default function FavoritesClient({
       .map((s) => `${s.Driver.givenName} ${s.Driver.familyName}`);
   }
 
+  /** Get the gap (in points) to the driver immediately ahead and behind. */
+  function getDriverGaps(driverId: string) {
+    const idx = driverStandings.findIndex((s) => s.Driver.driverId === driverId);
+    if (idx < 0) return { ahead: null, behind: null };
+    const pts = parseFloat(driverStandings[idx].points);
+    const ahead = idx > 0 ? {
+      name: driverStandings[idx - 1].Driver.familyName,
+      gap: parseFloat(driverStandings[idx - 1].points) - pts,
+    } : null;
+    const behind = idx < driverStandings.length - 1 ? {
+      name: driverStandings[idx + 1].Driver.familyName,
+      gap: pts - parseFloat(driverStandings[idx + 1].points),
+    } : null;
+    return { ahead, behind };
+  }
+
   return (
     <div>
       <h1 className="text-3xl font-black tracking-tight mb-1">
@@ -152,6 +235,8 @@ export default function FavoritesClient({
               const constructorId = Constructors[0]?.constructorId ?? "";
               const teamColor = getTeamColor(constructorId);
               const recent = getDriverRecentResults(Driver.driverId);
+              const extras = computeDriverExtras(Driver.driverId, sortedRaces);
+              const gaps = getDriverGaps(Driver.driverId);
 
               return (
                 <div
@@ -170,10 +255,18 @@ export default function FavoritesClient({
                       >
                         {Driver.permanentNumber}
                       </span>
-                      <div>
-                        <p className="font-black text-lg leading-tight">
-                          {Driver.givenName} {Driver.familyName}
-                        </p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-lg leading-tight">
+                            {Driver.givenName} {Driver.familyName}
+                          </p>
+                          {extras.trend === "up" && (
+                            <span className="text-green-400 text-sm font-bold" title="Improving form">&#9650;</span>
+                          )}
+                          {extras.trend === "down" && (
+                            <span className="text-red-400 text-sm font-bold" title="Declining form">&#9660;</span>
+                          )}
+                        </div>
                         <p className="text-sm text-f1-text-muted">
                           {Constructors[0]?.name ?? "—"}
                         </p>
@@ -181,7 +274,7 @@ export default function FavoritesClient({
                     </div>
 
                     {/* Stat tiles */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
+                    <div className="grid grid-cols-3 gap-2 mb-3">
                       <div className="rounded-lg bg-f1-dark p-2.5 text-center">
                         <p className="text-xs text-f1-text-muted mb-0.5">Position</p>
                         <p
@@ -200,6 +293,38 @@ export default function FavoritesClient({
                         <p className="text-xl font-black">{standing.wins}</p>
                       </div>
                     </div>
+
+                    {/* Extended stats row */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="rounded-lg bg-f1-dark p-2.5 text-center">
+                        <p className="text-xs text-f1-text-muted mb-0.5">Podiums</p>
+                        <p className="text-lg font-black">{extras.podiums}</p>
+                      </div>
+                      <div className="rounded-lg bg-f1-dark p-2.5 text-center">
+                        <p className="text-xs text-f1-text-muted mb-0.5">PPR</p>
+                        <p className="text-lg font-black">{extras.ppr.toFixed(1)}</p>
+                      </div>
+                      <div className="rounded-lg bg-f1-dark p-2.5 text-center">
+                        <p className="text-xs text-f1-text-muted mb-0.5">Proj. Pts</p>
+                        <p className="text-lg font-black">{extras.projectedPts}</p>
+                      </div>
+                    </div>
+
+                    {/* Championship gap context */}
+                    {(gaps.ahead || gaps.behind) && (
+                      <div className="flex gap-3 mb-4 text-xs">
+                        {gaps.ahead && (
+                          <span className="text-f1-text-muted">
+                            <span className="text-red-400 font-bold">-{gaps.ahead.gap}</span> to {gaps.ahead.name}
+                          </span>
+                        )}
+                        {gaps.behind && (
+                          <span className="text-f1-text-muted">
+                            <span className="text-green-400 font-bold">+{gaps.behind.gap}</span> over {gaps.behind.name}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {/* Recent results */}
                     {recent.length > 0 && (
@@ -236,6 +361,7 @@ export default function FavoritesClient({
               const teamColor = getTeamColor(Constructor.constructorId);
               const recent = getTeamBestResults(Constructor.constructorId);
               const drivers = getTeamDriverNames(Constructor.constructorId);
+              const teamExtras = computeTeamExtras(Constructor.constructorId, sortedRaces);
 
               return (
                 <div
@@ -265,7 +391,7 @@ export default function FavoritesClient({
                     </div>
 
                     {/* Stat tiles */}
-                    <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="grid grid-cols-4 gap-2 mb-4">
                       <div className="rounded-lg bg-f1-dark p-3">
                         <p className="text-xs text-f1-text-muted mb-0.5">Points</p>
                         <p className="text-2xl font-black">{standing.points}</p>
@@ -274,7 +400,22 @@ export default function FavoritesClient({
                         <p className="text-xs text-f1-text-muted mb-0.5">Wins</p>
                         <p className="text-2xl font-black">{standing.wins}</p>
                       </div>
+                      <div className="rounded-lg bg-f1-dark p-3">
+                        <p className="text-xs text-f1-text-muted mb-0.5">Podiums</p>
+                        <p className="text-2xl font-black">{teamExtras.podiums}</p>
+                      </div>
+                      <div className="rounded-lg bg-f1-dark p-3">
+                        <p className="text-xs text-f1-text-muted mb-0.5">PPR</p>
+                        <p className="text-2xl font-black">{teamExtras.ppr.toFixed(1)}</p>
+                      </div>
                     </div>
+
+                    {/* Double points finishes indicator */}
+                    {teamExtras.doublePoints > 0 && (
+                      <p className="text-xs text-f1-text-muted mb-4">
+                        Both drivers in points in <span className="font-bold text-f1-text">{teamExtras.doublePoints}</span> of {teamExtras.racesEntered} races
+                      </p>
+                    )}
 
                     {/* Best recent results */}
                     {recent.length > 0 && (

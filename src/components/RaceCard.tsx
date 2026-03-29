@@ -34,7 +34,15 @@ function isRaceWeekend(race: Race): boolean {
   return now >= firstDay && now <= endWindow;
 }
 
-export default function RaceCard({ race, resultSummary }: { race: Race; resultSummary?: RaceResultSummary }) {
+function formatSessionTime(dateStr: string, timeStr: string): string {
+  const ts = timeStr.endsWith("Z") ? timeStr : `${timeStr}Z`;
+  const d = new Date(`${dateStr}T${ts}`);
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) +
+    " " +
+    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+export default function RaceCard({ race, resultSummary, showSchedule }: { race: Race; resultSummary?: RaceResultSummary; showSchedule?: boolean }) {
   const past = isRacePast(race);
   const live = isRaceWeekend(race);
   const flag = getCountryFlagByCountry(race.Circuit.Location.country);
@@ -120,6 +128,37 @@ export default function RaceCard({ race, resultSummary }: { race: Race; resultSu
           </span>
         )}
       </div>
+
+      {/* Session schedule for upcoming races */}
+      {showSchedule && !past && (() => {
+        const sessions: { label: string; date: string; time: string }[] = [];
+        if (race.FirstPractice) sessions.push({ label: "FP1", ...race.FirstPractice });
+        if (race.SecondPractice) sessions.push({ label: "FP2", ...race.SecondPractice });
+        if (race.ThirdPractice) sessions.push({ label: "FP3", ...race.ThirdPractice });
+        if (race.SprintQualifying) sessions.push({ label: "Sprint Quali", ...race.SprintQualifying });
+        if (race.Sprint) sessions.push({ label: "Sprint", ...race.Sprint });
+        if (race.Qualifying) sessions.push({ label: "Qualifying", ...race.Qualifying });
+        if (race.time) sessions.push({ label: "Race", date: race.date, time: race.time });
+
+        if (sessions.length === 0) return null;
+        return (
+          <div className="mt-3 pt-3 border-t border-f1-border/30">
+            <p className="text-[10px] uppercase tracking-wider text-f1-text-muted mb-1.5 font-semibold">Session Schedule</p>
+            <div className="space-y-1">
+              {sessions.map((s) => (
+                <div key={s.label} className="flex items-center justify-between text-xs">
+                  <span className={`font-medium ${s.label === "Race" ? "text-f1-accent" : s.label === "Qualifying" ? "text-f1-text" : "text-f1-text-muted"}`}>
+                    {s.label}
+                  </span>
+                  <span className="text-f1-text-muted font-mono text-[11px]">
+                    {formatSessionTime(s.date, s.time)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Race result summary for completed races */}
       {past && resultSummary && (resultSummary.winner || resultSummary.pole || resultSummary.fastestLap) && (
