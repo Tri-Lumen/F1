@@ -67,8 +67,8 @@ export default function TeamColorsSection() {
                     className="relative h-8 w-8 rounded-lg overflow-hidden cursor-pointer ring-2 transition-all hover:scale-110"
                     style={{
                       backgroundColor: current,
-                      ringColor: isOverridden ? current : "transparent",
-                    }}
+                      ["--tw-ring-color" as string]: isOverridden ? current : "transparent",
+                    } as React.CSSProperties}
                     title="Click to change color"
                   >
                     <input
