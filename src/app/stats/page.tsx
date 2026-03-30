@@ -30,7 +30,7 @@ async function StatsContent() {
   );
 
   const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
-  const completedSprints = sprintRaces.filter((r) => (r as any).SprintResults?.length > 0);
+  const completedSprints = sprintRaces.filter((r) => (r.SprintResults?.length ?? 0) > 0);
 
   if (completedRaces.length === 0 && completedSprints.length === 0) {
     return (
@@ -108,7 +108,7 @@ async function StatsContent() {
 
   // Include sprint results in stats
   for (const sprintRace of completedSprints) {
-    const results = (sprintRace as any).SprintResults ?? [];
+    const results = sprintRace.SprintResults ?? [];
 
     for (const r of results) {
       const id = r.Driver.driverId;
