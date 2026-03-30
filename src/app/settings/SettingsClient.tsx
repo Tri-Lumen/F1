@@ -6,6 +6,9 @@ import { useFavorites } from "@/lib/FavoritesContext";
 import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
+import ThemeBuilderSection from "./ThemeBuilderSection";
+import TeamColorsSection from "./TeamColorsSection";
+import InterfaceSection from "./InterfaceSection";
 
 interface Props {
   availableDrivers: DriverStanding[];
@@ -279,7 +282,8 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
       <section className="mb-10">
         <h2 className="text-lg font-bold mb-1">Appearance</h2>
         <p className="text-sm text-f1-text-muted mb-4">
-          Pick a brightness mode, then optionally apply a team livery below — they work together
+          Choose a brightness mode, then optionally apply a team livery preset below — they work together.
+          Build a fully custom theme in the <span className="text-f1-text font-medium">Custom Themes</span> section.
         </p>
 
         {/* Dark / Light mode selector */}
@@ -329,7 +333,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
 
         {/* Team liveries */}
         <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
-          2026 Team Liveries
+          2026 Team Presets
         </p>
         <p className="text-xs text-f1-text-muted mb-3">
           Click a livery to apply it — click again to remove. Works in both dark and light mode.
@@ -385,10 +389,10 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
 
         {/* Retro liveries */}
         <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">
-          Retro Liveries
+          Retro Presets
         </p>
         <p className="text-xs text-f1-text-muted mb-3">
-          Iconic historical colour schemes — also toggle-able with the dark/light mode above
+          Iconic historical colour schemes — also toggle-able with the dark/light mode above.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {RETRO_THEMES.map((t) => {
@@ -438,6 +442,15 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           })}
         </div>
       </section>
+
+      {/* ── Custom Themes ── */}
+      <ThemeBuilderSection />
+
+      {/* ── Team Colors ── */}
+      <TeamColorsSection />
+
+      {/* ── Interface Controls ── */}
+      <InterfaceSection />
 
       {/* ── Favourite Drivers ── */}
       <section className="mb-10">

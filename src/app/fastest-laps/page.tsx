@@ -259,6 +259,55 @@ async function FastestLapsContent() {
         );
       })()}
 
+      {/* Lap Number Distribution */}
+      {entries.length > 3 && (() => {
+        const lapNums = entries.map((e) => parseInt(e.lap)).filter((n) => !isNaN(n) && n > 0);
+        if (lapNums.length < 3) return null;
+        const maxLap = Math.max(...lapNums);
+        // Bucket into 10 bins
+        const bins = 10;
+        const binSize = Math.ceil(maxLap / bins);
+        const counts = Array.from({ length: bins }, (_, i) => ({
+          start: i * binSize + 1,
+          end: (i + 1) * binSize,
+          count: lapNums.filter((n) => n > i * binSize && n <= (i + 1) * binSize).length,
+        }));
+        const maxCount = Math.max(...counts.map((b) => b.count), 1);
+
+        return (
+          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
+            <div className="border-b border-f1-border p-4">
+              <h2 className="font-bold text-lg">When Are Fastest Laps Set?</h2>
+              <p className="text-xs text-f1-text-muted mt-0.5">Distribution by lap number — late-race stops often trigger a purple lap attempt</p>
+            </div>
+            <div className="p-4">
+              <div className="flex items-end gap-1 h-20">
+                {counts.map((b, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full rounded-t bg-purple-500/50 hover:bg-purple-500/70 transition-colors"
+                      style={{ height: `${Math.max(4, (b.count / maxCount) * 64)}px` }}
+                      title={`Laps ${b.start}–${b.end}: ${b.count}`}
+                    />
+                    {b.count > 0 && (
+                      <span className="text-[9px] font-bold text-purple-400">{b.count}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-1 mt-1">
+                {counts.map((b, i) => (
+                  <div key={i} className="flex-1 text-center">
+                    <span className="text-[8px] text-f1-text-muted/50">{b.start}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-f1-text-muted mt-1 text-center">Lap Number</p>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Per-race fastest laps table */}
       {entries.length > 0 && (
         <div className="rounded-xl border border-f1-border bg-f1-card">

@@ -9,10 +9,17 @@ import {
   getLiveIntervals,
   getLiveStints,
   getTeamRadio,
+  getRaceControl,
+  getWeather,
+  getLiveLaps,
+  isSessionLive,
 } from "@/lib/api";
 import OnboardButton from "@/components/OnboardButton";
 import TireStrategy from "@/components/TireStrategy";
 import TeamRadioFeed from "@/components/TeamRadioFeed";
+import RaceControlFeed from "@/components/RaceControlFeed";
+import WeatherWidget from "@/components/WeatherWidget";
+import LiveLapTimes from "@/components/LiveLapTimes";
 import RefreshButton from "@/components/RefreshButton";
 import NextSessionCard from "@/components/NextSessionCard";
 import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
@@ -36,17 +43,18 @@ async function LiveContent() {
     );
   }
 
-  const sessionEnd = new Date(session.date_end);
-  const now = new Date();
-  const isLive = now <= sessionEnd && now >= new Date(session.date_start);
+  const isLive = isSessionLive(session);
 
   // Fetch each endpoint independently so partial failures don't break the whole page
-  const [drivers, positions, intervals, stints, radio] = await Promise.all([
+  const [drivers, positions, intervals, stints, radio, raceControl, weather, laps] = await Promise.all([
     getLiveDrivers(session.session_key),
     getLivePositions(session.session_key),
     getLiveIntervals(session.session_key),
     getLiveStints(session.session_key),
     getTeamRadio(session.session_key),
+    getRaceControl(session.session_key),
+    getWeather(session.session_key),
+    getLiveLaps(session.session_key),
   ]);
 
   // Track which data sources are available for user feedback
@@ -99,24 +107,53 @@ async function LiveContent() {
     return posA - posB;
   });
 
+  // Derive current lap from laps data
+  const currentLap = laps.length > 0
+    ? Math.max(...laps.map((l) => l.lap_number))
+    : null;
+
+  // Derive latest flag from race control messages
+  const latestFlagMsg = [...raceControl]
+    .reverse()
+    .find((m) => m.flag && m.flag !== "");
+  const currentFlag = latestFlagMsg?.flag ?? null;
+
+  const flagStyles: Record<string, { bg: string; text: string; label: string }> = {
+    GREEN: { bg: "bg-green-500", text: "text-white", label: "GREEN FLAG" },
+    YELLOW: { bg: "bg-yellow-400", text: "text-black", label: "YELLOW FLAG" },
+    DOUBLE_YELLOW: { bg: "bg-yellow-400", text: "text-black", label: "DOUBLE YELLOW" },
+    RED: { bg: "bg-red-600", text: "text-white", label: "RED FLAG" },
+    BLUE: { bg: "bg-blue-500", text: "text-white", label: "BLUE FLAG" },
+    CHEQUERED: { bg: "bg-white", text: "text-black", label: "CHEQUERED" },
+    CLEAR: { bg: "bg-green-500", text: "text-white", label: "TRACK CLEAR" },
+    SAFETY_CAR: { bg: "bg-yellow-500", text: "text-black", label: "SAFETY CAR" },
+    VIRTUAL_SAFETY_CAR: { bg: "bg-yellow-400", text: "text-black", label: "VSC" },
+  };
+
   return (
     <>
       {/* Session Header */}
       <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isLive && (
-              <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-3 py-1 text-sm font-bold text-white">
-                <span className="h-2 w-2 rounded-full bg-white animate-pulse-live" />
-                LIVE
-              </span>
-            )}
-            {!isLive && (
-              <span className="rounded-full bg-f1-dark px-3 py-1 text-sm font-bold text-f1-text-muted">
-                SESSION ENDED
-              </span>
-            )}
-            <div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex flex-col gap-1.5 shrink-0 mt-0.5">
+              {isLive ? (
+                <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-3 py-1 text-sm font-bold text-white">
+                  <span className="h-2 w-2 rounded-full bg-white animate-pulse-live" />
+                  LIVE
+                </span>
+              ) : (
+                <span className="rounded-full bg-f1-dark px-3 py-1 text-sm font-bold text-f1-text-muted">
+                  SESSION ENDED
+                </span>
+              )}
+              {currentFlag && flagStyles[currentFlag] && (
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${flagStyles[currentFlag].bg} ${flagStyles[currentFlag].text}`}>
+                  {flagStyles[currentFlag].label}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0">
               <h2 className="text-xl font-black">
                 {session.country_name} &mdash; {session.session_name}
               </h2>
@@ -125,23 +162,29 @@ async function LiveContent() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-xs text-f1-text-muted">
-            <span className="hidden sm:block">
-              MultiViewer integration enabled
-            </span>
-            <svg
-              className="h-4 w-4 text-f1-accent"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+          <div className="flex items-center gap-3 shrink-0">
+            {currentLap !== null && session.session_type === "Race" && (
+              <div className="text-right">
+                <p className="text-2xl font-black leading-none">{currentLap}</p>
+                <p className="text-xs text-f1-text-muted uppercase tracking-wider">Lap</p>
+              </div>
+            )}
+            <div className="flex flex-col items-end gap-1 text-xs text-f1-text-muted">
+              <span className="hidden sm:block">MultiViewer integration enabled</span>
+              <svg
+                className="h-4 w-4 text-f1-accent"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -283,13 +326,24 @@ async function LiveContent() {
         </div>
       </div>
 
-      {/* Two column layout: Tire Strategy + Team Radio */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Lap Times */}
+      <div className="mb-6">
+        <LiveLapTimes laps={laps} drivers={drivers} latestPositions={latestPositions} />
+      </div>
+
+      {/* Weather + Tire Strategy row */}
+      <div className="mb-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+        <WeatherWidget weather={weather} />
         <TireStrategy
           stints={stints}
           drivers={drivers}
           latestPositions={latestPositions}
         />
+      </div>
+
+      {/* Race Control + Team Radio row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RaceControlFeed messages={raceControl} />
         <TeamRadioFeed messages={radio} drivers={drivers} />
       </div>
     </>

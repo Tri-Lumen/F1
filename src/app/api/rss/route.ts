@@ -22,19 +22,29 @@ function stripHtml(html: string): string {
 
 /** Extract first image URL from HTML content or media tags */
 function extractImage(item: string): string | undefined {
-  // media:content or media:thumbnail
+  // media:content or media:thumbnail (handles media:group nesting too)
   const mediaMatch = item.match(/<media:(content|thumbnail)[^>]+url=["']([^"']+)["']/);
   if (mediaMatch) return mediaMatch[2];
 
-  // enclosure with image type
+  // enclosure with image type (both attribute orderings)
   const enclosureMatch = item.match(/<enclosure[^>]+type=["']image\/[^"']*["'][^>]+url=["']([^"']+)["']/);
   if (enclosureMatch) return enclosureMatch[1];
   const enclosureMatch2 = item.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image/);
   if (enclosureMatch2) return enclosureMatch2[1];
 
-  // img tag in description/content
+  // enclosure URL ending in an image extension (some feeds omit the type attribute)
+  const enclosureImgExt = item.match(/<enclosure[^>]+url=["']([^"']+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^"']*)?)["']/i);
+  if (enclosureImgExt) return enclosureImgExt[1];
+
+  // <image><url>...</url></image> (RSS channel-level sometimes nested in items)
+  const imageUrlTag = item.match(/<image[^>]*>[\s\S]*?<url[^>]*>([\s\S]*?)<\/url>/);
+  if (imageUrlTag) return decodeEntities(imageUrlTag[1]).trim();
+
+  // img tag in description/content/content:encoded (also handles data-src for lazy loading)
   const imgMatch = item.match(/<img[^>]+src=["']([^"']+)["']/);
   if (imgMatch) return imgMatch[1];
+  const dataSrcMatch = item.match(/<img[^>]+data-src=["']([^"']+)["']/);
+  if (dataSrcMatch) return dataSrcMatch[1];
 
   return undefined;
 }

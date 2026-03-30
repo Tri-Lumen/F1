@@ -4,9 +4,11 @@ import {
   getSeasonDriverStandings,
   getSeasonConstructorStandings,
   getSeasonSchedule,
+  getSeasonRaceResults,
   ARCHIVE_SEASONS,
   getCountryFlag,
   getCountryFlagByCountry,
+  getTeamColor,
   getF1TVRaceUrl,
 } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
@@ -36,11 +38,28 @@ export default async function ArchiveSeasonPage({
     notFound();
   }
 
-  const [driverStandings, constructorStandings, races] = await Promise.all([
+  const [driverStandings, constructorStandings, races, raceResults] = await Promise.all([
     getSeasonDriverStandings(season),
     getSeasonConstructorStandings(season),
     getSeasonSchedule(season),
+    getSeasonRaceResults(season),
   ]);
+
+  // Build winner map from race results
+  const winnerMap = new Map<string, { name: string; constructorId: string; time?: string; fastestLap?: string }>();
+  for (const race of raceResults) {
+    const results = race.Results ?? [];
+    const winner = results.find((r: any) => r.position === "1");
+    const fl = results.find((r: any) => r.FastestLap?.rank === "1");
+    if (winner) {
+      winnerMap.set(race.round, {
+        name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,
+        constructorId: winner.Constructor.constructorId,
+        time: winner.Time?.time,
+        fastestLap: fl ? `${fl.Driver.familyName} ${fl.FastestLap?.Time?.time ?? ""}` : undefined,
+      });
+    }
+  }
 
   const champion = driverStandings[0];
   const constructorChampion = constructorStandings[0];
@@ -207,6 +226,21 @@ export default async function ArchiveSeasonPage({
                       {getCountryFlagByCountry(race.Circuit.Location.country)}{" "}
                       {race.Circuit.Location.country} &middot; {race.date}
                     </p>
+                    {winnerMap.has(race.round) && (() => {
+                      const w = winnerMap.get(race.round)!;
+                      const color = getTeamColor(w.constructorId);
+                      return (
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className="h-3.5 w-1 rounded-full" style={{ backgroundColor: color }} />
+                          <span className="text-xs font-bold" style={{ color }}>
+                            {w.name.split(" ").pop()?.toUpperCase()}
+                          </span>
+                          {w.time && (
+                            <span className="text-xs text-f1-text-muted font-mono">{w.time}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <CircuitMap
                     circuitId={race.Circuit.circuitId}

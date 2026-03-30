@@ -1,35 +1,53 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function RefreshButton({
-  intervalMs = 30000,
+  intervalMs: intervalMsProp,
 }: {
   intervalMs?: number;
 }) {
   const router = useRouter();
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+
+  // Read the user's preferred refresh interval from localStorage (set in Settings).
+  // Falls back to the prop, then 30 s.
+  const [intervalMs, setIntervalMs] = useState(intervalMsProp ?? 30000);
+  useEffect(() => {
+    const stored = localStorage.getItem("f1-refresh-interval");
+    if (stored) {
+      const seconds = parseInt(stored, 10);
+      if (seconds > 0) setIntervalMs(seconds * 1000);
+    }
+  }, []);
+
+  const intervalRef = useRef(intervalMs);
+  intervalRef.current = intervalMs;
+
   const [countdown, setCountdown] = useState(intervalMs / 1000);
 
   const refresh = useCallback(() => {
     router.refresh();
-    setLastRefresh(new Date());
+    setCountdown(intervalRef.current / 1000);
+  }, [router]);
+
+  // Reset countdown when intervalMs changes (e.g. after reading localStorage)
+  useEffect(() => {
     setCountdown(intervalMs / 1000);
-  }, [router, intervalMs]);
+  }, [intervalMs]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           refresh();
-          return intervalMs / 1000;
+          return intervalRef.current / 1000;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [refresh, intervalMs]);
+  }, [refresh]);
 
   return (
     <button

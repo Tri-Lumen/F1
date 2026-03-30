@@ -234,6 +234,52 @@ async function StatsContent() {
     .sort((a, b) => a.stdDev - b.stdDev)
     .slice(0, 10);
 
+  // --- Championship Evolution (points after each round, top 8 drivers) ---
+  // Build a map: driverId -> { name, constructorId, cumulativePoints[] }
+  const champEvolution: Array<{ driverId: string; name: string; constructorId: string; points: number[] }> = [];
+  const driverPointsAfterRound = new Map<string, number>(); // running total per driver
+
+  for (const race of completedRaces) {
+    // Add this round's points for each driver
+    for (const r of race.Results ?? []) {
+      const id = r.Driver.driverId;
+      const prev = driverPointsAfterRound.get(id) ?? 0;
+      driverPointsAfterRound.set(id, prev + parseFloat(r.points));
+    }
+    // Record snapshot for this round
+    for (const [id, pts] of driverPointsAfterRound.entries()) {
+      const entry = champEvolution.find((e) => e.driverId === id);
+      if (entry) {
+        entry.points.push(pts);
+      } else {
+        const result = completedRaces
+          .flatMap((rr) => rr.Results ?? [])
+          .find((r) => r.Driver.driverId === id);
+        if (result) {
+          champEvolution.push({
+            driverId: id,
+            name: `${result.Driver.givenName} ${result.Driver.familyName}`,
+            constructorId: result.Constructor.constructorId,
+            points: [pts],
+          });
+        }
+      }
+    }
+  }
+
+  // Pad shorter series to match length
+  const numRounds = completedRaces.length;
+  for (const entry of champEvolution) {
+    while (entry.points.length < numRounds) {
+      entry.points.unshift(0); // pad start with 0 for drivers who didn't participate every round
+    }
+  }
+
+  // Keep top 8 by final points total
+  const top8Evolution = [...champEvolution]
+    .sort((a, b) => (b.points.at(-1) ?? 0) - (a.points.at(-1) ?? 0))
+    .slice(0, 8);
+
   return (
     <div className="space-y-8">
       {/* Season summary KPIs */}
@@ -557,6 +603,144 @@ async function StatsContent() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Championship Points Evolution */}
+      {top8Evolution.length > 0 && numRounds > 1 && (
+        <div className="rounded-xl border border-f1-border bg-f1-card overflow-hidden">
+          <div className="border-b border-f1-border p-4">
+            <h2 className="font-bold text-lg">Championship Evolution</h2>
+            <p className="text-xs text-f1-text-muted mt-0.5">
+              Cumulative points for top drivers after each round
+            </p>
+          </div>
+          <div className="p-4">
+            {/* SVG sparkline chart */}
+            {(() => {
+              const W = 800;
+              const H = 220;
+              const PAD = { top: 16, right: 24, bottom: 32, left: 48 };
+              const chartW = W - PAD.left - PAD.right;
+              const chartH = H - PAD.top - PAD.bottom;
+              const maxPts = Math.max(...top8Evolution.map((d) => d.points.at(-1) ?? 0));
+
+              const xScale = (i: number) =>
+                PAD.left + (i / Math.max(numRounds - 1, 1)) * chartW;
+              const yScale = (pts: number) =>
+                PAD.top + chartH - (pts / (maxPts || 1)) * chartH;
+
+              return (
+                <svg
+                  viewBox={`0 0 ${W} ${H}`}
+                  className="w-full"
+                  style={{ maxHeight: 240 }}
+                >
+                  {/* Grid lines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
+                    const y = PAD.top + chartH * (1 - frac);
+                    const pts = Math.round(maxPts * frac);
+                    return (
+                      <g key={frac}>
+                        <line
+                          x1={PAD.left}
+                          x2={W - PAD.right}
+                          y1={y}
+                          y2={y}
+                          stroke="currentColor"
+                          strokeOpacity={0.08}
+                          strokeWidth={1}
+                        />
+                        <text
+                          x={PAD.left - 6}
+                          y={y + 4}
+                          textAnchor="end"
+                          fontSize={10}
+                          fill="currentColor"
+                          opacity={0.4}
+                        >
+                          {pts}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Round labels on x-axis */}
+                  {completedRaces.map((race, i) => {
+                    if (i % Math.max(1, Math.floor(numRounds / 8)) !== 0) return null;
+                    return (
+                      <text
+                        key={race.round}
+                        x={xScale(i)}
+                        y={H - 6}
+                        textAnchor="middle"
+                        fontSize={9}
+                        fill="currentColor"
+                        opacity={0.35}
+                      >
+                        R{race.round}
+                      </text>
+                    );
+                  })}
+
+                  {/* Lines per driver */}
+                  {top8Evolution.map((driver) => {
+                    const color = getTeamColor(driver.constructorId);
+                    const points = driver.points.map((pts, i) => ({
+                      x: xScale(i),
+                      y: yScale(pts),
+                    }));
+                    const d = points
+                      .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+                      .join(" ");
+                    const last = points.at(-1)!;
+                    const shortName = driver.name.split(" ").pop() ?? driver.name;
+
+                    return (
+                      <g key={driver.driverId}>
+                        <path
+                          d={d}
+                          fill="none"
+                          stroke={color}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          opacity={0.85}
+                        />
+                        {/* Label at end of line */}
+                        <text
+                          x={last.x + 4}
+                          y={last.y + 4}
+                          fontSize={9}
+                          fill={color}
+                          fontWeight="bold"
+                        >
+                          {shortName}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              );
+            })()}
+
+            {/* Legend */}
+            <div className="mt-2 flex flex-wrap gap-3">
+              {top8Evolution.map((d) => {
+                const color = getTeamColor(d.constructorId);
+                const shortName = d.name.split(" ").pop() ?? d.name;
+                return (
+                  <div key={d.driverId} className="flex items-center gap-1.5">
+                    <span className="h-2 w-4 rounded-full inline-block" style={{ backgroundColor: color }} />
+                    <span className="text-xs text-f1-text-muted">{shortName}</span>
+                    <span className="text-xs font-bold" style={{ color }}>
+                      {d.points.at(-1)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

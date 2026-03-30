@@ -4,7 +4,7 @@ import Nav from "@/components/Nav";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
-import { getNextScheduledSession, getLatestSession } from "@/lib/api";
+import { getNextScheduledSession, getLatestSession, isSessionLive } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "F1 Dashboard — 2026 Season",
@@ -37,10 +37,7 @@ export default async function RootLayout({
     }
 
     if (latestSession) {
-      const now = new Date();
-      isLive =
-        now >= new Date(latestSession.date_start) &&
-        now <= new Date(latestSession.date_end);
+      isLive = isSessionLive(latestSession);
     }
   } catch {
     // Non-fatal — nav will render without the countdown
@@ -60,14 +57,62 @@ export default async function RootLayout({
             __html: `
               (function() {
                 try {
+                  var el = document.documentElement;
                   var m = localStorage.getItem('f1-mode');
                   var a = localStorage.getItem('f1-accent');
-                  if (m === 'light' || m === 'dark') {
-                    document.documentElement.setAttribute('data-mode', m);
+                  var r = localStorage.getItem('f1-border-radius');
+                  var rm = localStorage.getItem('f1-reduce-motion');
+                  var gi = localStorage.getItem('f1-glow-intensity');
+
+                  if (m === 'light' || m === 'dark') el.setAttribute('data-mode', m);
+                  if (r === 'sharp' || r === 'default' || r === 'rounded') el.setAttribute('data-radius', r);
+                  if (rm === 'true') el.setAttribute('data-reduce-motion', 'true');
+                  if (gi) {
+                    var g = Math.min(100, Math.max(0, parseInt(gi) || 50));
+                    el.style.setProperty('--glow-primary-opacity', Math.round(g * 0.28) + '%');
+                    el.style.setProperty('--glow-secondary-opacity', Math.round(g * 0.14) + '%');
                   }
                   if (a && (a.startsWith('team-') || a.startsWith('retro-'))) {
-                    document.documentElement.setAttribute('data-theme', a);
+                    el.setAttribute('data-theme', a);
                   }
+                  // Custom theme: apply CSS vars directly from stored theme data
+                  if (a && a.startsWith('custom-')) {
+                    try {
+                      var customs = JSON.parse(localStorage.getItem('f1-custom-themes') || '[]');
+                      var ct = customs.find(function(t) { return t.id === a; });
+                      if (ct && ct.colors) {
+                        var c = ct.colors;
+                        var vars = {
+                          '--color-f1-black': c.bg,
+                          '--color-f1-dark': c.dark,
+                          '--color-f1-card': c.card,
+                          '--color-f1-card-hover': c.cardHover,
+                          '--color-f1-border': c.border,
+                          '--color-f1-text': c.text,
+                          '--color-f1-text-muted': c.textMuted,
+                          '--color-f1-accent': c.accent,
+                          '--color-f1-red': c.accent,
+                          '--color-f1-red-dark': c.accentDark,
+                          '--color-f1-accent-secondary': c.accentSecondary,
+                        };
+                        for (var k in vars) el.style.setProperty(k, vars[k]);
+                      }
+                    } catch(e2) {}
+                  }
+                  // Team color overrides
+                  try {
+                    var overrides = JSON.parse(localStorage.getItem('f1-team-colors') || '{}');
+                    var teamVarMap = {
+                      red_bull: '--color-team-red-bull', ferrari: '--color-team-ferrari',
+                      mclaren: '--color-team-mclaren', mercedes: '--color-team-mercedes',
+                      aston_martin: '--color-team-aston-martin', alpine: '--color-team-alpine',
+                      williams: '--color-team-williams', haas: '--color-team-haas',
+                      rb: '--color-team-rb', audi: '--color-team-audi', cadillac: '--color-team-cadillac',
+                    };
+                    for (var id in overrides) {
+                      if (teamVarMap[id]) el.style.setProperty(teamVarMap[id], overrides[id]);
+                    }
+                  } catch(e3) {}
                 } catch(e) {}
               })();
             `,

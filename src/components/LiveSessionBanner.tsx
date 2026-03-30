@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { getLatestSession, getLiveDrivers, getLivePositions } from "@/lib/api";
+import { getLatestSession, getLiveDrivers, getLivePositions, isSessionLive } from "@/lib/api";
 import OnboardButton from "@/components/OnboardButton";
 
 export default async function LiveSessionBanner() {
   const session = await getLatestSession();
   if (!session) return null;
 
-  const sessionEnd = new Date(session.date_end);
-  const now = new Date();
-  const isLive = now <= sessionEnd && now >= new Date(session.date_start);
+  const isLive = isSessionLive(session);
 
   if (!isLive) return null;
 

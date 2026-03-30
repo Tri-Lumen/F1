@@ -15,7 +15,7 @@
   /* Secondary accent — white in default dark mode, overridden per-team */
   --color-f1-accent-secondary: #ffffff;
 
-  /* 2026 team colors */
+  /* 2026 team colors — overrideable via ThemeContext team color overrides */
   --color-team-red-bull: #b8941c;
   --color-team-ferrari: #e80020;
   --color-team-mclaren: #ff8000;
@@ -27,6 +27,14 @@
   --color-team-rb: #6692ff;
   --color-team-audi: #bb0000;
   --color-team-cadillac: #e0e0e0;
+
+  /* Border radius — overridden by data-radius attribute */
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
 }
 
 body {
@@ -35,7 +43,7 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
-/* Primary accent radial wash at the top of the page — changes with theme */
+/* Primary accent radial wash at the top of the page — intensity set by ThemeProvider */
 body::before {
   content: "";
   pointer-events: none;
@@ -44,12 +52,12 @@ body::before {
   z-index: 0;
   background: radial-gradient(
     ellipse 80% 40% at 50% -5%,
-    color-mix(in srgb, var(--color-f1-accent) 14%, transparent),
+    color-mix(in srgb, var(--color-f1-accent) var(--glow-primary-opacity, 14%), transparent),
     transparent 70%
   );
 }
 
-/* Secondary ambient gradient — bottom-right corner, secondary accent colour */
+/* Secondary ambient gradient — bottom-right corner */
 body::after {
   content: "";
   pointer-events: none;
@@ -58,7 +66,7 @@ body::after {
   z-index: 0;
   background: radial-gradient(
     ellipse 55% 45% at 95% 105%,
-    color-mix(in srgb, var(--color-f1-accent-secondary) 8%, transparent),
+    color-mix(in srgb, var(--color-f1-accent-secondary) var(--glow-secondary-opacity, 8%), transparent),
     transparent 65%
   );
 }
@@ -532,6 +540,35 @@ body::after {
   --color-f1-red-dark: #990000;
   --color-f1-accent: #CC0000;
   --color-f1-accent-secondary: #606060;
+}
+
+/* ── Border radius modes ── */
+[data-radius="sharp"] {
+  --radius-sm:  2px;
+  --radius-md:  3px;
+  --radius-lg:  4px;
+  --radius-xl:  5px;
+  --radius-2xl: 6px;
+  --radius-3xl: 8px;
+}
+
+[data-radius="rounded"] {
+  --radius-sm:  10px;
+  --radius-md:  14px;
+  --radius-lg:  18px;
+  --radius-xl:  22px;
+  --radius-2xl: 28px;
+  --radius-3xl: 36px;
+}
+
+/* ── Reduce motion ── */
+[data-reduce-motion] *,
+[data-reduce-motion] *::before,
+[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 /* Custom scrollbar — uses accent colour subtly */

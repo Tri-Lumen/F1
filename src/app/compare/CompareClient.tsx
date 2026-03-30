@@ -516,6 +516,55 @@ export default function CompareClient({
             </div>
           )}
 
+          {/* Qualifying Gap Chart */}
+          {h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0).length > 1 && (
+            <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
+              <h3 className="font-bold text-lg mb-1">Qualifying Gap</h3>
+              <p className="text-xs text-f1-text-muted mb-4">Grid position delta per race — bars above midline = {standingA?.Driver.code} ahead</p>
+              {(() => {
+                const qualRaces = h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0);
+                const W = 600, H = 120;
+                const PAD = { top: 10, right: 10, bottom: 24, left: 10 };
+                const cW = W - PAD.left - PAD.right;
+                const cH = H - PAD.top - PAD.bottom;
+                const midY = PAD.top + cH / 2;
+                const n = qualRaces.length;
+                const barW = Math.max(4, Math.min(24, (cW / n) * 0.7));
+                const maxDelta = Math.max(...qualRaces.map((r) => Math.abs(r.a.grid - r.b.grid)), 1);
+                const scale = (cH / 2) / maxDelta;
+                return (
+                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }} aria-hidden="true">
+                    {/* Midline */}
+                    <line x1={PAD.left} y1={midY} x2={W - PAD.right} y2={midY} stroke="currentColor" strokeOpacity="0.15" strokeWidth="1" />
+                    {qualRaces.map((r, i) => {
+                      const cx = PAD.left + (i + 0.5) * (cW / n);
+                      const delta = r.b.grid - r.a.grid; // positive = A ahead
+                      const barH = Math.abs(delta) * scale;
+                      const aAhead = delta > 0;
+                      return (
+                        <g key={r.round}>
+                          <rect
+                            x={cx - barW / 2}
+                            y={aAhead ? midY - barH : midY}
+                            width={barW}
+                            height={Math.max(barH, 2)}
+                            fill={aAhead ? teamColorA : teamColorB}
+                            opacity="0.75"
+                            rx="2"
+                          />
+                          <text x={cx} y={H - PAD.bottom + 12} textAnchor="middle" fontSize="7" fill="currentColor" fillOpacity="0.3">R{r.round}</text>
+                        </g>
+                      );
+                    })}
+                    {/* Labels */}
+                    <text x={PAD.left + 4} y={PAD.top + 8} fontSize="8" fontWeight="bold" fill={teamColorA} fillOpacity="0.8">{standingA?.Driver.code} ahead ▲</text>
+                    <text x={PAD.left + 4} y={H - PAD.bottom - 4} fontSize="8" fontWeight="bold" fill={teamColorB} fillOpacity="0.8">{standingB?.Driver.code} ahead ▼</text>
+                  </svg>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Head-to-Head Summary */}
           {h2hResults.length > 0 && (
             <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
