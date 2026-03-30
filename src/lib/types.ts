@@ -79,6 +79,7 @@ export interface Race {
   Sprint?: { date: string; time: string };
   SprintQualifying?: { date: string; time: string };
   Results?: RaceResult[];
+  SprintResults?: RaceResult[];
 }
 
 export interface QualifyingResult {
