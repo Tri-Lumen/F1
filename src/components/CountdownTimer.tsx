@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 interface TimeLeft {
   days: number;
@@ -28,7 +28,7 @@ interface Props {
   compact?: boolean;
 }
 
-export default function CountdownTimer({ target, compact = false }: Props) {
+function CountdownTimer({ target, compact = false }: Props) {
   const [time, setTime] = useState<TimeLeft | null>(null);
 
   useEffect(() => {
@@ -90,3 +90,5 @@ export default function CountdownTimer({ target, compact = false }: Props) {
     </div>
   );
 }
+
+export default memo(CountdownTimer);

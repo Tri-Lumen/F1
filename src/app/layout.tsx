@@ -4,6 +4,7 @@ import Nav from "@/components/Nav";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
+import { NotificationProvider } from "@/lib/NotificationContext";
 import { getNextScheduledSession, getLatestSession, isSessionLive } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -126,10 +127,12 @@ export default async function RootLayout({
         <ThemeProvider>
           <FavoritesProvider>
             <RssFeedProvider>
-              <Nav nextSession={navSession} isLive={isLive} />
-              <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                {children}
-              </main>
+              <NotificationProvider>
+                <Nav nextSession={navSession} isLive={isLive} />
+                <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                  {children}
+                </main>
+              </NotificationProvider>
             </RssFeedProvider>
           </FavoritesProvider>
         </ThemeProvider>

@@ -173,8 +173,11 @@ async function StatsContent() {
   let fastestPitStop = { driverId: "", raceName: "", duration: Infinity, constructorId: "" };
   let totalPitStops = 0;
 
+  // Build round -> race lookup map to avoid O(n²) .find() inside the loop
+  const raceByRound = new Map(completedRaces.map((r) => [r.round, r]));
+
   for (const { round, stops } of pitStopsByRound) {
-    const race = completedRaces.find((r) => r.round === round);
+    const race = raceByRound.get(round);
     for (const stop of stops) {
       const dur = parseFloat(stop.duration);
       if (isNaN(dur) || dur <= 0) continue;
@@ -236,8 +239,21 @@ async function StatsContent() {
 
   // --- Championship Evolution (points after each round, top 8 drivers) ---
   // Build a map: driverId -> { name, constructorId, cumulativePoints[] }
-  const champEvolution: Array<{ driverId: string; name: string; constructorId: string; points: number[] }> = [];
+  const champEvolutionMap = new Map<string, { driverId: string; name: string; constructorId: string; points: number[] }>();
   const driverPointsAfterRound = new Map<string, number>(); // running total per driver
+
+  // Pre-build a driver info lookup to avoid repeated flatMap+find (O(n²) -> O(1))
+  const driverInfoMap = new Map<string, { name: string; constructorId: string }>();
+  for (const race of completedRaces) {
+    for (const r of race.Results ?? []) {
+      if (!driverInfoMap.has(r.Driver.driverId)) {
+        driverInfoMap.set(r.Driver.driverId, {
+          name: `${r.Driver.givenName} ${r.Driver.familyName}`,
+          constructorId: r.Constructor.constructorId,
+        });
+      }
+    }
+  }
 
   for (const race of completedRaces) {
     // Add this round's points for each driver
@@ -248,24 +264,23 @@ async function StatsContent() {
     }
     // Record snapshot for this round
     for (const [id, pts] of driverPointsAfterRound.entries()) {
-      const entry = champEvolution.find((e) => e.driverId === id);
+      const entry = champEvolutionMap.get(id);
       if (entry) {
         entry.points.push(pts);
       } else {
-        const result = completedRaces
-          .flatMap((rr) => rr.Results ?? [])
-          .find((r) => r.Driver.driverId === id);
-        if (result) {
-          champEvolution.push({
+        const info = driverInfoMap.get(id);
+        if (info) {
+          champEvolutionMap.set(id, {
             driverId: id,
-            name: `${result.Driver.givenName} ${result.Driver.familyName}`,
-            constructorId: result.Constructor.constructorId,
+            name: info.name,
+            constructorId: info.constructorId,
             points: [pts],
           });
         }
       }
     }
   }
+  const champEvolution = [...champEvolutionMap.values()];
 
   // Pad shorter series to match length
   const numRounds = completedRaces.length;

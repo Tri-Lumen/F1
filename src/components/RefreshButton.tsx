@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-export default function RefreshButton({
+function RefreshButton({
   intervalMs: intervalMsProp,
 }: {
   intervalMs?: number;
@@ -73,3 +73,5 @@ export default function RefreshButton({
     </button>
   );
 }
+
+export default memo(RefreshButton);
