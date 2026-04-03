@@ -1,6 +1,12 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Driver Standings — F1 2026",
+  description: "Current F1 driver championship standings, stats, and points progression",
+};
 import Link from "next/link";
 import {
   getDriverStandings,

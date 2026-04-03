@@ -1,5 +1,6 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import {
   getDriverStandings,
@@ -7,6 +8,11 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import CompareClient from "./CompareClient";
+
+export const metadata: Metadata = {
+  title: "Head-to-Head — F1 2026",
+  description: "Compare F1 drivers side-by-side with race results, qualifying, and season statistics",
+};
 
 async function CompareContent() {
   const [standings, allRaces] = await Promise.all([

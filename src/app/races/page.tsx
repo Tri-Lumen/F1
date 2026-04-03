@@ -1,7 +1,13 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getRaceSchedule, getAllSeasonResults, getRaceDate, CURRENT_YEAR } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "Race Calendar — F1 2026",
+  description: "Upcoming and completed races with results, winners, and fastest laps",
+};
 import RaceCard from "@/components/RaceCard";
 import type { RaceResultSummary } from "@/components/RaceCard";
 import RefreshButton from "@/components/RefreshButton";

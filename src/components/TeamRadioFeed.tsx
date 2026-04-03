@@ -35,11 +35,18 @@ export default function TeamRadioFeed({
       audioRef.current?.pause();
       setPlayingUrl(null);
     } else {
+      // Clean up previous audio to prevent memory leaks
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.removeAttribute("src");
+        audioRef.current.load();
       }
       const audio = new Audio(url);
-      audio.addEventListener("ended", () => setPlayingUrl(null));
+      const onEnded = () => {
+        setPlayingUrl(null);
+        audio.removeEventListener("ended", onEnded);
+      };
+      audio.addEventListener("ended", onEnded);
       audio.play().catch(() => setPlayingUrl(null));
       audioRef.current = audio;
       setPlayingUrl(url);

@@ -12,8 +12,24 @@ import {
   getCountryFlag,
   CURRENT_YEAR,
 } from "@/lib/api";
+import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
 import { CarImage, DriverImage } from "@/components/ProfileImage";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ constructorId: string }>;
+}): Promise<Metadata> {
+  const { constructorId } = await params;
+  const standings = await getConstructorStandings();
+  const standing = standings.find((s) => s.Constructor.constructorId === constructorId);
+  const name = standing?.Constructor.name ?? constructorId;
+  return {
+    title: `${name} — F1 2026`,
+    description: `Team results, driver comparison, and stats for ${name}`,
+  };
+}
 import { getTeamCarImageUrls, getDriverImageUrl } from "@/lib/profileImages";
 
 function formatDate(dateStr: string) {

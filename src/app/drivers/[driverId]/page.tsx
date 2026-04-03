@@ -10,8 +10,26 @@ import {
   getCountryFlag,
   CURRENT_YEAR,
 } from "@/lib/api";
+import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ driverId: string }>;
+}): Promise<Metadata> {
+  const { driverId } = await params;
+  const standings = await getDriverStandings();
+  const standing = standings.find((s) => s.Driver.driverId === driverId);
+  const name = standing
+    ? `${standing.Driver.givenName} ${standing.Driver.familyName}`
+    : driverId;
+  return {
+    title: `${name} — F1 2026`,
+    description: `Season results, points progression, and stats for ${name}`,
+  };
+}
 import { getDriverImageUrl, getDriverNumberUrl } from "@/lib/profileImages";
 
 function positionBadge(pos: string, status: string) {
