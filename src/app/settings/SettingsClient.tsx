@@ -11,6 +11,20 @@ import ThemeBuilderSection from "./ThemeBuilderSection";
 import TeamColorsSection from "./TeamColorsSection";
 import InterfaceSection from "./InterfaceSection";
 
+interface ElectronAppAPI {
+  isElectron?: boolean;
+  checkForUpdates: () => Promise<{ triggered: boolean; error?: string; hasUpdate?: boolean; latestVersion?: string; releaseUrl?: string; canDownload?: boolean; updateReady?: boolean }>;
+  downloadUpdate: () => Promise<{ started: boolean; error?: string }>;
+  installUpdate: () => void;
+  onUpdateProgress: (cb: (p: { percent: number }) => void) => void;
+  onUpdateDownloaded: (cb: (info: { version: string }) => void) => void;
+}
+
+function getElectronApp(): ElectronAppAPI | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as { electronApp?: ElectronAppAPI }).electronApp;
+}
+
 interface Props {
   availableDrivers: DriverStanding[];
   availableTeams: ConstructorStanding[];
@@ -119,19 +133,31 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   }
 
   function importSettings(file: File) {
+    const MAX_SETTING_VALUE_LENGTH = 50_000;
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
+        if (typeof data !== "object" || data === null || Array.isArray(data)) {
+          alert("Invalid settings file: expected a JSON object.");
+          return;
+        }
         for (const [key, value] of Object.entries(data)) {
-          if (key.startsWith("f1-") && typeof value === "string") {
+          if (
+            key.startsWith("f1-") &&
+            typeof value === "string" &&
+            value.length <= MAX_SETTING_VALUE_LENGTH
+          ) {
             localStorage.setItem(key, value);
           }
         }
         window.location.reload();
       } catch {
-        alert("Invalid settings file");
+        alert("Invalid settings file.");
       }
+    };
+    reader.onerror = () => {
+      alert("Failed to read the settings file.");
     };
     reader.readAsText(file);
   }
@@ -142,9 +168,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     setTimeout(() => setMvSaved(false), 2000);
   }
 
-  const isElectron =
-    typeof window !== "undefined" &&
-    !!(window as unknown as { electronApp?: { isElectron?: boolean } }).electronApp?.isElectron;
+  const isElectron = !!getElectronApp()?.isElectron;
 
   const [updating, setUpdating] = useState(false);
   const [updateResult, setUpdateResult] = useState<{
@@ -159,16 +183,6 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [downloadComplete, setDownloadComplete] = useState(false);
 
-  type ElectronAppAPI = {
-    checkForUpdates: () => Promise<{ triggered: boolean; error?: string; hasUpdate?: boolean; latestVersion?: string; releaseUrl?: string; canDownload?: boolean; updateReady?: boolean; }>;
-    downloadUpdate: () => Promise<{ started: boolean; error?: string }>;
-    installUpdate: () => void;
-    onUpdateProgress: (cb: (p: { percent: number }) => void) => void;
-    onUpdateDownloaded: (cb: (info: { version: string }) => void) => void;
-  };
-  const getElectronApp = () =>
-    (window as unknown as { electronApp: ElectronAppAPI }).electronApp;
-
   async function handleUpdate() {
     setUpdating(true);
     setUpdateResult(null);
@@ -176,7 +190,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     setDownloadProgress(null);
     try {
       if (isElectron) {
-        const electronApp = getElectronApp();
+        const electronApp = getElectronApp()!;
         const result = await electronApp.checkForUpdates();
         if (!result.triggered) {
           setUpdateResult({
@@ -227,7 +241,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   }
 
   async function handleDownload() {
-    const electronApp = getElectronApp();
+    const electronApp = getElectronApp()!;
     setDownloading(true);
     setDownloadProgress(0);
 
@@ -252,7 +266,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   }
 
   function handleInstall() {
-    getElectronApp().installUpdate();
+    getElectronApp()?.installUpdate();
   }
 
   return (

@@ -32,7 +32,7 @@ async function FastestLapsContent() {
   const entries: FastestLapEntry[] = [];
 
   for (const race of completedRaces) {
-    const fl = (race.Results ?? []).find((r: any) => r.FastestLap?.rank === "1");
+    const fl = (race.Results ?? []).find((r) => r.FastestLap?.rank === "1");
     if (!fl) continue;
     entries.push({
       round: race.round,

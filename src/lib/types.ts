@@ -80,6 +80,8 @@ export interface Race {
   SprintQualifying?: { date: string; time: string };
   Results?: RaceResult[];
   SprintResults?: RaceResult[];
+  QualifyingResults?: QualifyingResult[];
+  PitStops?: PitStop[];
 }
 
 export interface QualifyingResult {
@@ -208,6 +210,38 @@ export interface OpenF1PitStop {
   lap_number: number;
   date: string;
   session_key: number;
+}
+
+// Ergast API response envelope types
+export interface ErgastResponse<T> {
+  MRData: T;
+}
+
+export interface StandingsTableData {
+  StandingsTable: {
+    StandingsLists: Array<{
+      DriverStandings?: DriverStanding[];
+      ConstructorStandings?: ConstructorStanding[];
+    }>;
+  };
+}
+
+export interface DriverTableData {
+  DriverTable: {
+    Drivers: Driver[];
+  };
+}
+
+export interface ConstructorTableData {
+  ConstructorTable: {
+    Constructors: Constructor[];
+  };
+}
+
+export interface RaceTableData {
+  RaceTable: {
+    Races: Race[];
+  };
 }
 
 // RSS feed types

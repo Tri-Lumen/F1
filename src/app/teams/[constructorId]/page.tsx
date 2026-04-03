@@ -55,14 +55,14 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   let totalPos = 0, resultCount = 0, doublePoints = 0;
 
   const teamRaces = allRaces.filter((race) =>
-    (race.Results ?? []).some((r: any) => r.Constructor.constructorId === constructorId)
+    (race.Results ?? []).some((r) => r.Constructor.constructorId === constructorId)
   );
 
   for (const race of teamRaces) {
     const results = (race.Results ?? []).filter(
-      (r: any) => r.Constructor.constructorId === constructorId
+      (r) => r.Constructor.constructorId === constructorId
     );
-    const positions = results.map((r: any) => parseInt(r.position));
+    const positions = results.map((r) => parseInt(r.position));
 
     if (positions.includes(1) && positions.includes(2)) oneTwo++;
     if (positions.length >= 2 && positions.every((p: number) => p <= 10)) doublePoints++;
@@ -85,7 +85,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   // Reliability breakdown: categorize DNFs
   const dnfReasons: { driver: string; status: string; raceName: string }[] = [];
   for (const race of teamRaces) {
-    for (const r of (race.Results ?? []).filter((r: any) => r.Constructor.constructorId === constructorId)) {
+    for (const r of (race.Results ?? []).filter((r) => r.Constructor.constructorId === constructorId)) {
       if (r.status !== "Finished" && !r.status.startsWith("+")) {
         dnfReasons.push({
           driver: `${r.Driver.givenName} ${r.Driver.familyName}`,
@@ -120,10 +120,10 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   // Build combined race table: for each race, get both drivers' results
   const raceRows = teamRaces.map((race) => {
     const results = (race.Results ?? []).filter(
-      (r: any) => r.Constructor.constructorId === constructorId
+      (r) => r.Constructor.constructorId === constructorId
     );
     // Sort by position
-    results.sort((a: any, b: any) => parseInt(a.position) - parseInt(b.position));
+    results.sort((a, b) => parseInt(a.position) - parseInt(b.position));
     return { race, results };
   });
 
@@ -371,7 +371,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
               <tbody>
                 {raceRows.map(({ race, results }) => {
                   const totalPts = results.reduce(
-                    (sum: number, r: any) => sum + parseFloat(r.points),
+                    (sum, r) => sum + parseFloat(r.points),
                     0
                   );
                   return (
@@ -393,7 +393,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                       </td>
                       {drivers.map((d) => {
                         const r = results.find(
-                          (res: any) => res.Driver.driverId === d.Driver.driverId
+                          (res) => res.Driver.driverId === d.Driver.driverId
                         );
                         return (
                           <td key={d.Driver.driverId} className="px-4 py-3 text-center">

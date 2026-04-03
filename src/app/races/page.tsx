@@ -16,9 +16,9 @@ async function RacesContent() {
   const resultSummaryMap = new Map<string, RaceResultSummary>();
   for (const race of allResults) {
     const results = race.Results ?? [];
-    const winner = results.find((r: any) => r.position === "1");
-    const pole = results.find((r: any) => r.grid === "1");
-    const fl = results.find((r: any) => r.FastestLap?.rank === "1");
+    const winner = results.find((r) => r.position === "1");
+    const pole = results.find((r) => r.grid === "1");
+    const fl = results.find((r) => r.FastestLap?.rank === "1");
     resultSummaryMap.set(race.round, {
       winner: winner ? {
         name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,

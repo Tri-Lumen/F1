@@ -31,10 +31,10 @@ function computeH2H(drivers: DriverStanding[], races: Race[]): H2H[] {
 
     for (const r of races) {
       const rA = (r.Results ?? []).find(
-        (x: any) => x.Driver.driverId === a.Driver.driverId
+        (x) => x.Driver.driverId === a.Driver.driverId
       );
       const rB = (r.Results ?? []).find(
-        (x: any) => x.Driver.driverId === b.Driver.driverId
+        (x) => x.Driver.driverId === b.Driver.driverId
       );
       if (!rA || !rB) continue;
 

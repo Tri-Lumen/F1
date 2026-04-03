@@ -1,4 +1,6 @@
 import type {
+  Driver,
+  Constructor,
   DriverStanding,
   ConstructorStanding,
   Race,
@@ -15,6 +17,11 @@ import type {
   RaceControlMessage,
   WeatherData,
   LiveLap,
+  ErgastResponse,
+  StandingsTableData,
+  DriverTableData,
+  ConstructorTableData,
+  RaceTableData,
 } from "./types";
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
@@ -74,17 +81,17 @@ async function fetchErgastArchive<T>(path: string): Promise<T | null> {
 export async function getDriverStandings(): Promise<DriverStanding[]> {
   // Fetch standings and driver list in parallel to avoid waterfall on pre-season fallback
   const [data, driversData] = await Promise.all([
-    fetchErgast<any>(`/${CURRENT_SEASON}/driverstandings/?limit=100`),
-    fetchErgast<any>(`/${CURRENT_SEASON}/drivers/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/driverstandings/?limit=100`),
+    fetchErgast<ErgastResponse<DriverTableData>>(`/${CURRENT_SEASON}/drivers/?limit=100`),
   ]);
   const standings: DriverStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
 
   // Pre-season fallback: if no standings yet, build entries from the driver list
   if (standings.length === 0) {
-    const drivers: any[] = driversData?.MRData?.DriverTable?.Drivers ?? [];
+    const drivers: Driver[] = driversData?.MRData?.DriverTable?.Drivers ?? [];
     if (drivers.length > 0) {
-      return drivers.map((d: any, i: number) => ({
+      return drivers.map((d, i) => ({
         position: String(i + 1),
         positionText: String(i + 1),
         points: "0",
@@ -101,17 +108,17 @@ export async function getDriverStandings(): Promise<DriverStanding[]> {
 export async function getConstructorStandings(): Promise<ConstructorStanding[]> {
   // Fetch standings and constructor list in parallel to avoid waterfall on pre-season fallback
   const [data, ctorData] = await Promise.all([
-    fetchErgast<any>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`),
-    fetchErgast<any>(`/${CURRENT_SEASON}/constructors/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`),
+    fetchErgast<ErgastResponse<ConstructorTableData>>(`/${CURRENT_SEASON}/constructors/?limit=100`),
   ]);
   const standings: ConstructorStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
 
   // Pre-season fallback: if no standings yet, build entries from the constructors list
   if (standings.length === 0) {
-    const ctors: any[] = ctorData?.MRData?.ConstructorTable?.Constructors ?? [];
+    const ctors: Constructor[] = ctorData?.MRData?.ConstructorTable?.Constructors ?? [];
     if (ctors.length > 0) {
-      return ctors.map((c: any, i: number) => ({
+      return ctors.map((c, i) => ({
         position: String(i + 1),
         positionText: String(i + 1),
         points: "0",
@@ -125,64 +132,62 @@ export async function getConstructorStandings(): Promise<ConstructorStanding[]> 
 }
 
 export async function getRaceSchedule(): Promise<Race[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getRaceResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races?.[0]?.Results ?? [];
 }
 
 export async function getRaceWithResults(round: string): Promise<Race | null> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/results/?limit=30`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/results/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0] ?? null;
 }
 
 export async function getQualifyingResults(round: string): Promise<QualifyingResult[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/qualifying/?limit=30`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/qualifying/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults ?? [];
 }
 
 export async function getDriverResults(driverId: string): Promise<Race[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/drivers/${driverId}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/drivers/${driverId}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getConstructorResults(constructorId: string): Promise<Race[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/constructors/${constructorId}/results/?limit=50`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/constructors/${constructorId}/results/?limit=50`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getAllSeasonResults(): Promise<Race[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/results/?limit=500`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/results/?limit=500`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getSprintResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
 }
 
 export async function getAllSprintResults(): Promise<Race[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/sprint/?limit=500`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/sprint/?limit=500`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getPitStops(round: string): Promise<PitStop[]> {
-  const data = await fetchErgast<any>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
 }
 
 // --- OpenF1 Live API ---
 
-export async function getLiveSessions(): Promise<LiveSession[]> {
+/** Generic OpenF1 fetch: handles timeout, signal cleanup, and error fallback. */
+async function fetchOpenF1<T>(path: string): Promise<T[]> {
   const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
   try {
-    const res = await fetch(`${OPENF1_BASE}/sessions?year=${CURRENT_SEASON}`, {
-      cache: "no-store",
-      signal,
-    });
+    const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
     if (!res.ok) return [];
     return await res.json();
   } catch {
@@ -190,6 +195,28 @@ export async function getLiveSessions(): Promise<LiveSession[]> {
   } finally {
     clear();
   }
+}
+
+/**
+ * Fetch from OpenF1 with a recent-time filter, falling back to an unfiltered
+ * query when the time-windowed result is empty (e.g. session just started).
+ */
+async function fetchOpenF1WithTimeFilter<T>(
+  endpoint: string,
+  sessionKey: number,
+  windowMs: number = 5 * 60_000,
+): Promise<T[]> {
+  const since = new Date(Date.now() - windowMs).toISOString();
+  const filtered = await fetchOpenF1<T>(
+    `/${endpoint}?session_key=${sessionKey}&date>${encodeURIComponent(since)}`
+  );
+  if (filtered.length > 0) return filtered;
+  // Fallback: unfiltered (for sessions that just started or non-live sessions)
+  return fetchOpenF1<T>(`/${endpoint}?session_key=${sessionKey}`);
+}
+
+export async function getLiveSessions(): Promise<LiveSession[]> {
+  return fetchOpenF1<LiveSession>(`/sessions?year=${CURRENT_SEASON}`);
 }
 
 export async function getLatestSession(): Promise<LiveSession | null> {
@@ -229,136 +256,28 @@ export async function getLatestSession(): Promise<LiveSession | null> {
 }
 
 export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriver[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${OPENF1_BASE}/drivers?session_key=${sessionKey}`, {
-      cache: "no-store",
-      signal,
-    });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<LiveTimingDriver>(`/drivers?session_key=${sessionKey}`);
 }
 
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    // Fetch recent position data (last 5 min) — wide enough to survive safety-car gaps
-    // while still avoiding full-session payloads.
-    const since = new Date(Date.now() - 5 * 60_000).toISOString();
-    const res = await fetch(
-      `${OPENF1_BASE}/position?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    const data: LivePosition[] = await res.json();
-    // If the time-filtered query returned data, use it; otherwise fall back to unfiltered
-    if (data.length > 0) return data;
-  } catch {
-    // Fall through to unfiltered fetch
-  } finally {
-    clear();
-  }
-  // Fallback: unfiltered (for sessions that just started or non-live sessions)
-  const { signal: sig2, clear: clear2 } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/position?session_key=${sessionKey}`,
-      { cache: "no-store", signal: sig2 }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear2();
-  }
+  return fetchOpenF1WithTimeFilter<LivePosition>("position", sessionKey);
 }
 
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    // Fetch recent interval data (last 5 min) — matches the position window
-    const since = new Date(Date.now() - 5 * 60_000).toISOString();
-    const res = await fetch(
-      `${OPENF1_BASE}/intervals?session_key=${sessionKey}&date>${encodeURIComponent(since)}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    const data: LiveInterval[] = await res.json();
-    if (data.length > 0) return data;
-  } catch {
-    // Fall through to unfiltered fetch
-  } finally {
-    clear();
-  }
-  // Fallback: unfiltered
-  const { signal: sig2, clear: clear2 } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/intervals?session_key=${sessionKey}`,
-      { cache: "no-store", signal: sig2 }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear2();
-  }
+  return fetchOpenF1WithTimeFilter<LiveInterval>("intervals", sessionKey);
 }
 
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/stints?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<LiveStint>(`/stints?session_key=${sessionKey}`);
 }
 
 export async function getTeamRadio(sessionKey: number): Promise<TeamRadio[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/team_radio?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<TeamRadio>(`/team_radio?session_key=${sessionKey}`);
 }
 
 /** Fetch pit box (stationary) times from OpenF1 for a given session. */
 export async function getOpenF1PitStops(sessionKey: number): Promise<OpenF1PitStop[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/pit?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<OpenF1PitStop>(`/pit?session_key=${sessionKey}`);
 }
 
 /**
@@ -378,77 +297,41 @@ export async function getOpenF1SessionKeyForRace(race: Race): Promise<number | n
 
 /** Fetch lap-by-lap timing data for all drivers in a session. */
 export async function getLiveLaps(sessionKey: number): Promise<LiveLap[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    // Only the last 3 laps per driver is enough for current-lap display
-    const res = await fetch(
-      `${OPENF1_BASE}/laps?session_key=${sessionKey}&lap_number>=${Math.max(1, 0)}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<LiveLap>(
+    `/laps?session_key=${sessionKey}&lap_number>=${Math.max(1, 0)}`
+  );
 }
 
 /** Fetch race control messages (flags, safety car, penalties, etc.) */
 export async function getRaceControl(sessionKey: number): Promise<RaceControlMessage[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/race_control?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
-  }
+  return fetchOpenF1<RaceControlMessage>(`/race_control?session_key=${sessionKey}`);
 }
 
 /** Fetch current weather data for the session (returns the most recent entry). */
 export async function getWeather(sessionKey: number): Promise<WeatherData | null> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(
-      `${OPENF1_BASE}/weather?session_key=${sessionKey}`,
-      { cache: "no-store", signal }
-    );
-    if (!res.ok) return null;
-    const data: WeatherData[] = await res.json();
-    // Return the most recent weather reading
-    return data.length > 0 ? data[data.length - 1] : null;
-  } catch {
-    return null;
-  } finally {
-    clear();
-  }
+  const data = await fetchOpenF1<WeatherData>(`/weather?session_key=${sessionKey}`);
+  return data.length > 0 ? data[data.length - 1] : null;
 }
 
 // --- Archive API (historical seasons, 24 h cache) ---
 
 export async function getSeasonDriverStandings(season: string): Promise<DriverStanding[]> {
-  const data = await fetchErgastArchive<any>(`/${season}/driverstandings/?limit=100`);
+  const data = await fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/${season}/driverstandings/?limit=100`);
   return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
 }
 
 export async function getSeasonConstructorStandings(season: string): Promise<ConstructorStanding[]> {
-  const data = await fetchErgastArchive<any>(`/${season}/constructorstandings/?limit=100`);
+  const data = await fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/${season}/constructorstandings/?limit=100`);
   return data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
 }
 
 export async function getSeasonSchedule(season: string): Promise<Race[]> {
-  const data = await fetchErgastArchive<any>(`/${season}/?limit=30`);
+  const data = await fetchErgastArchive<ErgastResponse<RaceTableData>>(`/${season}/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getSeasonRaceResults(season: string): Promise<Race[]> {
-  const data = await fetchErgastArchive<any>(`/${season}/results/?limit=500`);
+  const data = await fetchErgastArchive<ErgastResponse<RaceTableData>>(`/${season}/results/?limit=500`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
