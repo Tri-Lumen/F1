@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 const DEFAULT_MV_HOST = "localhost:10101";
 
@@ -27,27 +27,28 @@ export default function OnboardButton({
   >("idle");
   const [mvConnected, setMvConnected] = useState<boolean | null>(null);
 
-  const checkConnection = useCallback(async () => {
-    const url = getMultiviewerUrl();
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: "{ systemInfo { version } }" }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-      setMvConnected(res.ok);
-    } catch {
-      setMvConnected(false);
-    }
-  }, []);
-
   useEffect(() => {
-    checkConnection();
-  }, [checkConnection]);
+    const controller = new AbortController();
+    const url = getMultiviewerUrl();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: "{ systemInfo { version } }" }),
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!controller.signal.aborted) setMvConnected(res.ok);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setMvConnected(false);
+      })
+      .finally(() => clearTimeout(timeout));
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, []);
 
   async function openOnboard() {
     if (mvConnected === false) {

@@ -49,8 +49,8 @@ export default async function ArchiveSeasonPage({
   const winnerMap = new Map<string, { name: string; constructorId: string; time?: string; fastestLap?: string }>();
   for (const race of raceResults) {
     const results = race.Results ?? [];
-    const winner = results.find((r: any) => r.position === "1");
-    const fl = results.find((r: any) => r.FastestLap?.rank === "1");
+    const winner = results.find((r) => r.position === "1");
+    const fl = results.find((r) => r.FastestLap?.rank === "1");
     if (winner) {
       winnerMap.set(race.round, {
         name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,

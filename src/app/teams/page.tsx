@@ -1,6 +1,12 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Constructor Standings — F1 2026",
+  description: "F1 constructor championship standings with team stats and driver head-to-head comparisons",
+};
 import Link from "next/link";
 import {
   getConstructorStandings,
@@ -10,6 +16,7 @@ import {
   getCountryFlag,
   CURRENT_YEAR,
 } from "@/lib/api";
+import type { Race, RaceResult } from "@/lib/types";
 import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RefreshButton from "@/components/RefreshButton";
 import TeammateH2H from "@/components/TeammateH2H";
@@ -29,7 +36,7 @@ interface TeamStats {
 
 function computeTeamStats(
   constructorId: string,
-  allRaces: any[]
+  allRaces: Race[]
 ): TeamStats {
   let podiums = 0;
   let poles = 0;
@@ -44,12 +51,12 @@ function computeTeamStats(
 
   for (const race of allRaces) {
     const teamResults = (race.Results ?? []).filter(
-      (r: any) => r.Constructor.constructorId === constructorId
+      (r) => r.Constructor.constructorId === constructorId
     );
     if (teamResults.length > 0) racesEntered++;
 
     // Check 1-2 finish
-    const positions = teamResults.map((r: any) => parseInt(r.position));
+    const positions = teamResults.map((r) => parseInt(r.position));
     if (positions.includes(1) && positions.includes(2)) oneTwo++;
 
     // Check double points (both drivers in top 10)

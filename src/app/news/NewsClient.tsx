@@ -244,7 +244,7 @@ export default function NewsClient() {
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
@@ -252,10 +252,11 @@ export default function NewsClient() {
       enabledFeeds.map((f) => ({ id: f.id, name: f.name, url: f.url }))
     );
 
-    fetch(`/api/rss?feeds=${encodeURIComponent(feedParam)}`)
+    fetch(`/api/rss?feeds=${encodeURIComponent(feedParam)}`, {
+      signal: controller.signal,
+    })
       .then((res) => res.json())
       .then((data) => {
-        if (cancelled) return;
         if (data.error) {
           setError(data.error);
         } else {
@@ -264,13 +265,13 @@ export default function NewsClient() {
         setLoading(false);
       })
       .catch((err) => {
-        if (cancelled) return;
+        if (controller.signal.aborted) return;
         setError("Failed to fetch news feeds");
         setLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [enabledFeeds, mounted]);
 

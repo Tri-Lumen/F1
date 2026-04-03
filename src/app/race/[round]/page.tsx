@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   getRaceWithResults,
   getQualifyingResults,
@@ -17,10 +18,32 @@ import {
   getLiveDrivers,
   CURRENT_YEAR,
 } from "@/lib/api";
+import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
 import QualifyingGapChart from "@/components/QualifyingGapChart";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ round: string }>;
+}): Promise<Metadata> {
+  const { round } = await params;
+  const race = await getRaceWithResults(round);
+  return {
+    title: race ? `${race.raceName} — F1 2026` : `Round ${round} — F1 2026`,
+    description: race
+      ? `Results, qualifying, pit stops, and analysis for the ${race.raceName}`
+      : `Race results for round ${round} of the 2026 F1 season`,
+  };
+}
+
 async function RaceContent({ round }: { round: string }) {
+  // Validate round is a reasonable numeric value
+  const roundNum = parseInt(round);
+  if (isNaN(roundNum) || roundNum < 1 || roundNum > 30) {
+    notFound();
+  }
+
   const [race, qualifying, sprint, pitStops] = await Promise.all([
     getRaceWithResults(round),
     getQualifyingResults(round),

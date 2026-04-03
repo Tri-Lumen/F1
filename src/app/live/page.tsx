@@ -1,7 +1,13 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Live Timing — F1 2026",
+  description: "Real-time positions, intervals, tire strategy, team radio, and race control messages",
+};
 import {
   getLatestSession,
   getLiveDrivers,

@@ -1,6 +1,12 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Driver Standings — F1 2026",
+  description: "Current F1 driver championship standings, stats, and points progression",
+};
 import Link from "next/link";
 import {
   getDriverStandings,
@@ -11,6 +17,7 @@ import {
   getRaceDate,
   CURRENT_YEAR,
 } from "@/lib/api";
+import type { Race } from "@/lib/types";
 import StandingsTable from "@/components/StandingsTable";
 import RefreshButton from "@/components/RefreshButton";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
@@ -30,7 +37,7 @@ interface DriverStats {
 
 function computeDriverStats(
   driverId: string,
-  allRaces: any[]
+  allRaces: Race[]
 ): DriverStats {
   let podiums = 0;
   let fastestLaps = 0;
@@ -100,7 +107,7 @@ async function DriversContent() {
     const results: { pos: number; status: string }[] = [];
     for (let i = completedRaces.length - 1; i >= 0 && results.length < 5; i--) {
       const result = completedRaces[i].Results?.find(
-        (r: any) => r.Driver.driverId === s.Driver.driverId
+        (r) => r.Driver.driverId === s.Driver.driverId
       );
       if (result) results.unshift({ pos: parseInt(result.position), status: result.status });
     }
@@ -164,7 +171,7 @@ async function DriversContent() {
   let streakName = "";
   let streakCount = 0;
   for (let i = completedRaces.length - 1; i >= 0; i--) {
-    const winner = completedRaces[i].Results?.find((r: any) => r.position === "1");
+    const winner = completedRaces[i].Results?.find((r) => r.position === "1");
     if (!winner) continue;
     const name = `${winner.Driver.givenName} ${winner.Driver.familyName}`;
     if (streakCount === 0) { streakName = name; streakCount = 1; }

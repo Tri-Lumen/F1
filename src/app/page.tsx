@@ -1,7 +1,13 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Dashboard — F1 2026",
+  description: "Season overview with live session status, championship leaders, and recent race results",
+};
 import {
   getDriverStandings,
   getConstructorStandings,

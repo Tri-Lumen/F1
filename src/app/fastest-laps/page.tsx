@@ -1,5 +1,6 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import {
@@ -9,6 +10,11 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
+
+export const metadata: Metadata = {
+  title: "Fastest Laps — F1 2026",
+  description: "Fastest lap rankings, leaders, and records across all races",
+};
 
 interface FastestLapEntry {
   round: string;
@@ -32,7 +38,7 @@ async function FastestLapsContent() {
   const entries: FastestLapEntry[] = [];
 
   for (const race of completedRaces) {
-    const fl = (race.Results ?? []).find((r: any) => r.FastestLap?.rank === "1");
+    const fl = (race.Results ?? []).find((r) => r.FastestLap?.rank === "1");
     if (!fl) continue;
     entries.push({
       round: race.round,

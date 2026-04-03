@@ -1,5 +1,6 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import {
   getAllSeasonResults,
@@ -12,6 +13,11 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
+
+export const metadata: Metadata = {
+  title: "Season Stats — F1 2026",
+  description: "Win distributions, podium leaders, points trends, and pit stop analysis",
+};
 
 async function StatsContent() {
   const [allRaces, sprintRaces, driverStandings, constructorStandings] = await Promise.all([

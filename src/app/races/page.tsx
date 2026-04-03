@@ -1,7 +1,13 @@
 export const revalidate = 60;
 
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getRaceSchedule, getAllSeasonResults, getRaceDate, CURRENT_YEAR } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "Race Calendar — F1 2026",
+  description: "Upcoming and completed races with results, winners, and fastest laps",
+};
 import RaceCard from "@/components/RaceCard";
 import type { RaceResultSummary } from "@/components/RaceCard";
 import RefreshButton from "@/components/RefreshButton";
@@ -16,9 +22,9 @@ async function RacesContent() {
   const resultSummaryMap = new Map<string, RaceResultSummary>();
   for (const race of allResults) {
     const results = race.Results ?? [];
-    const winner = results.find((r: any) => r.position === "1");
-    const pole = results.find((r: any) => r.grid === "1");
-    const fl = results.find((r: any) => r.FastestLap?.rank === "1");
+    const winner = results.find((r) => r.position === "1");
+    const pole = results.find((r) => r.grid === "1");
+    const fl = results.find((r) => r.FastestLap?.rank === "1");
     resultSummaryMap.set(race.round, {
       winner: winner ? {
         name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,
