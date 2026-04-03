@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme, type ColorMode, type AccentTheme } from "@/lib/ThemeContext";
 import { useFavorites } from "@/lib/FavoritesContext";
+import { useNotifications, LEAD_OPTIONS } from "@/lib/NotificationContext";
 import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
@@ -55,19 +56,24 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   // Reset confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const [notifyEnabled, setNotifyEnabled] = useState(false);
-  const [notifyLead, setNotifyLead] = useState(10);
-  const [notifyPermission, setNotifyPermission] = useState<string>("default");
+  const {
+    enabled: notifyEnabled,
+    permission: notifyPermission,
+    leadMinutes: notifyLead,
+    autoSubscribeWeekend,
+    scheduled: scheduledNotifications,
+    history: notifyHistory,
+    toggle: toggleNotify,
+    setLeadMinutes: saveNotifyLead,
+    setAutoSubscribeWeekend,
+    cancel: cancelNotification,
+    clearHistory: clearNotifyHistory,
+  } = useNotifications();
 
   // Load saved preferences from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("f1-multiviewer-host");
     if (saved) setMvHost(saved);
-    if (typeof Notification !== "undefined") {
-      setNotifyPermission(Notification.permission);
-    }
-    setNotifyEnabled(localStorage.getItem("f1-notify") === "true");
-    setNotifyLead(parseInt(localStorage.getItem("f1-notify-lead") ?? "10") || 10);
     setRefreshInterval(parseInt(localStorage.getItem("f1-refresh-interval") ?? "60") || 60);
   }, []);
 
@@ -128,26 +134,6 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
       }
     };
     reader.readAsText(file);
-  }
-
-  async function toggleNotify() {
-    if (!notifyEnabled) {
-      if (notifyPermission !== "granted") {
-        const result = await Notification.requestPermission();
-        setNotifyPermission(result);
-        if (result !== "granted") return;
-      }
-      localStorage.setItem("f1-notify", "true");
-      setNotifyEnabled(true);
-    } else {
-      localStorage.setItem("f1-notify", "false");
-      setNotifyEnabled(false);
-    }
-  }
-
-  function saveNotifyLead(minutes: number) {
-    setNotifyLead(minutes);
-    localStorage.setItem("f1-notify-lead", String(minutes));
   }
 
   function saveMvHost() {
@@ -605,7 +591,8 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
         <p className="text-sm text-f1-text-muted mb-4">
           Get a browser notification before upcoming sessions start. The{" "}
           <span className="text-f1-text font-medium">Notify me</span> button on
-          the home page countdown card enables per-session alerts.
+          the home page countdown card enables per-session alerts. Notifications persist
+          across page navigations.
         </p>
         <div className="flex flex-wrap items-center gap-4">
           <button
@@ -635,18 +622,107 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                 onChange={(e) => saveNotifyLead(parseInt(e.target.value))}
                 className="rounded-lg border border-f1-border bg-f1-dark px-2 py-2 text-sm text-f1-text focus:border-f1-accent focus:outline-none"
               >
-                {[5, 10, 15, 30].map((m) => (
-                  <option key={m} value={m}>{m} minutes</option>
+                {LEAD_OPTIONS.map((m) => (
+                  <option key={m} value={m}>{m} min{m === 60 ? " (1 hr)" : ""}</option>
                 ))}
               </select>
               <span className="text-sm text-f1-text-muted">before session</span>
             </div>
           )}
         </div>
+
+        {notifyEnabled && (
+          <div className="mt-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoSubscribeWeekend}
+                onChange={(e) => setAutoSubscribeWeekend(e.target.checked)}
+                className="rounded border-f1-border bg-f1-dark text-f1-accent focus:ring-f1-accent h-4 w-4"
+              />
+              <span className="text-sm text-f1-text">Auto-subscribe to all weekend sessions</span>
+            </label>
+            <p className="text-xs text-f1-text-muted mt-1 ml-6">
+              Automatically schedule notifications for every session (FP, Qualifying, Sprint, Race)
+            </p>
+          </div>
+        )}
+
         {notifyPermission === "denied" && (
           <p className="mt-2 text-xs text-f1-text-muted/60">
             Notifications are blocked. Enable them in your browser&apos;s site settings for this page.
           </p>
+        )}
+
+        {/* Scheduled notifications list */}
+        {notifyEnabled && scheduledNotifications.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-bold text-f1-text-muted mb-2 uppercase tracking-wider">
+              Scheduled ({scheduledNotifications.length})
+            </h3>
+            <div className="space-y-1.5">
+              {scheduledNotifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="flex items-center justify-between rounded-lg border border-f1-border/50 bg-f1-dark px-3 py-2"
+                >
+                  <div>
+                    <span className="text-sm font-medium">{n.sessionType}</span>
+                    <span className="text-sm text-f1-text-muted"> &mdash; {n.raceName}</span>
+                    <p className="text-xs text-f1-text-muted">
+                      {new Date(n.sessionDate).toLocaleString(undefined, {
+                        weekday: "short", month: "short", day: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                      {" "}({n.leadMinutes}m lead)
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => cancelNotification(n.id)}
+                    className="text-xs text-red-400 hover:text-red-300 px-2 py-1"
+                    title="Cancel this notification"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notification history */}
+        {notifyHistory.length > 0 && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-f1-text-muted uppercase tracking-wider">
+                History ({notifyHistory.length})
+              </h3>
+              <button
+                onClick={clearNotifyHistory}
+                className="text-xs text-f1-text-muted hover:text-f1-text"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="space-y-1">
+              {notifyHistory.slice(0, 10).map((h, i) => (
+                <div
+                  key={`${h.id}-${i}`}
+                  className="flex items-center justify-between rounded-lg bg-f1-dark/50 px-3 py-1.5"
+                >
+                  <span className="text-xs text-f1-text-muted">
+                    {h.sessionType} &mdash; {h.raceName}
+                  </span>
+                  <span className="text-xs text-f1-text-muted/60">
+                    {new Date(h.firedAt).toLocaleString(undefined, {
+                      month: "short", day: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </section>
 
