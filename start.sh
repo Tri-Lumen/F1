@@ -2,7 +2,7 @@
 set -e
 
 echo "================================"
-echo "  F1 Dashboard - 2026 Season"
+echo "  Delta Dashboard - 2026 Season"
 echo "================================"
 echo ""
 
@@ -37,7 +37,7 @@ if [ ! -d "node_modules" ]; then
   echo ""
 fi
 
-echo "Starting F1 Dashboard..."
+echo "Starting Delta Dashboard..."
 echo "Open http://localhost:3000 in your browser"
 echo ""
 

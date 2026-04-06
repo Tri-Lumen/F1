@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  F1 Dashboard — Docker Install Script
+#  Delta Dashboard — Docker Install Script
 #
 #  Authenticates with GitHub Container Registry and starts the stack.
 #
@@ -15,7 +15,7 @@ set -e
 GHCR_IMAGE="ghcr.io/tri-lumen/f1:latest"
 REPO="Tri-Lumen/F1"
 REPO_URL="https://github.com/${REPO}.git"
-INSTALL_DIR="${F1_INSTALL_DIR:-$HOME/F1-Dashboard}"
+INSTALL_DIR="${DELTA_INSTALL_DIR:-$HOME/Delta-Dashboard}"
 
 # ---- Colours ----------------------------------------------------------------
 RED='\033[0;31m'
@@ -32,7 +32,7 @@ error() { printf "${RED}[ERROR]${NC} %s\n" "$*"; exit 1; }
 
 echo ""
 printf "${BOLD}========================================${NC}\n"
-printf "${BOLD}  F1 Dashboard — Docker Installer${NC}\n"
+printf "${BOLD}  Delta Dashboard — Docker Installer${NC}\n"
 printf "${BOLD}========================================${NC}\n"
 echo ""
 
@@ -126,24 +126,24 @@ else
 fi
 
 # ---- Pull the latest image --------------------------------------------------
-info "Pulling latest F1 Dashboard image..."
+info "Pulling latest Delta Dashboard image..."
 $COMPOSE pull
 ok "Image pulled"
 
 # ---- Start the stack --------------------------------------------------------
-info "Starting F1 Dashboard stack..."
+info "Starting Delta Dashboard stack..."
 $COMPOSE up -d
 ok "Stack started"
 
 # ---- Done -------------------------------------------------------------------
 echo ""
 printf "${GREEN}${BOLD}========================================${NC}\n"
-printf "${GREEN}${BOLD}  F1 Dashboard is running!${NC}\n"
+printf "${GREEN}${BOLD}  Delta Dashboard is running!${NC}\n"
 printf "${GREEN}${BOLD}========================================${NC}\n"
 echo ""
 info "Dashboard: ${BOLD}http://localhost:3000${NC}"
 echo ""
-info "To view logs:    $COMPOSE logs -f f1-dashboard"
+info "To view logs:    $COMPOSE logs -f delta-dashboard"
 info "To stop:         $COMPOSE down"
 info "To update:       $COMPOSE pull && $COMPOSE up -d"
 echo ""

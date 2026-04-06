@@ -99,7 +99,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: f1-dashboard-${{ matrix.platform }}
+          name: delta-dashboard-${{ matrix.platform }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
 

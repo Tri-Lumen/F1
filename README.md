@@ -1,4 +1,4 @@
-# F1 Dashboard
+# Delta Dashboard
 
 Real-time Formula 1 dashboard for the 2026 season. Track live sessions, standings, race results, driver and team stats, and explore historical data back to 2016 — all in a single app.
 
@@ -38,10 +38,10 @@ Grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/r
 
 | Platform | Asset |
 |---|---|
-| Windows | [F1-Dashboard-Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-Setup.exe) |
-| macOS (Apple Silicon) | [F1-Dashboard-arm64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-arm64.dmg) |
-| macOS (Intel) | [F1-Dashboard-x64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard-x64.dmg) |
-| Linux | [F1-Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/F1-Dashboard.AppImage) |
+| Windows | [Delta-Dashboard-Setup.exe](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard-Setup.exe) |
+| macOS (Apple Silicon) | [Delta-Dashboard-arm64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard-arm64.dmg) |
+| macOS (Intel) | [Delta-Dashboard-x64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard-x64.dmg) |
+| Linux | [Delta-Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard.AppImage) |
 
 ## Run from Source
 
@@ -75,8 +75,8 @@ docker compose up -d
 Or build and run directly:
 
 ```bash
-docker build -t f1-dashboard .
-docker run -p 3000:3000 f1-dashboard
+docker build -t delta-dashboard .
+docker run -p 3000:3000 delta-dashboard
 ```
 
 The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev/watchtower/) for automatic hourly image updates.
@@ -87,7 +87,7 @@ The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev
 
 ```yaml
 services:
-  f1-dashboard:
+  delta-dashboard:
     image: ghcr.io/tri-lumen/f1:latest
     ports:
       - "3000:3000"

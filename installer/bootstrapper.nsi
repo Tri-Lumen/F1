@@ -1,5 +1,5 @@
 ; ============================================================================
-;  F1 Dashboard — NSIS Bootstrapper Installer
+;  Delta Dashboard — NSIS Bootstrapper Installer
 ;
 ;  Builds a tiny .exe that downloads and runs the latest release from GitHub.
 ;  This installer only needs to be built once — it always fetches the latest.
@@ -9,19 +9,19 @@
 !include "nsDialogs.nsh"
 
 ; ---- General settings -------------------------------------------------------
-Name "F1 Dashboard Installer"
-OutFile "F1-Dashboard-WebInstaller.exe"
-InstallDir "$TEMP\F1-Dashboard-Bootstrap"
+Name "Delta Dashboard Installer"
+OutFile "Delta-Dashboard-WebInstaller.exe"
+InstallDir "$TEMP\Delta-Dashboard-Bootstrap"
 RequestExecutionLevel user
 ShowInstDetails show
 
 ; ---- Branding ----------------------------------------------------------------
 !define MUI_ICON "..\build\icon.ico"
 !define MUI_ABORTWARNING
-!define MUI_WELCOMEPAGE_TITLE "F1 Dashboard — Online Installer"
-!define MUI_WELCOMEPAGE_TEXT "This installer will download and install the latest version of F1 Dashboard from GitHub.$\r$\n$\r$\nNo internet connection is required after the initial install — the app will auto-update itself.$\r$\n$\r$\nClick Next to continue."
+!define MUI_WELCOMEPAGE_TITLE "Delta Dashboard — Online Installer"
+!define MUI_WELCOMEPAGE_TEXT "This installer will download and install the latest version of Delta Dashboard from GitHub.$\r$\n$\r$\nNo internet connection is required after the initial install — the app will auto-update itself.$\r$\n$\r$\nClick Next to continue."
 !define MUI_FINISHPAGE_TITLE "Installation Complete"
-!define MUI_FINISHPAGE_TEXT "F1 Dashboard has been installed successfully.$\r$\n$\r$\nYou can now launch it from the Start Menu."
+!define MUI_FINISHPAGE_TEXT "Delta Dashboard has been installed successfully.$\r$\n$\r$\nYou can now launch it from the Start Menu."
 
 ; ---- Pages -------------------------------------------------------------------
 !insertmacro MUI_PAGE_WELCOME
@@ -51,7 +51,7 @@ Section "Install"
     File "install-windows.ps1"
 
     ; Execute the PowerShell bootstrapper
-    DetailPrint "Downloading latest F1 Dashboard release..."
+    DetailPrint "Downloading latest Delta Dashboard release..."
     nsExec::ExecToLog '$PowerShellPath -ExecutionPolicy Bypass -NoProfile -File "$INSTDIR\install-windows.ps1"'
     Pop $0
 
