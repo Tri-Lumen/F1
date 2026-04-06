@@ -34,7 +34,7 @@ autoUpdater.on('update-downloaded', (info) => {
     dialog.showMessageBox(mainWindow, {
       type:      'info',
       title:     'Update Ready to Install',
-      message:   `F1 Dashboard ${info.version} has been downloaded`,
+      message:   `Delta Dashboard ${info.version} has been downloaded`,
       detail:    'Restart now to apply the update, or it will be applied on the next launch.',
       buttons:   ['Restart Now', 'Later'],
       defaultId: 0,
@@ -85,7 +85,7 @@ function fetchLatestRelease() {
         {
           headers: {
             Accept: 'application/vnd.github.v3+json',
-            'User-Agent': `F1-Dashboard/${currentVersion}`,
+            'User-Agent': `Delta-Dashboard/${currentVersion}`,
           },
         },
         (res) => {
@@ -168,7 +168,7 @@ function startNextServer(port) {
     const msg = isPackaged
       ? `Bundled server not found at:\n${serverScript}`
       : `Run "npm run build" first.\n\nExpected:\n${serverScript}`;
-    dialog.showErrorBox('F1 Dashboard — Startup Error', msg);
+    dialog.showErrorBox('Delta Dashboard — Startup Error', msg);
     app.quit();
     return;
   }
@@ -299,7 +299,7 @@ function buildMenu(port) {
               const release = await fetchLatestRelease();
               if (!release) {
                 await dialog.showMessageBox(mainWindow, {
-                  type: 'info', title: 'F1 Dashboard', message: 'No releases have been published yet.',
+                  type: 'info', title: 'Delta Dashboard', message: 'No releases have been published yet.',
                 });
                 return;
               }
@@ -308,7 +308,7 @@ function buildMenu(port) {
                 const { response } = await dialog.showMessageBox(mainWindow, {
                   type:      'info',
                   title:     'Update Available',
-                  message:   `F1 Dashboard ${release.tag_name} is available`,
+                  message:   `Delta Dashboard ${release.tag_name} is available`,
                   detail:    `You are running v${currentVersion}. Open the releases page to download manually.`,
                   buttons:   ['Open Releases Page', 'Later'],
                   defaultId: 0,
@@ -316,7 +316,7 @@ function buildMenu(port) {
                 if (response === 0) shell.openExternal(release.html_url);
               } else {
                 dialog.showMessageBox(mainWindow, {
-                  type: 'info', title: 'F1 Dashboard is up to date',
+                  type: 'info', title: 'Delta Dashboard is up to date',
                   message: `You are running the latest version (v${currentVersion}).`,
                 });
               }
@@ -329,7 +329,7 @@ function buildMenu(port) {
               const currentVersion = app.getVersion();
               if (!result || !isNewerVersion(result.updateInfo.version, currentVersion)) {
                 dialog.showMessageBox(mainWindow, {
-                  type: 'info', title: 'F1 Dashboard is up to date',
+                  type: 'info', title: 'Delta Dashboard is up to date',
                   message: `You are running the latest version (v${currentVersion}).`,
                 });
                 return;
@@ -338,7 +338,7 @@ function buildMenu(port) {
               const { response } = await dialog.showMessageBox(mainWindow, {
                 type:      'info',
                 title:     'Update Available',
-                message:   `F1 Dashboard ${result.updateInfo.version} is available`,
+                message:   `Delta Dashboard ${result.updateInfo.version} is available`,
                 detail:    `You are running v${currentVersion}. Click Download to start downloading in the background.`,
                 buttons:   ['Download', 'Later'],
                 defaultId: 0,
@@ -352,12 +352,12 @@ function buildMenu(port) {
           },
         },
         {
-          label: 'About F1 Dashboard',
+          label: 'About Delta Dashboard',
           click() {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
-              title: 'F1 Dashboard',
-              message: `F1 Dashboard\nVersion ${app.getVersion()}\n\nRunning on port ${port}`,
+              title: 'Delta Dashboard',
+              message: `Delta Dashboard\nVersion ${app.getVersion()}\n\nRunning on port ${port}`,
             });
           },
         },
@@ -376,7 +376,7 @@ async function createWindow() {
   try {
     serverPort = await findFreePort(3000);
   } catch (err) {
-    dialog.showErrorBox('F1 Dashboard — Startup Error', err.message);
+    dialog.showErrorBox('Delta Dashboard — Startup Error', err.message);
     app.quit();
     return;
   }
@@ -403,7 +403,7 @@ async function createWindow() {
       p    { font-size:.85rem; color:#94a3b8; }
     </style></head>
     <body>
-      <h2>🏎️ F1 Dashboard</h2>
+      <h2>🏎️ Delta Dashboard</h2>
       <p>Starting server on port ${serverPort}…</p>
     </body>
     </html>`);
@@ -413,7 +413,7 @@ async function createWindow() {
   } catch (err) {
     loadingWindow.close();
     dialog.showErrorBox(
-      'F1 Dashboard — Startup Error',
+      'Delta Dashboard — Startup Error',
       `The embedded server failed to start.\n\n${err.message}\n\nCheck that Node.js is installed and accessible.`
     );
     stopNextServer();
@@ -430,7 +430,7 @@ async function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 600,
-    title: 'F1 Dashboard',
+    title: 'Delta Dashboard',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

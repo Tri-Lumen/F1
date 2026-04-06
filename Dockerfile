@@ -1,7 +1,7 @@
 FROM node:22-alpine AS base
 
 LABEL org.opencontainers.image.source="https://github.com/Tri-Lumen/F1"
-LABEL org.opencontainers.image.description="F1 Dashboard"
+LABEL org.opencontainers.image.description="Delta Dashboard"
 LABEL org.opencontainers.image.licenses="ISC"
 
 # --- Dependencies ---

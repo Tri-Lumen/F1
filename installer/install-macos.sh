@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  F1 Dashboard — macOS Bootstrapper
+#  Delta Dashboard — macOS Bootstrapper
 #
-#  Downloads and installs the latest F1 Dashboard release from GitHub.
+#  Downloads and installs the latest Delta Dashboard release from GitHub.
 #  Re-run at any time to update to the newest version.
 #
 #  Usage:
@@ -12,7 +12,7 @@ set -e
 
 REPO="Tri-Lumen/F1"
 API_URL="https://api.github.com/repos/${REPO}/releases/latest"
-APP_NAME="F1 Dashboard"
+APP_NAME="Delta Dashboard"
 
 # ---- Colours ----------------------------------------------------------------
 RED='\033[0;31m'
@@ -40,7 +40,7 @@ detect_arch() {
 
 echo ""
 printf "${BOLD}========================================${NC}\n"
-printf "${BOLD}  F1 Dashboard — macOS Installer${NC}\n"
+printf "${BOLD}  Delta Dashboard — macOS Installer${NC}\n"
 printf "${BOLD}========================================${NC}\n"
 echo ""
 
@@ -51,7 +51,7 @@ fi
 
 # ---- Fetch latest release info ---------------------------------------------
 info "Fetching latest release info..."
-RELEASE_JSON=$(curl -fsSL -H "User-Agent: F1-Dashboard-Installer" "$API_URL") \
+RELEASE_JSON=$(curl -fsSL -H "User-Agent: Delta-Dashboard-Installer" "$API_URL") \
     || error "Failed to reach GitHub API. Check your internet connection."
 
 VERSION=$(echo "$RELEASE_JSON" | grep -o '"tag_name":"[^"]*"' | head -1 | sed 's/"tag_name":"\([^"]*\)"/\1/')
@@ -91,7 +91,7 @@ ok "Download complete"
 info "Mounting disk image..."
 # hdiutil outputs tab-separated columns; the mount path is the last field on
 # the line(s) that contain /Volumes/.  Using awk -F'\t' correctly handles
-# volume names that contain spaces (e.g. "F1 Dashboard").  The previous
+# volume names that contain spaces (e.g. "Delta Dashboard").  The previous
 # awk '{print $NF}' split on whitespace and silently returned only the last
 # word, making the subsequent find/copy steps operate on a non-existent path.
 MOUNT_OUTPUT=$(hdiutil attach "$TEMP_DIR/$DMG_NAME" -nobrowse 2>&1) \
@@ -137,7 +137,7 @@ info "Future updates will be applied automatically via the app."
 echo ""
 
 # ---- Optionally launch ------------------------------------------------------
-if [ "${F1_LAUNCH:-}" = "1" ] || [ "${1:-}" = "--launch" ]; then
+if [ "${DELTA_LAUNCH:-}" = "1" ] || [ "${1:-}" = "--launch" ]; then
     info "Launching $APP_NAME..."
     open "$DEST"
 fi

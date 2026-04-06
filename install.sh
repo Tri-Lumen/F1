@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  F1 Dashboard — Auto-Install & Update Script
+#  Delta Dashboard — Auto-Install & Update Script
 #
 #  This script automatically fetches the latest version from GitHub and
 #  runs it. Re-run at any time to update to the newest version.
@@ -15,7 +15,7 @@ set -e
 
 REPO="Tri-Lumen/F1"
 REPO_URL="https://github.com/${REPO}.git"
-INSTALL_DIR="${F1_INSTALL_DIR:-$HOME/F1-Dashboard}"
+INSTALL_DIR="${DELTA_INSTALL_DIR:-$HOME/Delta-Dashboard}"
 
 # ---- Colours ----------------------------------------------------------------
 RED='\033[0;31m'
@@ -32,13 +32,13 @@ error() { printf "${RED}[ERROR]${NC} %s\n" "$*"; exit 1; }
 
 # ---- Detect whether we're running from inside the repo ----------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}" 2>/dev/null)" && pwd 2>/dev/null || true)"
-if [ -f "$SCRIPT_DIR/package.json" ] && grep -q '"name": "f1"' "$SCRIPT_DIR/package.json" 2>/dev/null; then
+if [ -f "$SCRIPT_DIR/package.json" ] && grep -q '"name": "delta-dashboard"' "$SCRIPT_DIR/package.json" 2>/dev/null; then
   INSTALL_DIR="$SCRIPT_DIR"
 fi
 
 echo ""
 printf "${BOLD}========================================${NC}\n"
-printf "${BOLD}  F1 Dashboard — Auto-Installer${NC}\n"
+printf "${BOLD}  Delta Dashboard — Auto-Installer${NC}\n"
 printf "${BOLD}========================================${NC}\n"
 echo ""
 
@@ -116,7 +116,7 @@ echo "    cd $INSTALL_DIR && git pull && npm ci && npm run build"
 echo ""
 
 # ---- Optionally start immediately -------------------------------------------
-if [ "${F1_AUTOSTART:-}" = "1" ] || [ "${1:-}" = "--start" ]; then
-  info "Starting F1 Dashboard..."
+if [ "${DELTA_AUTOSTART:-}" = "1" ] || [ "${1:-}" = "--start" ]; then
+  info "Starting Delta Dashboard..."
   npm start
 fi

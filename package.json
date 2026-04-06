@@ -1,7 +1,7 @@
 {
-  "name": "f1",
+  "name": "delta-dashboard",
   "version": "1.0.5",
-  "description": "F1 dashboard",
+  "description": "Delta Dashboard",
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
@@ -41,8 +41,8 @@
     "typescript": "5.9.3"
   },
   "build": {
-    "appId": "com.trilumen.f1dashboard",
-    "productName": "F1 Dashboard",
+    "appId": "com.trilumen.deltadashboard",
+    "productName": "Delta Dashboard",
     "copyright": "Copyright © 2026 Tri-Lumen",
     "directories": {
       "output": "dist-electron",
@@ -90,7 +90,7 @@
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico",
-      "artifactName": "F1-Dashboard-Setup.${ext}"
+      "artifactName": "Delta-Dashboard-Setup.${ext}"
     },
     "mac": {
       "target": [
@@ -117,7 +117,7 @@
       "notarize": true
     },
     "dmg": {
-      "artifactName": "F1-Dashboard-${arch}.${ext}",
+      "artifactName": "Delta-Dashboard-${arch}.${ext}",
       "contents": [
         {
           "x": 130,
@@ -148,7 +148,7 @@
       ],
       "icon": "build/icon.png",
       "category": "Network",
-      "artifactName": "F1-Dashboard.${ext}"
+      "artifactName": "Delta-Dashboard.${ext}"
     },
     "publish": {
       "provider": "github",

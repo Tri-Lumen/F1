@@ -8,7 +8,7 @@ import { NotificationProvider } from "@/lib/NotificationContext";
 import { getNextScheduledSession, getLatestSession, isSessionLive } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "F1 Dashboard — 2026 Season",
+  title: "Delta Dashboard — 2026 Season",
   description: "Live F1 stats, standings, and race results for the 2026 season",
 };
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  F1 Dashboard — Linux Bootstrapper
+#  Delta Dashboard — Linux Bootstrapper
 #
-#  Downloads and installs the latest F1 Dashboard release from GitHub.
+#  Downloads and installs the latest Delta Dashboard release from GitHub.
 #  Re-run at any time to update to the newest version.
 #
 #  Usage:
@@ -12,10 +12,10 @@ set -e
 
 REPO="Tri-Lumen/F1"
 API_URL="https://api.github.com/repos/${REPO}/releases/latest"
-INSTALL_DIR="${F1_INSTALL_DIR:-$HOME/.local/bin}"
+INSTALL_DIR="${DELTA_INSTALL_DIR:-$HOME/.local/bin}"
 DESKTOP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 ICON_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/icons"
-APP_NAME="F1 Dashboard"
+APP_NAME="Delta Dashboard"
 
 # ---- Colours ----------------------------------------------------------------
 RED='\033[0;31m'
@@ -32,7 +32,7 @@ error() { printf "${RED}[ERROR]${NC} %s\n" "$*"; exit 1; }
 
 echo ""
 printf "${BOLD}========================================${NC}\n"
-printf "${BOLD}  F1 Dashboard — Linux Installer${NC}\n"
+printf "${BOLD}  Delta Dashboard — Linux Installer${NC}\n"
 printf "${BOLD}========================================${NC}\n"
 echo ""
 
@@ -54,10 +54,10 @@ fi
 info "Fetching latest release info..."
 
 if command -v curl &>/dev/null; then
-    RELEASE_JSON=$(curl -fsSL -H "User-Agent: F1-Dashboard-Installer" "$API_URL") \
+    RELEASE_JSON=$(curl -fsSL -H "User-Agent: Delta-Dashboard-Installer" "$API_URL") \
         || error "Failed to reach GitHub API. Check your internet connection."
 else
-    RELEASE_JSON=$(wget -qO- --header="User-Agent: F1-Dashboard-Installer" "$API_URL") \
+    RELEASE_JSON=$(wget -qO- --header="User-Agent: Delta-Dashboard-Installer" "$API_URL") \
         || error "Failed to reach GitHub API. Check your internet connection."
 fi
 
@@ -117,7 +117,7 @@ else
     # AppImage installation
     mkdir -p "$INSTALL_DIR"
 
-    DEST="$INSTALL_DIR/F1-Dashboard.AppImage"
+    DEST="$INSTALL_DIR/Delta-Dashboard.AppImage"
 
     # Remove previous version if present
     if [ -f "$DEST" ]; then
@@ -133,7 +133,7 @@ else
     mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
 
     # Try to extract the icon from the AppImage
-    ICON_PATH="$ICON_DIR/f1-dashboard.png"
+    ICON_PATH="$ICON_DIR/delta-dashboard.png"
     if [ ! -f "$ICON_PATH" ]; then
         # Download icon from repo
         ICON_URL="https://raw.githubusercontent.com/${REPO}/main/build/icon.png"
@@ -144,14 +144,14 @@ else
         fi
     fi
 
-    cat > "$DESKTOP_DIR/f1-dashboard.desktop" <<DESKTOP
+    cat > "$DESKTOP_DIR/delta-dashboard.desktop" <<DESKTOP
 [Desktop Entry]
 Name=$APP_NAME
 Exec=$DEST
 Icon=$ICON_PATH
 Type=Application
 Categories=Network;Sports;
-Comment=Live F1 Dashboard with standings, results, and timing
+Comment=Live Delta Dashboard with standings, results, and timing
 Terminal=false
 DESKTOP
 
@@ -179,10 +179,10 @@ info "Future updates will be applied automatically via the app."
 echo ""
 
 # ---- Optionally launch ------------------------------------------------------
-if [ "${F1_LAUNCH:-}" = "1" ] || [ "${1:-}" = "--launch" ]; then
+if [ "${DELTA_LAUNCH:-}" = "1" ] || [ "${1:-}" = "--launch" ]; then
     info "Launching $APP_NAME..."
     if [ "$ASSET_TYPE" = "deb" ]; then
-        nohup f1-dashboard &>/dev/null & 2>/dev/null || warn "Could not launch — open $APP_NAME from your application launcher."
+        nohup delta-dashboard &>/dev/null & 2>/dev/null || warn "Could not launch — open $APP_NAME from your application launcher."
     else
         nohup "$DEST" &>/dev/null &
     fi

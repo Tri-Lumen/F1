@@ -127,7 +127,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "f1-dashboard-settings.json";
+    a.download = "delta-dashboard-settings.json";
     a.click();
     URL.revokeObjectURL(url);
   }

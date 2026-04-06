@@ -34,13 +34,13 @@ jobs:
       - name: Upload bootstrapper artifact
         uses: actions/upload-artifact@v4
         with:
-          name: F1-Dashboard-WebInstaller
-          path: installer/F1-Dashboard-WebInstaller.exe
+          name: Delta-Dashboard-WebInstaller
+          path: installer/Delta-Dashboard-WebInstaller.exe
 
       - name: Upload to release
         if: github.event_name == 'release'
         run: |
-          gh release upload "${{ github.event.release.tag_name }}" installer/F1-Dashboard-WebInstaller.exe --clobber
+          gh release upload "${{ github.event.release.tag_name }}" installer/Delta-Dashboard-WebInstaller.exe --clobber
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

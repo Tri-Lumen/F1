@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Settings — F1 2026",
-  description: "Customize your F1 Dashboard theme, favorites, notifications, and preferences",
+  description: "Customize your Delta Dashboard theme, favorites, notifications, and preferences",
 };
 
 export default async function SettingsPage() {

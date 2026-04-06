@@ -1,7 +1,7 @@
 # ============================================================================
-#  F1 Dashboard — Windows Bootstrapper
+#  Delta Dashboard — Windows Bootstrapper
 #
-#  Downloads and installs the latest F1 Dashboard release from GitHub.
+#  Downloads and installs the latest Delta Dashboard release from GitHub.
 #  Re-run at any time to update to the newest version.
 #
 #  Usage (PowerShell):
@@ -20,7 +20,7 @@ $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
 function Write-Banner {
     Write-Host ''
     Write-Host '========================================' -ForegroundColor Cyan
-    Write-Host '  F1 Dashboard — Windows Installer'      -ForegroundColor Cyan
+    Write-Host '  Delta Dashboard — Windows Installer'      -ForegroundColor Cyan
     Write-Host '========================================' -ForegroundColor Cyan
     Write-Host ''
 }
@@ -28,7 +28,7 @@ function Write-Banner {
 function Get-LatestRelease {
     Write-Host '[INFO]  Fetching latest release info...' -ForegroundColor Cyan
     try {
-        $release = Invoke-RestMethod -Uri $apiUrl -Headers @{ 'User-Agent' = 'F1-Dashboard-Installer' }
+        $release = Invoke-RestMethod -Uri $apiUrl -Headers @{ 'User-Agent' = 'Delta-Dashboard-Installer' }
     }
     catch {
         Write-Host "[ERROR] Failed to reach GitHub API: $_" -ForegroundColor Red
@@ -64,7 +64,7 @@ function Find-WindowsAsset {
     return $asset
 }
 
-function Install-F1Dashboard {
+function Install-DeltaDashboard {
     Write-Banner
 
     $release = Get-LatestRelease
@@ -74,7 +74,7 @@ function Install-F1Dashboard {
     Write-Host "[INFO]  Latest version: $version" -ForegroundColor Cyan
     Write-Host "[INFO]  Downloading $($asset.name) ($([math]::Round($asset.size / 1MB, 1)) MB)..." -ForegroundColor Cyan
 
-    $tempDir  = Join-Path $env:TEMP 'F1-Dashboard-Install'
+    $tempDir  = Join-Path $env:TEMP 'Delta-Dashboard-Install'
     $tempFile = Join-Path $tempDir $asset.name
 
     # Clean up any previous partial download
@@ -85,7 +85,7 @@ function Install-F1Dashboard {
         # Use BITS for reliable large downloads with progress, fall back to Invoke-WebRequest
         try {
             Import-Module BitsTransfer -ErrorAction Stop
-            Start-BitsTransfer -Source $asset.browser_download_url -Destination $tempFile -Description "Downloading F1 Dashboard $version"
+            Start-BitsTransfer -Source $asset.browser_download_url -Destination $tempFile -Description "Downloading Delta Dashboard $version"
         }
         catch {
             Write-Host '[INFO]  BITS unavailable, using direct download...' -ForegroundColor Cyan
@@ -109,7 +109,7 @@ function Install-F1Dashboard {
         Write-Host '  Installation complete!' -ForegroundColor Green
         Write-Host '========================================' -ForegroundColor Green
         Write-Host ''
-        Write-Host '[INFO]  F1 Dashboard should now be available in your Start Menu.' -ForegroundColor Cyan
+        Write-Host '[INFO]  Delta Dashboard should now be available in your Start Menu.' -ForegroundColor Cyan
         Write-Host '[INFO]  Future updates will be applied automatically via the app.' -ForegroundColor Cyan
         Write-Host ''
     }
@@ -119,4 +119,4 @@ function Install-F1Dashboard {
     }
 }
 
-Install-F1Dashboard
+Install-DeltaDashboard

@@ -1,7 +1,7 @@
 services:
-  f1-dashboard:
+  delta-dashboard:
     image: ghcr.io/tri-lumen/f1:latest
-    container_name: f1-dashboard
+    container_name: delta-dashboard
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -33,4 +33,4 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_POLL_INTERVAL=3600
       - WATCHTOWER_LABEL_ENABLE=false
-    command: --interval 3600 f1-dashboard
+    command: --interval 3600 delta-dashboard
