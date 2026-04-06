@@ -633,7 +633,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
               <span className="text-sm text-f1-text-muted">Alert</span>
               <select
                 value={notifyLead}
-                onChange={(e) => saveNotifyLead(parseInt(e.target.value))}
+                onChange={(e) => saveNotifyLead(parseInt(e.target.value, 10))}
                 className="rounded-lg border border-f1-border bg-f1-dark px-2 py-2 text-sm text-f1-text focus:border-f1-accent focus:outline-none"
               >
                 {LEAD_OPTIONS.map((m) => (

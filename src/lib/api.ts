@@ -298,7 +298,7 @@ export async function getOpenF1SessionKeyForRace(race: Race): Promise<number | n
 /** Fetch lap-by-lap timing data for all drivers in a session. */
 export async function getLiveLaps(sessionKey: number): Promise<LiveLap[]> {
   return fetchOpenF1<LiveLap>(
-    `/laps?session_key=${sessionKey}&lap_number>=${Math.max(1, 0)}`
+    `/laps?session_key=${sessionKey}&lap_number>=1`
   );
 }
 

@@ -89,7 +89,7 @@ function NotifyButton({
       {active && (
         <select
           value={leadMinutes}
-          onChange={(e) => setLeadMinutes(parseInt(e.target.value))}
+          onChange={(e) => setLeadMinutes(parseInt(e.target.value, 10))}
           className="rounded-lg border border-f1-border bg-f1-dark px-2 py-1.5 text-xs text-f1-text-muted focus:border-f1-accent focus:outline-none"
         >
           {LEAD_OPTIONS.map((m) => (
