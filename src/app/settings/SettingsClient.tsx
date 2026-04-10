@@ -88,7 +88,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   useEffect(() => {
     const saved = localStorage.getItem("f1-multiviewer-host");
     if (saved) setMvHost(saved);
-    setRefreshInterval(parseInt(localStorage.getItem("f1-refresh-interval") ?? "60") || 60);
+    setRefreshInterval(parseInt(localStorage.getItem("f1-refresh-interval") ?? "60", 10) || 60);
   }, []);
 
   function saveRefreshInterval(seconds: number) {

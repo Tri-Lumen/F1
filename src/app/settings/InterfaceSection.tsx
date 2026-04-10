@@ -81,7 +81,7 @@ export default function InterfaceSection() {
             max={100}
             step={5}
             value={glowIntensity}
-            onChange={(e) => setGlowIntensity(parseInt(e.target.value))}
+            onChange={(e) => setGlowIntensity(parseInt(e.target.value, 10))}
             className="flex-1 h-2 rounded-full appearance-none cursor-pointer accent-f1-accent"
             style={{
               background: `linear-gradient(90deg, var(--color-f1-accent) ${glowIntensity}%, var(--color-f1-border) ${glowIntensity}%)`,

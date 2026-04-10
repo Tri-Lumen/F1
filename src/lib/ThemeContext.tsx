@@ -160,7 +160,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (storedMode && isValidMode(storedMode)) setModeState(storedMode);
     if (storedAccent && isValidAccent(storedAccent, parsedCustom)) setAccentState(storedAccent as AccentTheme);
     if (storedRadius && isValidRadius(storedRadius)) setBorderRadiusState(storedRadius);
-    if (storedGlow) setGlowIntensityState(Math.min(100, Math.max(0, parseInt(storedGlow) || 50)));
+    if (storedGlow) setGlowIntensityState(Math.min(100, Math.max(0, parseInt(storedGlow, 10) || 50)));
     if (storedMotion) setReduceMotionState(storedMotion === "true");
 
     setCustomThemes(parsedCustom);
