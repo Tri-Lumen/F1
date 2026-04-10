@@ -108,7 +108,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
     try {
       setEnabled(localStorage.getItem(LS_ENABLED) === "true");
-      const savedLead = parseInt(localStorage.getItem(LS_LEAD) ?? "10");
+      const savedLead = parseInt(localStorage.getItem(LS_LEAD) ?? "10", 10);
       setLeadMinutesState((LEAD_OPTIONS as readonly number[]).includes(savedLead) ? savedLead : 10);
       setAutoSubscribeWeekendState(localStorage.getItem(LS_AUTO_WEEKEND) === "true");
 

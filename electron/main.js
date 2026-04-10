@@ -517,7 +517,11 @@ ipcMain.handle('download-update', () => {
 });
 
 ipcMain.handle('install-update', () => {
-  if (updateDownloaded) autoUpdater.quitAndInstall();
+  if (updateDownloaded) {
+    autoUpdater.quitAndInstall();
+    return { installed: true };
+  }
+  return { installed: false, error: 'No update downloaded' };
 });
 
 // ---------------------------------------------------------------------------

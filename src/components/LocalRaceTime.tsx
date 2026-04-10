@@ -6,8 +6,9 @@ export default function LocalRaceTime({ date, time }: { date: string; time?: str
   const [localTime, setLocalTime] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!time) return;
-    const d = new Date(`${date}T${time}`);
+    if (!time) { setLocalTime(null); return; }
+    const ts = time.endsWith("Z") ? time : `${time}Z`;
+    const d = new Date(`${date}T${ts}`);
     setLocalTime(
       d.toLocaleString(undefined, {
         weekday: "short",

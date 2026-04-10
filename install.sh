@@ -67,9 +67,11 @@ if [ -d "$INSTALL_DIR/.git" ]; then
   cd "$INSTALL_DIR"
 
   # Stash any local changes to avoid conflicts
+  STASHED=0
   if ! git diff --quiet 2>/dev/null; then
     warn "Local changes detected — stashing before update"
     git stash -q
+    STASHED=1
   fi
 
   BEFORE=$(git rev-parse HEAD)
@@ -80,6 +82,15 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     ok "Already up to date"
   else
     ok "Updated to $(git log --oneline -1)"
+  fi
+
+  # Restore stashed changes
+  if [ "$STASHED" = "1" ]; then
+    if git stash pop -q 2>/dev/null; then
+      ok "Re-applied local changes"
+    else
+      warn "Could not re-apply local changes (run 'git stash pop' manually)"
+    fi
   fi
 else
   info "Installing to $INSTALL_DIR ..."

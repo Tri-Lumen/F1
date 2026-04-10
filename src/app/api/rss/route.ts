@@ -3,6 +3,45 @@ import type { RssArticle } from "@/lib/types";
 
 const FETCH_TIMEOUT_MS = 8_000;
 
+/** Block requests to private/internal IP ranges and non-HTTP(S) schemes. */
+function isAllowedUrl(raw: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+  const host = parsed.hostname;
+  // Block loopback, link-local, and private ranges
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "[::1]" ||
+    host === "0.0.0.0" ||
+    host.endsWith(".local") ||
+    host === "metadata.google.internal"
+  ) {
+    return false;
+  }
+  // Block private IPv4 ranges
+  const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (ipv4) {
+    const [, a, b] = ipv4.map(Number);
+    if (
+      a === 10 ||
+      a === 127 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 169 && b === 254) ||
+      a === 0
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Unescape HTML entities commonly found in RSS feeds */
 function decodeEntities(text: string): string {
   return text
@@ -12,6 +51,16 @@ function decodeEntities(text: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'")
     .replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&nbsp;/g, " ")
+    .replace(/&mdash;/g, "\u2014")
+    .replace(/&ndash;/g, "\u2013")
+    .replace(/&hellip;/g, "\u2026")
+    .replace(/&rsquo;/g, "\u2019")
+    .replace(/&lsquo;/g, "\u2018")
+    .replace(/&rdquo;/g, "\u201D")
+    .replace(/&ldquo;/g, "\u201C")
     .replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1");
 }
 
@@ -129,6 +178,7 @@ export async function GET(request: NextRequest) {
     feedList.map(async (feed) => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      if (!isAllowedUrl(feed.url)) return [];
       try {
         const res = await fetch(feed.url, {
           signal: controller.signal,

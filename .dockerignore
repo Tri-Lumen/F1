@@ -1,8 +1,16 @@
 node_modules
 .next
+.git
 .gitignore
 README.md
 Dockerfile
 docker-compose.yml
+docker-install.sh
 .dockerignore
 .env*.local
+electron
+installer
+scripts
+build
+dist-electron
+*.md

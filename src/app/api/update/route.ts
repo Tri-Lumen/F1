@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 
-function run(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
+function run(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
-    exec(cmd, {
+    execFile(args[0], args.slice(1), {
       cwd,
       timeout: 120_000,
       env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
@@ -23,7 +23,7 @@ function run(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string
 async function fixRemoteForDocker(cwd: string): Promise<void> {
   try {
     const { stdout } = await run(
-      `git -c safe.directory=${cwd} remote get-url origin 2>&1`,
+      ["git", "-c", `safe.directory=${cwd}`, "remote", "get-url", "origin"],
       cwd
     );
     const url = stdout.trim();
@@ -32,7 +32,7 @@ async function fixRemoteForDocker(cwd: string): Promise<void> {
         .replace(/127\.0\.0\.1/g, "host.docker.internal")
         .replace(/\blocalhost\b/g, "host.docker.internal");
       await run(
-        `git -c safe.directory=${cwd} remote set-url origin "${fixed}" 2>&1`,
+        ["git", "-c", `safe.directory=${cwd}`, "remote", "set-url", "origin", fixed],
         cwd
       );
     }
@@ -74,25 +74,25 @@ export async function POST() {
     let branch: string;
     try {
       const branchResult = await run(
-        `git -c safe.directory=${cwd} rev-parse --abbrev-ref HEAD 2>&1`,
+        ["git", "-c", `safe.directory=${cwd}`, "rev-parse", "--abbrev-ref", "HEAD"],
         cwd
       );
       branch = branchResult.stdout.trim();
     } catch {
       // HEAD is unresolvable (empty repo from docker init) — fetch and set up main
       await run(
-        `git -c safe.directory=${cwd} fetch origin main 2>&1`,
+        ["git", "-c", `safe.directory=${cwd}`, "fetch", "origin", "main"],
         cwd
       );
       await run(
-        `git -c safe.directory=${cwd} reset --mixed origin/main 2>&1`,
+        ["git", "-c", `safe.directory=${cwd}`, "reset", "--mixed", "origin/main"],
         cwd
       );
       branch = "main";
       steps.push({ step: "init", output: "Initialized repository from remote" });
     }
     const pull = await run(
-      `git -c safe.directory=${cwd} pull --ff-only origin ${branch} 2>&1`,
+      ["git", "-c", `safe.directory=${cwd}`, "pull", "--ff-only", "origin", branch],
       cwd
     );
     steps.push({ step: "git pull", output: pull.stdout.trim() || pull.stderr.trim() });
@@ -101,11 +101,11 @@ export async function POST() {
 
     if (!alreadyUpToDate) {
       // 2. Install any new/changed dependencies
-      const install = await run("npm ci --omit=dev 2>&1", cwd);
+      const install = await run(["npm", "ci", "--omit=dev"], cwd);
       steps.push({ step: "npm install", output: install.stdout.trim().slice(-500) });
 
       // 3. Rebuild the app
-      const build = await run("npm run build 2>&1", cwd);
+      const build = await run(["npm", "run", "build"], cwd);
       steps.push({ step: "npm build", output: build.stdout.trim().slice(-500) });
     }
 
