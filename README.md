@@ -16,19 +16,23 @@ Your pit wall for the 2026 Formula 1 season. Live timing, championship standings
 
 ### Live Timing
 
-Follow every session as it happens. Real-time positions, intervals, and gap-to-leader update automatically every 15 seconds. Tire compound and age tracking shows each driver's stint history at a glance. Team radio messages stream in with audio playback, and one-click onboard camera links open directly in MultiViewer.
+Follow every session as it happens. Real-time positions, intervals, and gap-to-leader update automatically every 15 seconds. Tire compound and age tracking shows each driver's stint history at a glance. Team radio messages stream in with audio playback, and one-click onboard camera links open directly in MultiViewer. A race control feed surfaces flags, penalties, and steward decisions as they happen, while the weather widget tracks air and track temperature, wind speed, and rainfall.
 
 ### Race Weekend Awareness
 
-A nav bar countdown ticks down to the next session in days, hours, and minutes. When a session goes green, a pulsing red LIVE badge appears and the dashboard banner switches to highlight the active event.
+A nav bar countdown ticks down to the next session in days, hours, and minutes. When a session goes green, a pulsing red LIVE badge appears and the dashboard banner switches to highlight the active event. Browser notifications can remind you before a session starts so you never miss lights out.
 
 ### Standings & Results
 
-Full driver and constructor championship tables, updated throughout the season. Every race has its own detail page covering the podium, full classification, qualifying order, sprint results, and pit stop summaries. A dedicated fastest-lap rankings page rounds it out.
+Full driver and constructor championship tables, updated throughout the season. Every race has its own detail page covering the podium, full classification, qualifying order, sprint results, and pit stop summaries. Circuit maps give you a visual overview of each track. A dedicated fastest-lap rankings page rounds it out.
 
 ### Driver & Team Profiles
 
 Each driver and constructor gets a profile page with points progression charts across the season, qualifying gap analysis, teammate head-to-head records, and stat cards for wins, podiums, poles, and DNFs.
+
+### News
+
+An aggregated news feed pulls articles from Motorsport.com, Autosport, PlanetF1, RaceFans, The Race, and more. Toggle sources on or off, and articles are automatically tagged to relevant drivers.
 
 ### Analytics & History
 
@@ -36,7 +40,7 @@ Season-level analytics break down wins, podiums, and points leaders. A head-to-h
 
 ### Personalization
 
-Pin your favorite drivers and teams to get a custom summary view. Switch between dark and light themes styled with official F1 branding, and set accent colors on a per-team basis.
+Pin your favorite drivers and teams to get a custom summary view. Switch between dark and light themes styled with official F1 branding, and choose from team-branded accent themes or retro throwbacks. A full theme builder lets you dial in every color, adjust border radius and glow intensity, or toggle reduced motion for accessibility.
 
 ### Cross-Platform
 
@@ -59,6 +63,7 @@ Run it in the browser, install the desktop app on Windows, macOS, or Linux with 
 | `/stats` | Season analytics — wins, podiums, points leaders, team battles |
 | `/fastest-laps` | Fastest lap rankings per race |
 | `/compare` | Head-to-head driver comparison |
+| `/news` | Aggregated F1 news from RSS feeds |
 | `/archive` | Historical season browser (2016-2025) |
 | `/archive/:season` | Past-season standings and results |
 | `/favorites` | Personalized view of pinned drivers and teams |
@@ -173,6 +178,7 @@ services:
 | **Desktop** | [Electron 33](https://www.electronjs.org) + electron-updater |
 | **Standings & Results** | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) |
 | **Live Timing** | [OpenF1](https://openf1.org) |
+| **News Feeds** | RSS (Motorsport.com, Autosport, PlanetF1, RaceFans, The Race) |
 | **Containerization** | Docker (Node 22 Alpine) + Watchtower |
 
 ## License
