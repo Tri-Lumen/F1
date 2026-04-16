@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { DriverStanding } from "@/lib/types";
 import { getTeamColor, getCountryFlag } from "@/lib/api";
+import {
+  getDriverConstructorId,
+  getDriverConstructorName,
+} from "@/lib/driverOverrides";
 
 function formDotColor(pos: number, isDnf: boolean): string {
   if (isDnf) return "#ef4444";
@@ -43,9 +47,15 @@ export default function StandingsTable({
         </thead>
         <tbody>
           {data.map((s) => {
-            const teamColor = getTeamColor(
-              s.Constructors[0]?.constructorId ?? ""
-            );
+            const constructorId = getDriverConstructorId(
+              s.Driver.driverId,
+              s.Constructors[0]?.constructorId,
+            ) ?? "";
+            const constructorName = getDriverConstructorName(
+              s.Driver.driverId,
+              s.Constructors[0]?.name,
+            ) ?? "";
+            const teamColor = getTeamColor(constructorId);
             const gap = leader - parseFloat(s.points);
             const barWidth =
               leader > 0
@@ -78,17 +88,17 @@ export default function StandingsTable({
                         </span>
                       </span>
                       <span className="ml-2 text-xs text-f1-text-muted sm:hidden">
-                        {s.Constructors[0]?.name}
+                        {constructorName}
                       </span>
                     </div>
                   </Link>
                 </td>
                 <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">
                   <Link
-                    href={`/teams#${s.Constructors[0]?.constructorId}`}
+                    href={`/teams#${constructorId}`}
                     className="hover:text-f1-red transition-colors"
                   >
-                    {s.Constructors[0]?.name}
+                    {constructorName}
                   </Link>
                 </td>
                 <td className="px-3 py-3 text-center">{s.wins}</td>

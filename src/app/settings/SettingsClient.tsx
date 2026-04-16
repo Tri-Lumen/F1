@@ -7,6 +7,11 @@ import { useNotifications, LEAD_OPTIONS } from "@/lib/NotificationContext";
 import { CURRENT_TEAMS, RETRO_THEMES } from "@/lib/teamThemes";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding } from "@/lib/types";
+import {
+  getDriverNumber,
+  getDriverConstructorId,
+  getDriverConstructorName,
+} from "@/lib/driverOverrides";
 import ThemeBuilderSection from "./ThemeBuilderSection";
 import TeamColorsSection from "./TeamColorsSection";
 import InterfaceSection from "./InterfaceSection";
@@ -478,7 +483,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {availableDrivers.map((standing) => {
               const { Driver, Constructors } = standing;
-              const constructorId = Constructors[0]?.constructorId ?? "";
+              const constructorId = getDriverConstructorId(Driver.driverId, Constructors[0]?.constructorId) ?? "";
+              const constructorName = getDriverConstructorName(Driver.driverId, Constructors[0]?.name) ?? "—";
+              const displayNumber = getDriverNumber(Driver.driverId, Driver.permanentNumber);
               const teamColor = getTeamColor(constructorId);
               const isSelected = favoriteDriverIds.includes(Driver.driverId);
               const atMax = !isSelected && favoriteDriverIds.length >= 3;
@@ -502,14 +509,14 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
                       className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center text-sm font-black text-white"
                       style={{ backgroundColor: teamColor }}
                     >
-                      {Driver.permanentNumber}
+                      {displayNumber}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-sm leading-tight">
                         {Driver.givenName} {Driver.familyName}
                       </p>
                       <p className="text-xs text-f1-text-muted truncate">
-                        {Constructors[0]?.name ?? "—"} · P{standing.position}
+                        {constructorName} · P{standing.position}
                       </p>
                     </div>
                     {isSelected && (

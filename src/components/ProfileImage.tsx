@@ -7,11 +7,24 @@ interface DriverImageProps {
   alt: string;
   /** Tailwind classes applied to the <img> element */
   className?: string;
+  /** Optional secondary URL to try before giving up — e.g. a prior-season asset. */
+  fallbackSrc?: string;
 }
 
-/** Driver headshot with a silhouette placeholder on load failure. */
-export function DriverImage({ src, alt, className }: DriverImageProps) {
+/** Driver headshot with a fade-in load, optional secondary URL, and silhouette fallback. */
+export function DriverImage({ src, alt, className, fallbackSrc }: DriverImageProps) {
+  const [currentSrc, setCurrentSrc] = useState(src);
+  const [triedFallback, setTriedFallback] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+
+  // Reset transient state when the primary src changes (e.g. switching drivers).
+  useEffect(() => {
+    setCurrentSrc(src);
+    setTriedFallback(false);
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
 
   if (failed) {
     // Extract initials from alt text (e.g. "Max Verstappen" → "MV")
@@ -26,6 +39,7 @@ export function DriverImage({ src, alt, className }: DriverImageProps) {
       <div
         className={`relative flex items-end justify-center bg-gradient-to-b from-f1-border/30 to-f1-border/60 rounded-lg ${className ?? ""}`}
         aria-label={alt}
+        role="img"
       >
         <svg
           viewBox="0 0 64 80"
@@ -46,10 +60,20 @@ export function DriverImage({ src, alt, className }: DriverImageProps) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
-      className={className}
-      onError={() => setFailed(true)}
+      loading="lazy"
+      decoding="async"
+      className={`${className ?? ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+      onLoad={() => setLoaded(true)}
+      onError={() => {
+        if (fallbackSrc && !triedFallback) {
+          setTriedFallback(true);
+          setCurrentSrc(fallbackSrc);
+          return;
+        }
+        setFailed(true);
+      }}
     />
   );
 }
@@ -70,6 +94,11 @@ interface DriverNumberProps {
 export function DriverNumber({ src, number, className, color }: DriverNumberProps) {
   const [failed, setFailed] = useState(false);
 
+  // Reset failure state when the src changes (e.g. driver's 2026 number logo swaps in).
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
   if (failed) {
     return (
       <span
@@ -87,6 +116,8 @@ export function DriverNumber({ src, number, className, color }: DriverNumberProp
       src={src}
       alt={`#${number}`}
       className={className}
+      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
       style={{ objectFit: "contain" }}
     />
@@ -141,6 +172,8 @@ export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
       src={currentSrc}
       alt={alt}
       className={className}
+      loading="lazy"
+      decoding="async"
       onError={() => {
         if (fallbackUrls && fallbackIndex < fallbackUrls.length) {
           setCurrentSrc(fallbackUrls[fallbackIndex]);

@@ -10,11 +10,16 @@
  *
  * The CDN organises drivers by the first letter of their given name and uses
  * a code built from the first 3 chars of first + last name (e.g. MAXVER01).
+ * When a driver switches teams mid-career the numeric suffix is incremented
+ * (MAXVER01 → MAXVER02) so the CDN serves the new-livery portrait; those
+ * per-driver bumps live in `driverOverrides.ts`.
  *
  * Team car images are transparent-background renders from the F1 official CDN.
  * For each team we provide an ordered list of candidate URLs (newest season
  * first); the CarImage component tries each in turn until one loads.
  */
+
+import { DRIVER_OVERRIDES_2026 } from "./driverOverrides";
 
 const F1_CDN = "https://media.formula1.com";
 const CAR_YEAR = "2026";
@@ -26,7 +31,7 @@ const CAR_YEAR_FALLBACK = "2025";
  * CDN hasn't changed the URL itself. Without this, browsers and the
  * Cloudinary edge can keep serving stale 2025 (or earlier) photos for weeks.
  */
-const IMG_CACHE_BUST = "v=2026.04";
+const IMG_CACHE_BUST = "v=2026.04.16";
 const IMG_VERSION = `?${IMG_CACHE_BUST}`;
 
 /** Cloudinary transformations applied to every driver headshot. */
@@ -124,12 +129,34 @@ const DRIVER_NUMBER_SLUGS: Record<string, string> = {
   perez:       "SERPER01",
 };
 
+/**
+ * Resolve the canonical CDN slug for a driver, honouring 2026 overrides
+ * (e.g. Bortoleto's fresh Audi portrait uses GABBOR02 rather than GABBOR01).
+ */
+function resolveDriverSlug(driverId: string): string | undefined {
+  return DRIVER_OVERRIDES_2026[driverId]?.assetCode ?? DRIVER_NUMBER_SLUGS[driverId];
+}
+
 export function getDriverImageUrl(driverId: string): string | undefined {
+  const override = DRIVER_OVERRIDES_2026[driverId];
+  if (override?.assetCode && override.assetInitial && override.assetGiven && override.assetFamily) {
+    return driverUrl(override.assetInitial, override.assetCode, override.assetGiven, override.assetFamily);
+  }
   return DRIVER_IMAGES[driverId];
 }
 
+/**
+ * Returns a prior-season portrait URL to use when the current-season asset
+ * hasn't been uploaded yet — e.g. Bortoleto's Audi overalls (GABBOR02) fall
+ * back to his launch portrait (GABBOR01) if the new code 404s.
+ */
+export function getDriverImageFallbackUrl(driverId: string): string | undefined {
+  if (DRIVER_OVERRIDES_2026[driverId]?.assetCode) return DRIVER_IMAGES[driverId];
+  return undefined;
+}
+
 export function getDriverNumberUrl(driverId: string): string | undefined {
-  const slug = DRIVER_NUMBER_SLUGS[driverId];
+  const slug = resolveDriverSlug(driverId);
   if (!slug) return undefined;
   return `${F1_CDN}/${NUMBER_TRANSFORMS}/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png${IMG_VERSION}`;
 }

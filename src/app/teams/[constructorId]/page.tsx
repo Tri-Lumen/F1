@@ -30,7 +30,8 @@ export async function generateMetadata({
     description: `Team results, driver comparison, and stats for ${name}`,
   };
 }
-import { getTeamCarImageUrls, getDriverImageUrl } from "@/lib/profileImages";
+import { getTeamCarImageUrls, getDriverImageUrl, getDriverImageFallbackUrl } from "@/lib/profileImages";
+import { getDriverNumber } from "@/lib/driverOverrides";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -218,6 +219,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         {drivers.map((d) => {
           const driverImg = getDriverImageUrl(d.Driver.driverId);
+          const driverImgFallback = getDriverImageFallbackUrl(d.Driver.driverId);
           return (
             <Link
               key={d.Driver.driverId}
@@ -230,7 +232,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                     className="text-3xl font-black opacity-25"
                     style={{ color: teamColor }}
                   >
-                    {d.Driver.permanentNumber}
+                    {getDriverNumber(d.Driver.driverId, d.Driver.permanentNumber)}
                   </span>
                   <div>
                     <p className="text-sm text-f1-text-muted">
@@ -246,6 +248,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                 {driverImg && (
                   <DriverImage
                     src={driverImg}
+                    fallbackSrc={driverImgFallback}
                     alt={`${d.Driver.givenName} ${d.Driver.familyName}`}
                     className="h-28 w-auto object-contain object-bottom shrink-0"
                   />

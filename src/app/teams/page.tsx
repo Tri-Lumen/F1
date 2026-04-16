@@ -21,6 +21,7 @@ import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RefreshButton from "@/components/RefreshButton";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
+import { getDriverNumber } from "@/lib/driverOverrides";
 
 interface TeamStats {
   podiums: number;
@@ -244,7 +245,7 @@ async function TeamsContent() {
                               </span>
                             </p>
                             <p className="text-xs text-f1-text-muted">
-                              #{d.Driver.permanentNumber}
+                              #{getDriverNumber(d.Driver.driverId, d.Driver.permanentNumber)}
                             </p>
                           </div>
                         </div>

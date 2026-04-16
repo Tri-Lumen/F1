@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useFavorites } from "@/lib/FavoritesContext";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding, Race } from "@/lib/types";
+import {
+  getDriverNumber,
+  getDriverConstructorId,
+  getDriverConstructorName,
+} from "@/lib/driverOverrides";
 
 interface Props {
   driverStandings: DriverStanding[];
@@ -232,7 +237,9 @@ export default function FavoritesClient({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {favoriteDrivers.map((standing) => {
               const { Driver, Constructors } = standing;
-              const constructorId = Constructors[0]?.constructorId ?? "";
+              const constructorId = getDriverConstructorId(Driver.driverId, Constructors[0]?.constructorId) ?? "";
+              const constructorName = getDriverConstructorName(Driver.driverId, Constructors[0]?.name) ?? "—";
+              const displayNumber = getDriverNumber(Driver.driverId, Driver.permanentNumber);
               const teamColor = getTeamColor(constructorId);
               const recent = getDriverRecentResults(Driver.driverId);
               const extras = computeDriverExtras(Driver.driverId, sortedRaces);
@@ -253,7 +260,7 @@ export default function FavoritesClient({
                         className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black text-white"
                         style={{ backgroundColor: teamColor }}
                       >
-                        {Driver.permanentNumber}
+                        {displayNumber}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -268,7 +275,7 @@ export default function FavoritesClient({
                           )}
                         </div>
                         <p className="text-sm text-f1-text-muted">
-                          {Constructors[0]?.name ?? "—"}
+                          {constructorName}
                         </p>
                       </div>
                     </div>
