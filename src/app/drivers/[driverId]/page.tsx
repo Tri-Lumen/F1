@@ -30,7 +30,12 @@ export async function generateMetadata({
     description: `Season results, points progression, and stats for ${name}`,
   };
 }
-import { getDriverImageUrl, getDriverNumberUrl } from "@/lib/profileImages";
+import { getDriverImageUrl, getDriverImageFallbackUrl, getDriverNumberUrl } from "@/lib/profileImages";
+import {
+  getDriverNumber,
+  getDriverConstructorId,
+  getDriverConstructorName,
+} from "@/lib/driverOverrides";
 
 function positionBadge(pos: string, status: string) {
   const p = parseInt(pos);
@@ -90,7 +95,10 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
 
   const driver = standing.Driver;
   const constructor = standing.Constructors[0];
-  const teamColor = getTeamColor(constructor?.constructorId ?? "");
+  const constructorId = getDriverConstructorId(driver.driverId, constructor?.constructorId) ?? "";
+  const constructorName = getDriverConstructorName(driver.driverId, constructor?.name) ?? "";
+  const displayNumber = getDriverNumber(driver.driverId, driver.permanentNumber);
+  const teamColor = getTeamColor(constructorId);
 
   // Compute season stats from race results
   let podiums = 0;
@@ -151,6 +159,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
 
   const last5 = races.slice(-5);
   const driverImageUrl = getDriverImageUrl(driver.driverId);
+  const driverImageFallbackUrl = getDriverImageFallbackUrl(driver.driverId);
   const driverNumberUrl = getDriverNumberUrl(driver.driverId);
 
   const age = driver.dateOfBirth
@@ -186,19 +195,19 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
                   <span style={{ color: teamColor }}>{driver.familyName}</span>
                 </h1>
                 <p className="mt-1 text-sm font-medium" style={{ color: teamColor }}>
-                  {constructor?.name ?? ""}
+                  {constructorName}
                 </p>
                 <div className="mt-2 flex items-center gap-3">
                   {driverNumberUrl ? (
                     <DriverNumber
                       src={driverNumberUrl}
-                      number={driver.permanentNumber || "#"}
+                      number={displayNumber}
                       className="h-10 w-auto opacity-80"
                       color={teamColor}
                     />
                   ) : (
                     <span className="text-4xl font-black italic leading-none opacity-25" style={{ color: teamColor }}>
-                      {driver.permanentNumber || "#"}
+                      {displayNumber}
                     </span>
                   )}
                   <span className="text-xs text-f1-text-muted font-mono">
@@ -211,6 +220,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
               <div className="shrink-0 self-end">
                 <DriverImage
                   src={driverImageUrl}
+                  fallbackSrc={driverImageFallbackUrl}
                   alt={`${driver.givenName} ${driver.familyName}`}
                   className="h-44 w-auto object-contain object-bottom drop-shadow-lg"
                 />

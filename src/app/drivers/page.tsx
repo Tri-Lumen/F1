@@ -23,6 +23,11 @@ import RefreshButton from "@/components/RefreshButton";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
 import { DriverNumber } from "@/components/ProfileImage";
 import { getDriverNumberUrl } from "@/lib/profileImages";
+import {
+  getDriverNumber,
+  getDriverConstructorId,
+  getDriverConstructorName,
+} from "@/lib/driverOverrides";
 
 interface DriverStats {
   podiums: number;
@@ -265,9 +270,19 @@ async function DriversContent() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {standings.map((s) => {
           const stats = computeDriverStats(s.Driver.driverId, allRaces);
-          const teamColor = getTeamColor(
-            s.Constructors[0]?.constructorId ?? ""
+          const constructorId = getDriverConstructorId(
+            s.Driver.driverId,
+            s.Constructors[0]?.constructorId,
+          ) ?? "";
+          const constructorName = getDriverConstructorName(
+            s.Driver.driverId,
+            s.Constructors[0]?.name,
+          ) ?? "";
+          const displayNumber = getDriverNumber(
+            s.Driver.driverId,
+            s.Driver.permanentNumber,
           );
+          const teamColor = getTeamColor(constructorId);
 
           return (
             <div
@@ -297,20 +312,20 @@ async function DriversContent() {
                     </div>
                   </div>
                   <p className="mt-1 text-sm text-f1-text-muted">
-                    {s.Constructors[0]?.name ?? ""}
+                    {constructorName}
                   </p>
                 </div>
                 <div className="text-right flex items-start">
                   {getDriverNumberUrl(s.Driver.driverId) ? (
                     <DriverNumber
                       src={getDriverNumberUrl(s.Driver.driverId)!}
-                      number={s.Driver.permanentNumber || "#"}
+                      number={displayNumber}
                       className="h-9 w-auto opacity-30"
                       color={teamColor}
                     />
                   ) : (
                     <span className="text-3xl font-black italic text-f1-text-muted/30">
-                      {s.Driver.permanentNumber || "#"}
+                      {displayNumber}
                     </span>
                   )}
                 </div>
