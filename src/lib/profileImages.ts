@@ -1,29 +1,47 @@
 /**
  * Profile image URLs for F1 drivers and team cars.
  *
- * Driver headshots use the F1 official media CDN with the Cloudinary
- * `d_driver_fallback_image.png` overlay — if a driver's photo doesn't exist
- * at the given path, Cloudinary automatically serves a silhouette placeholder.
+ * Driver headshots use the F1 official media CDN (Cloudinary-backed). We pass
+ * a chain of Cloudinary directives BEFORE the asset path:
+ *   - `f_auto`  — serve modern formats (AVIF/WebP) when supported
+ *   - `q_auto`  — automatic quality (smaller payloads, faster load)
+ *   - `w_400`   — cap width for headshots (the source is huge)
+ *   - `d_driver_fallback_image.png` — silhouette placeholder if missing
  *
  * The CDN organises drivers by the first letter of their given name and uses
  * a code built from the first 3 chars of first + last name (e.g. MAXVER01).
  *
  * Team car images are transparent-background renders from the F1 official CDN.
+ * For each team we provide an ordered list of candidate URLs (newest season
+ * first); the CarImage component tries each in turn until one loads.
  */
 
 const F1_CDN = "https://media.formula1.com";
 const CAR_YEAR = "2026";
 const CAR_YEAR_FALLBACK = "2025";
 
-/** Cache-bust suffix to force browsers to refetch images each season */
-const IMG_VERSION = `?v=${CAR_YEAR}`;
+/**
+ * Cache-bust suffix. Bumped per release (mirrors package.json) so that when a
+ * user updates the app, all driver/team images are refetched even if the F1
+ * CDN hasn't changed the URL itself. Without this, browsers and the
+ * Cloudinary edge can keep serving stale 2025 (or earlier) photos for weeks.
+ */
+const IMG_CACHE_BUST = "v=2026.04";
+const IMG_VERSION = `?${IMG_CACHE_BUST}`;
+
+/** Cloudinary transformations applied to every driver headshot. */
+const DRIVER_TRANSFORMS = "f_auto,q_auto,w_400,d_driver_fallback_image.png";
+/** Cloudinary transformations applied to every team car render. */
+const CAR_TRANSFORMS = "f_auto,q_auto,w_800";
+/** Transformations for the small driver number-logos. */
+const NUMBER_TRANSFORMS = "f_auto,q_auto,w_200,d_default_fallback_en.png";
 
 /**
  * Build a driver headshot URL using the current F1 CDN pattern.
  * Pattern: /drivers/{FirstInitial}/{CODE}_{Given_Family}/{code}.png
  */
 function driverUrl(firstInitial: string, code: string, givenName: string, familyName: string): string {
-  return `${F1_CDN}/d_driver_fallback_image.png/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/4col/image.png${IMG_VERSION}`;
+  return `${F1_CDN}/${DRIVER_TRANSFORMS}/content/dam/fom-website/drivers/${firstInitial}/${code}_${givenName}_${familyName}/${code.toLowerCase()}.png.transform/4col/image.png${IMG_VERSION}`;
 }
 
 /** Maps Ergast driverId -> F1 official race-suit headshot URL */
@@ -55,7 +73,7 @@ export const DRIVER_IMAGES: Record<string, string> = {
 
 /** Build a team car image URL with the CDN transform suffix. */
 function carUrl(year: string, teamSlug: string): string {
-  return `${F1_CDN}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/4col/image.png${IMG_VERSION}`;
+  return `${F1_CDN}/${CAR_TRANSFORMS}/content/dam/fom-website/teams/${year}/${teamSlug}.png.transform/4col/image.png${IMG_VERSION}`;
 }
 
 /** Maps Ergast constructorId -> F1 official transparent car-render PNG */
@@ -79,7 +97,6 @@ export const TEAM_CAR_IMAGES: Record<string, string[]> = {
 
 /**
  * Official F1 CDN slugs for driver number logo images.
- * URL pattern: {F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/{slug}.png
  */
 const DRIVER_NUMBER_SLUGS: Record<string, string> = {
   max_verstappen:  "MAXVER01",
@@ -114,7 +131,7 @@ export function getDriverImageUrl(driverId: string): string | undefined {
 export function getDriverNumberUrl(driverId: string): string | undefined {
   const slug = DRIVER_NUMBER_SLUGS[driverId];
   if (!slug) return undefined;
-  return `${F1_CDN}/d_default_fallback_en.png/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png`;
+  return `${F1_CDN}/${NUMBER_TRANSFORMS}/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png${IMG_VERSION}`;
 }
 
 /**

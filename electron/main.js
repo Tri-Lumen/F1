@@ -223,6 +223,7 @@ function stopNextServer() {
 function waitForServer(port, timeout = 30_000) {
   return new Promise((resolve, reject) => {
     const deadline = Date.now() + timeout;
+    const start = Date.now();
     function check() {
       const req = http.get(`http://127.0.0.1:${port}`, (res) => {
         res.resume();
@@ -232,7 +233,10 @@ function waitForServer(port, timeout = 30_000) {
         if (Date.now() > deadline) {
           reject(new Error(`Next.js server did not respond within ${timeout / 1000}s`));
         } else {
-          setTimeout(check, 300);
+          // Tight polling for the first second (server usually comes up fast),
+          // then back off to 250ms so we're not hammering the loopback socket.
+          const elapsed = Date.now() - start;
+          setTimeout(check, elapsed < 1000 ? 75 : 250);
         }
       });
       req.setTimeout(500, () => { req.destroy(); });
@@ -381,37 +385,59 @@ async function createWindow() {
     return;
   }
 
+  // Kick off the Next.js server immediately and, in parallel, build the main
+  // window so it's ready to display content the instant the server responds.
   startNextServer(serverPort);
 
-  // Show a simple loading window while the server warms up.
-  const loadingWindow = new BrowserWindow({
-    width: 400,
-    height: 220,
-    resizable: false,
-    frame: false,
-    alwaysOnTop: true,
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
+  // Build the menu and main window up-front. `show: false` + `ready-to-show`
+  // avoids the white flash that BrowserWindow would otherwise paint while it
+  // waits for the renderer's first frame.
+  buildMenu(serverPort);
+
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 900,
+    minHeight: 600,
+    title: 'Delta Dashboard',
+    show: false,
+    backgroundColor: '#1a1a2e',
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      // Disable throttling of background timers/animations during startup so
+      // the renderer can finish hydrating as fast as possible.
+      backgroundThrottling: false,
+    },
   });
 
-  loadingWindow.loadURL(`data:text/html,
-    <html>
-    <head><style>
-      body { margin:0; display:flex; flex-direction:column; align-items:center;
-             justify-content:center; height:100vh; font-family:sans-serif;
-             background:#1a1a2e; color:#e2e8f0; }
-      h2   { font-size:1.4rem; margin-bottom:.5rem; }
-      p    { font-size:.85rem; color:#94a3b8; }
-    </style></head>
-    <body>
+  // Show a lightweight splash inside the main window itself — avoids the
+  // overhead of spawning, loading, and tearing down a second BrowserWindow.
+  const splashHtml = `data:text/html;charset=utf-8,${encodeURIComponent(`
+    <!doctype html><html><head><meta charset="utf-8"><style>
+      html,body{margin:0;height:100%;background:#1a1a2e;color:#e2e8f0;
+        font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;}
+      h2{font-size:1.4rem;margin:0 0 .5rem;letter-spacing:.02em;}
+      p{font-size:.85rem;color:#94a3b8;margin:0;}
+      .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+        background:#e10600;margin:0 2px;animation:b 1s infinite;}
+      .dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+      @keyframes b{0%,80%,100%{opacity:.2}40%{opacity:1}}
+    </style></head><body>
       <h2>🏎️ Delta Dashboard</h2>
-      <p>Starting server on port ${serverPort}…</p>
-    </body>
-    </html>`);
+      <p>Starting<span class="dot"></span><span class="dot"></span><span class="dot"></span></p>
+    </body></html>`)}`;
+
+  mainWindow.loadURL(splashHtml);
+  mainWindow.once('ready-to-show', () => mainWindow?.show());
 
   try {
     await waitForServer(serverPort);
   } catch (err) {
-    loadingWindow.close();
     dialog.showErrorBox(
       'Delta Dashboard — Startup Error',
       `The embedded server failed to start.\n\n${err.message}\n\nCheck that Node.js is installed and accessible.`
@@ -421,25 +447,9 @@ async function createWindow() {
     return;
   }
 
-  loadingWindow.close();
-
-  buildMenu(serverPort);
-
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    minWidth: 900,
-    minHeight: 600,
-    title: 'Delta Dashboard',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  });
-
+  // Server is up — swap the splash for the real app. `did-finish-load` already
+  // fired for the splash, so the window is visible; loading the new URL is a
+  // smooth in-place navigation rather than a fresh window creation.
   mainWindow.loadURL(`http://127.0.0.1:${serverPort}`);
 
   // Open external URLs (F1TV, etc.) in the system browser.
