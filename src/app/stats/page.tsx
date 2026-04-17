@@ -186,7 +186,7 @@ async function StatsContent() {
     const race = raceByRound.get(round);
     for (const stop of stops) {
       const dur = parseFloat(stop.duration);
-      if (isNaN(dur) || dur <= 0) continue;
+      if (!Number.isFinite(dur) || dur <= 0) continue;
       totalPitStops++;
 
       const cid = driverTeamMap.get(stop.driverId) ?? "";

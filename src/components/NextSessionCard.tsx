@@ -26,7 +26,7 @@ export default async function NextSessionCard() {
       <div className="grid lg:grid-cols-[1fr_1.2fr]">
         {/* Circuit map panel — accent-tinted background */}
         <div className="relative flex items-center justify-center p-8 min-h-[200px]"
-          style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-f1-accent) 12%, var(--color-f1-dark)) 0%, var(--color-f1-dark) 100%)" }}>
+          style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--color-f1-accent) 12%, var(--color-f1-dark)) 0%, color-mix(in srgb, var(--color-f1-accent) 8%, var(--color-f1-dark)) 25%, color-mix(in srgb, var(--color-f1-accent) 4%, var(--color-f1-dark)) 55%, color-mix(in srgb, var(--color-f1-accent) 1.5%, var(--color-f1-dark)) 80%, var(--color-f1-dark) 100%)" }}>
           <CircuitMap
             circuitId={session.circuitId}
             className="w-full max-w-[260px] h-40 text-f1-accent"

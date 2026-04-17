@@ -34,23 +34,29 @@ export default function TeamRadioFeed({
     if (playingUrl === url) {
       audioRef.current?.pause();
       setPlayingUrl(null);
-    } else {
-      // Clean up previous audio to prevent memory leaks
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.removeAttribute("src");
-        audioRef.current.load();
-      }
-      const audio = new Audio(url);
-      const onEnded = () => {
-        setPlayingUrl(null);
-        audio.removeEventListener("ended", onEnded);
-      };
-      audio.addEventListener("ended", onEnded);
-      audio.play().catch(() => setPlayingUrl(null));
-      audioRef.current = audio;
-      setPlayingUrl(url);
+      return;
     }
+    // Tear down previous clip: strip the ended listener first so a late-firing
+    // event from the old element can't clobber the new playingUrl state.
+    const prev = audioRef.current;
+    if (prev) {
+      prev.onended = null;
+      prev.pause();
+      prev.removeAttribute("src");
+      prev.load();
+    }
+    const audio = new Audio(url);
+    audio.onended = () => {
+      if (audioRef.current === audio) setPlayingUrl(null);
+    };
+    audioRef.current = audio;
+    setPlayingUrl(url);
+    // play() returns a promise; await the settled result so that if the user
+    // supersedes this clip before it starts, the abort doesn't bubble as an
+    // unhandled DOMException ("play() was interrupted by pause()").
+    audio.play().catch(() => {
+      if (audioRef.current === audio) setPlayingUrl(null);
+    });
   }
 
   if (messages.length === 0) {
@@ -63,11 +69,26 @@ export default function TeamRadioFeed({
 
   return (
     <div className="rounded-xl border border-f1-border bg-f1-card">
-      <div className="border-b border-f1-border p-4 flex items-center justify-between">
+      <div className="border-b border-f1-border p-4 flex items-center justify-between gap-3">
         <h3 className="font-bold text-lg">Team Radio</h3>
-        <span className="text-xs text-f1-text-muted">
-          {messages.length} message{messages.length !== 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-3">
+          {playingUrl && (
+            <button
+              onClick={() => {
+                audioRef.current?.pause();
+                setPlayingUrl(null);
+              }}
+              className="rounded-md border border-f1-border bg-f1-dark px-2 py-1 text-[11px] font-semibold text-f1-text-muted hover:border-f1-accent/40 hover:text-f1-accent transition-colors"
+              title="Stop the currently-playing radio message"
+              aria-label="Stop currently playing radio message"
+            >
+              Stop
+            </button>
+          )}
+          <span className="text-xs text-f1-text-muted">
+            {messages.length} message{messages.length !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
       <div className="divide-y divide-f1-border/50 max-h-96 overflow-y-auto">
         {display.map((msg, i) => {
@@ -91,6 +112,12 @@ export default function TeamRadioFeed({
                     : "bg-f1-dark text-f1-text-muted hover:bg-f1-accent/20 hover:text-f1-accent"
                 }`}
                 title={isPlaying ? "Pause" : "Play radio message"}
+                aria-label={
+                  isPlaying
+                    ? `Pause ${driver?.name_acronym ?? `#${msg.driver_number}`} radio message`
+                    : `Play ${driver?.name_acronym ?? `#${msg.driver_number}`} radio message`
+                }
+                aria-pressed={isPlaying}
               >
                 {isPlaying ? (
                   <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">

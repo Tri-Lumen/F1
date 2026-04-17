@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getDriverNumberByAcronym } from "@/lib/driverOverrides";
 
 const DEFAULT_MV_HOST = "localhost:10101";
 
@@ -59,6 +60,9 @@ export default function OnboardButton({
 
     setStatus("loading");
     const url = getMultiviewerUrl();
+    // OpenF1 live timing can lag mid-season number changes (e.g. Verstappen's
+    // switch to #3 for 2026), so route through the override table first.
+    const resolvedNumber = getDriverNumberByAcronym(acronym, driverNumber);
     try {
       // Re-check connection before sending mutation
       const controller = new AbortController();
@@ -70,7 +74,7 @@ export default function OnboardButton({
           query: `mutation {
             playerCreate(input: {
               contentType: "onboard"
-              driverNumber: ${driverNumber}
+              driverNumber: ${resolvedNumber}
             }) {
               ... on Player { id }
             }
@@ -83,26 +87,34 @@ export default function OnboardButton({
       if (res.ok) {
         const json = await res.json();
         if (json.errors?.length) {
-          // GraphQL returned errors — try legacy mutation format
-          const retryRes = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              query: `mutation {
-                playerCreate(input: {
-                  contentId: "ONBOARD"
-                  driverNumber: ${driverNumber}
-                }) { id }
-              }`,
-            }),
-          });
-          if (retryRes.ok) {
-            const retryJson = await retryRes.json();
-            if (!retryJson.errors?.length) {
-              setStatus("success");
-              setTimeout(() => setStatus("idle"), 2000);
-              return;
+          // GraphQL returned errors — try legacy mutation format.
+          // Guard the retry with its own timeout so a stalled MV host can't hang the button.
+          const retryController = new AbortController();
+          const retryTimeout = setTimeout(() => retryController.abort(), 5000);
+          try {
+            const retryRes = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                query: `mutation {
+                  playerCreate(input: {
+                    contentId: "ONBOARD"
+                    driverNumber: ${resolvedNumber}
+                  }) { id }
+                }`,
+              }),
+              signal: retryController.signal,
+            });
+            if (retryRes.ok) {
+              const retryJson = await retryRes.json();
+              if (!retryJson.errors?.length) {
+                setStatus("success");
+                setTimeout(() => setStatus("idle"), 2000);
+                return;
+              }
             }
+          } finally {
+            clearTimeout(retryTimeout);
           }
           setStatus("error");
           setTimeout(() => setStatus("idle"), 3000);
@@ -134,6 +146,8 @@ export default function OnboardButton({
       onClick={openOnboard}
       disabled={status === "loading"}
       title={title}
+      aria-label={title}
+      aria-busy={status === "loading" || undefined}
       className={`group relative inline-flex items-center justify-center rounded-lg transition-all ${
         compact
           ? "h-7 w-7 bg-f1-dark/60 hover:bg-f1-accent/20"
@@ -197,6 +211,15 @@ export default function OnboardButton({
             ? "No MultiViewer"
             : "Onboard"}
         </span>
+      )}
+
+      {/* Compact-mode offline indicator — a red dot lets users spot an unreachable
+          MV host without having to hover for the tooltip or click to surface the error. */}
+      {compact && mvConnected === false && status === "idle" && (
+        <span
+          aria-hidden="true"
+          className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-f1-dark"
+        />
       )}
 
       {/* Tooltip for no-mv status */}
