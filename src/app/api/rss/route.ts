@@ -169,7 +169,11 @@ export async function GET(request: NextRequest) {
   // Expect JSON array of { id, name, url }
   let feedList: { id: string; name: string; url: string }[];
   try {
-    feedList = JSON.parse(feedUrls);
+    const parsed = JSON.parse(feedUrls);
+    if (!Array.isArray(parsed)) {
+      return NextResponse.json({ error: "feeds must be a JSON array" }, { status: 400 });
+    }
+    feedList = parsed;
   } catch {
     return NextResponse.json({ error: "Invalid feeds parameter" }, { status: 400 });
   }

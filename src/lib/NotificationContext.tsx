@@ -60,6 +60,31 @@ const LEAD_OPTIONS = [5, 10, 15, 30, 60] as const;
 export type LeadOption = (typeof LEAD_OPTIONS)[number];
 export { LEAD_OPTIONS };
 
+/** `setTimeout` clamps delays to a 32-bit signed int (~24.8 days); longer
+ *  delays fire immediately.  Cap individual chunks below that and chain. */
+const MAX_TIMEOUT_MS = 2_147_483_000;
+
+/** Schedule `fn` to run at `fireAt` (ms since epoch), chaining sub-timeouts
+ *  when the delay would otherwise overflow the 32-bit timer.  Returns a
+ *  cancel function that clears whichever link of the chain is pending. */
+function scheduleAt(fireAt: number, fn: () => void): () => void {
+  let current: ReturnType<typeof setTimeout> | null = null;
+  function arm() {
+    const remaining = fireAt - Date.now();
+    if (remaining <= 0) {
+      current = null;
+      fn();
+      return;
+    }
+    current = setTimeout(arm, Math.min(remaining, MAX_TIMEOUT_MS));
+  }
+  arm();
+  return () => {
+    if (current !== null) clearTimeout(current);
+    current = null;
+  };
+}
+
 const LS_ENABLED = "f1-notify";
 const LS_LEAD = "f1-notify-lead";
 const LS_SCHEDULED = "f1-notify-scheduled";
@@ -99,7 +124,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [scheduled, setScheduled] = useState<ScheduledNotification[]>([]);
   const [history, setHistory] = useState<NotificationHistoryEntry[]>([]);
   const [mounted, setMounted] = useState(false);
-  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  /** One cancel() per scheduled notification.  Timers may be chained for
+   *  long delays (see `scheduleAt`), so we only track the cancel closure. */
+  const timersRef = useRef<Map<string, () => void>>(new Map());
 
   // --- Load from localStorage on mount ---
   useEffect(() => {
@@ -152,24 +179,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     for (const notif of scheduled) {
       if (notif.fired || currentTimers.has(notif.id)) continue;
-      const delay = notif.fireAt - now;
-      if (delay <= 0) {
+      if (notif.fireAt <= now) {
         // Already past — fire immediately and mark as fired
         fireNotification(notif);
         continue;
       }
 
-      const timerId = setTimeout(() => {
+      const cancel = scheduleAt(notif.fireAt, () => {
         fireNotification(notif);
         currentTimers.delete(notif.id);
-      }, delay);
-      currentTimers.set(notif.id, timerId);
+      });
+      currentTimers.set(notif.id, cancel);
     }
 
     return () => {
       // Clean up all timers on unmount/re-run
-      for (const [id, timerId] of currentTimers.entries()) {
-        clearTimeout(timerId);
+      for (const [id, cancel] of currentTimers.entries()) {
+        cancel();
         currentTimers.delete(id);
       }
     };
@@ -217,8 +243,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       localStorage.setItem(LS_ENABLED, "false");
       setEnabled(false);
       // Clear all pending timers
-      for (const [id, timerId] of timersRef.current.entries()) {
-        clearTimeout(timerId);
+      for (const [id, cancel] of timersRef.current.entries()) {
+        cancel();
         timersRef.current.delete(id);
       }
     }
@@ -255,9 +281,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [leadMinutes]);
 
   const cancel = useCallback((id: string) => {
-    const timerId = timersRef.current.get(id);
-    if (timerId) {
-      clearTimeout(timerId);
+    const cancelTimer = timersRef.current.get(id);
+    if (cancelTimer) {
+      cancelTimer();
       timersRef.current.delete(id);
     }
     setScheduled((prev) => prev.filter((s) => s.id !== id));
