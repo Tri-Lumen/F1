@@ -1,5 +1,25 @@
 import { NextResponse } from "next/server";
 import { execFile } from "child_process";
+import { timingSafeEqual } from "crypto";
+
+/**
+ * When UPDATE_SECRET is set, POSTs must include a matching bearer token.
+ * Without a secret the endpoint is open — fine for local Docker on a private
+ * network, but anyone hosting this on a LAN or beyond should set one to
+ * prevent unauthenticated remote `git pull` + `npm ci` + `npm run build`
+ * triggers from anything that can reach the port.
+ */
+function isAuthorized(req: Request): boolean {
+  const secret = process.env.UPDATE_SECRET;
+  if (!secret) return true;
+  const header = req.headers.get("authorization") ?? "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  if (!match) return false;
+  const provided = Buffer.from(match[1]);
+  const expected = Buffer.from(secret);
+  if (provided.length !== expected.length) return false;
+  return timingSafeEqual(provided, expected);
+}
 
 function run(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
@@ -41,7 +61,11 @@ async function fixRemoteForDocker(cwd: string): Promise<void> {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   // When running inside an Electron packaged app the source tree, git history,
   // and devDependencies are not present — git pull / npm build cannot work.
   // The Electron main process sets ELECTRON_RUN=1 before spawning this server.

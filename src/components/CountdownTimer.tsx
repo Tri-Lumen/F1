@@ -33,6 +33,13 @@ function CountdownTimer({ target, compact = false }: Props) {
 
   useEffect(() => {
     const targetDate = new Date(target);
+    // Guard: invalid date inputs make getTime() return NaN, which would
+    // cascade into NaN-in-NaN-out renders ("NaN Days NaN Hrs"). Bail early.
+    if (!Number.isFinite(targetDate.getTime())) {
+      setTime({ total: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+
     let timeoutId: ReturnType<typeof setTimeout>;
 
     function tick() {
