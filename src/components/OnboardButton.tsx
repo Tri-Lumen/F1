@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getDriverNumberByAcronym } from "@/lib/driverOverrides";
 
 const DEFAULT_MV_HOST = "localhost:10101";
 
@@ -59,6 +60,9 @@ export default function OnboardButton({
 
     setStatus("loading");
     const url = getMultiviewerUrl();
+    // OpenF1 live timing can lag mid-season number changes (e.g. Verstappen's
+    // WDC-revert to #33), so route through the 2026 override table first.
+    const resolvedNumber = getDriverNumberByAcronym(acronym, driverNumber);
     try {
       // Re-check connection before sending mutation
       const controller = new AbortController();
@@ -70,7 +74,7 @@ export default function OnboardButton({
           query: `mutation {
             playerCreate(input: {
               contentType: "onboard"
-              driverNumber: ${driverNumber}
+              driverNumber: ${resolvedNumber}
             }) {
               ... on Player { id }
             }
@@ -91,7 +95,7 @@ export default function OnboardButton({
               query: `mutation {
                 playerCreate(input: {
                   contentId: "ONBOARD"
-                  driverNumber: ${driverNumber}
+                  driverNumber: ${resolvedNumber}
                 }) { id }
               }`,
             }),

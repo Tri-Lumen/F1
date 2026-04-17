@@ -113,6 +113,49 @@ export function getDriverOverride(driverId: string): DriverOverride | undefined 
 }
 
 /**
+ * Maps the OpenF1 three-letter `name_acronym` to the Ergast driverId so live
+ * timing components (which don't carry a driverId) can still resolve overrides.
+ */
+export const ACRONYM_TO_DRIVER_ID: Record<string, string> = {
+  VER: "max_verstappen",
+  LEC: "leclerc",
+  HAM: "hamilton",
+  NOR: "norris",
+  PIA: "piastri",
+  RUS: "russell",
+  ANT: "antonelli",
+  ALO: "alonso",
+  STR: "stroll",
+  GAS: "gasly",
+  COL: "colapinto",
+  ALB: "albon",
+  SAI: "sainz",
+  OCO: "ocon",
+  BEA: "bearman",
+  BOR: "bortoleto",
+  HUL: "hulkenberg",
+  HAD: "hadjar",
+  LAW: "lawson",
+  LIN: "lindblad",
+  BOT: "bottas",
+  PER: "perez",
+};
+
+/**
+ * Resolves the canonical 2026 permanent number from a live-timing acronym,
+ * falling back to the upstream number when no override matches.  Used by
+ * components that only see OpenF1 live data (acronym + numeric driver_number).
+ */
+export function getDriverNumberByAcronym(
+  acronym: string | undefined,
+  upstream: number | string,
+): string {
+  const driverId = acronym ? ACRONYM_TO_DRIVER_ID[acronym.toUpperCase()] : undefined;
+  const override = driverId ? DRIVER_OVERRIDES_2026[driverId]?.number : undefined;
+  return override ?? String(upstream);
+}
+
+/**
  * Returns the canonical 2026 permanent number for a driver, falling back to
  * the upstream value (or a placeholder) when no override exists.
  */
