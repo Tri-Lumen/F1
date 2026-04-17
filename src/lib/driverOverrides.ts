@@ -34,7 +34,7 @@ export interface DriverOverride {
 /**
  * 2026 season driver overrides.
  *
- * Numbers: Verstappen reverted to his permanent #33 after losing the 2025 WDC;
+ * Numbers: Verstappen carries #3 for 2026 after losing the 2025 WDC;
  * Kimi Antonelli locked in #12; Lindblad takes Perez's old #11 slot at Red Bull.
  *
  * Team rebrand: Sauber → Audi works team.  Bortoleto and Hulkenberg carry over
@@ -44,7 +44,7 @@ export interface DriverOverride {
  */
 export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
   max_verstappen: {
-    number: "33",
+    number: "3",
   },
   leclerc: { number: "16" },
   hamilton: { number: "44" },

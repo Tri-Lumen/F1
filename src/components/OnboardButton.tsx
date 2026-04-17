@@ -61,7 +61,7 @@ export default function OnboardButton({
     setStatus("loading");
     const url = getMultiviewerUrl();
     // OpenF1 live timing can lag mid-season number changes (e.g. Verstappen's
-    // WDC-revert to #33), so route through the 2026 override table first.
+    // switch to #3 for 2026), so route through the override table first.
     const resolvedNumber = getDriverNumberByAcronym(acronym, driverNumber);
     try {
       // Re-check connection before sending mutation
