@@ -46,9 +46,13 @@ export default function TireStrategy({
     );
   }
 
-  // Find max lap for proportional width
+  // Find max lap for proportional width. For in-progress stints (no lap_end)
+  // use the highest lap_start seen across all drivers as a proxy for the
+  // current race lap — previously a magic `+5` could push bars past the
+  // actual race distance on short sessions.
+  const currentRaceLap = stints.reduce((m, s) => Math.max(m, s.lap_start), 0);
   const maxLap = Math.max(
-    ...stints.map((s) => s.lap_end ?? s.lap_start + 5),
+    ...stints.map((s) => s.lap_end ?? currentRaceLap),
     1
   );
 

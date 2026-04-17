@@ -54,7 +54,8 @@ export default function RootLayout({
                   if (r === 'sharp' || r === 'default' || r === 'rounded') el.setAttribute('data-radius', r);
                   if (rm === 'true') el.setAttribute('data-reduce-motion', 'true');
                   if (gi) {
-                    var g = Math.min(100, Math.max(0, parseInt(gi) || 50));
+                    var gp = parseInt(gi, 10);
+                    var g = isFinite(gp) ? Math.min(100, Math.max(0, gp)) : 50;
                     el.style.setProperty('--glow-primary-opacity', Math.round(g * 0.28) + '%');
                     el.style.setProperty('--glow-secondary-opacity', Math.round(g * 0.14) + '%');
                   }

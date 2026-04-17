@@ -34,14 +34,21 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   // Read persisted favourites from localStorage on first mount
   useEffect(() => {
-    try {
-      const drivers = JSON.parse(localStorage.getItem("f1-fav-drivers") ?? "[]");
-      const teams = JSON.parse(localStorage.getItem("f1-fav-teams") ?? "[]");
-      if (Array.isArray(drivers)) setFavoriteDriverIds(drivers);
-      if (Array.isArray(teams)) setFavoriteTeamIds(teams);
-    } catch {
-      // ignore parse errors
+    // Filter to strings — Array.isArray alone can't stop a tampered or
+    // imported entry like `[1, null, "alonso"]` from leaking non-strings
+    // into every consumer (rendering, comparisons, override lookups).
+    function sanitize(raw: string | null, max: number): string[] {
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((s): s is string => typeof s === "string").slice(0, max);
+      } catch {
+        return [];
+      }
     }
+    setFavoriteDriverIds(sanitize(localStorage.getItem("f1-fav-drivers"), 3));
+    setFavoriteTeamIds(sanitize(localStorage.getItem("f1-fav-teams"), 2));
     setMounted(true);
   }, []);
 

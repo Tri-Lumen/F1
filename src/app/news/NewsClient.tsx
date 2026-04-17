@@ -34,7 +34,7 @@ function ArticleCard({ article }: { article: RssArticle }) {
         <div className="relative h-40 w-full overflow-hidden bg-f1-dark">
           <img
             src={article.imageUrl}
-            alt=""
+            alt={article.title}
             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             onError={(e) => {

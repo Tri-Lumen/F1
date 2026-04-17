@@ -98,7 +98,9 @@ export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
     assetFamily: "Bottas",
   },
   perez: {
-    number: "11",
+    // Lindblad inherits #11 at Red Bull for 2026, so Perez takes his earlier
+    // career number at Cadillac rather than colliding on the grid.
+    number: "2",
     constructorId: "cadillac",
     constructorName: "Cadillac F1 Team",
     assetCode: "SERPER02",
@@ -107,6 +109,22 @@ export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
     assetFamily: "Perez",
   },
 };
+
+// Dev-time guard: catch duplicate permanent numbers before they hit the UI.
+if (process.env.NODE_ENV !== "production") {
+  const seen = new Map<string, string>();
+  for (const [id, o] of Object.entries(DRIVER_OVERRIDES_2026)) {
+    if (!o.number) continue;
+    const prior = seen.get(o.number);
+    if (prior) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[driverOverrides] duplicate number #${o.number} assigned to "${prior}" and "${id}"`
+      );
+    }
+    seen.set(o.number, id);
+  }
+}
 
 export function getDriverOverride(driverId: string): DriverOverride | undefined {
   return DRIVER_OVERRIDES_2026[driverId];

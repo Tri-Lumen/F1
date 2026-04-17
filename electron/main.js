@@ -173,8 +173,19 @@ function startNextServer(port) {
     return;
   }
 
-  const env = {
-    ...process.env,
+  // Whitelist parent env vars rather than spreading process.env wholesale —
+  // otherwise AWS keys, GitHub tokens, and anything else in the user's shell
+  // becomes visible to whatever the Next.js server logs or echoes back.
+  const ENV_PASSTHROUGH = [
+    'PATH', 'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'TMP', 'TEMP',
+    'TMPDIR', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TZ', 'SystemRoot', 'WINDIR',
+    'COMSPEC', 'NUMBER_OF_PROCESSORS', 'PROCESSOR_ARCHITECTURE',
+  ];
+  const env = {};
+  for (const key of ENV_PASSTHROUGH) {
+    if (process.env[key] !== undefined) env[key] = process.env[key];
+  }
+  Object.assign(env, {
     NODE_ENV: 'production',
     PORT: String(port),
     HOSTNAME: '127.0.0.1',
@@ -185,7 +196,7 @@ function startNextServer(port) {
     // separately-bundled node binary (which would be platform-specific and
     // would require shipping a large extra resource on every platform).
     ...(isPackaged ? { ELECTRON_RUN_AS_NODE: '1' } : {}),
-  };
+  });
 
   // In packaged mode use the Electron binary itself as the Node.js runtime
   // (works cross-platform via ELECTRON_RUN_AS_NODE).  In dev just use the

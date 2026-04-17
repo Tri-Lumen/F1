@@ -26,7 +26,15 @@ import type {
 
 const ERGAST_BASE = "https://api.jolpi.ca/ergast/f1";
 const OPENF1_BASE = "https://api.openf1.org/v1";
-const CURRENT_SEASON = "2026";
+
+/**
+ * Derive the current season from the real calendar year, but never dip below
+ * 2026 — we don't have an earlier live-timing model and a clock skew before
+ * that would break the homepage.  This keeps the app working on Jan 1 of a
+ * new year without a manual bump.
+ */
+const SEASON_FLOOR = 2026;
+const CURRENT_SEASON = String(Math.max(SEASON_FLOOR, new Date().getFullYear()));
 
 /** Historical seasons available in the archive section */
 export const ARCHIVE_SEASONS = [
@@ -207,6 +215,10 @@ async function fetchOpenF1WithTimeFilter<T>(
   windowMs: number = 5 * 60_000,
 ): Promise<T[]> {
   const since = new Date(Date.now() - windowMs).toISOString();
+  // OpenF1 uses an unconventional `date>value` operator syntax in the query
+  // string — the literal `>` is part of the parameter name, not an operator
+  // between key and value.  Do NOT route this through URLSearchParams; it
+  // would percent-encode the `>` and the API returns an empty set.
   const filtered = await fetchOpenF1<T>(
     `/${endpoint}?session_key=${sessionKey}&date>${encodeURIComponent(since)}`
   );

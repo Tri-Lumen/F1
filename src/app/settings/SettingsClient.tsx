@@ -93,7 +93,13 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   useEffect(() => {
     const saved = localStorage.getItem("f1-multiviewer-host");
     if (saved) setMvHost(saved);
-    setRefreshInterval(parseInt(localStorage.getItem("f1-refresh-interval") ?? "60", 10) || 60);
+    const storedInterval = localStorage.getItem("f1-refresh-interval");
+    if (storedInterval) {
+      const n = parseInt(storedInterval, 10);
+      // Don't fall back via `|| 60` — that would clobber a legitimate 0 (and
+      // any out-of-range number) silently. Clamp to [1, 3600] seconds instead.
+      if (Number.isFinite(n)) setRefreshInterval(Math.min(3600, Math.max(1, n)));
+    }
   }, []);
 
   function saveRefreshInterval(seconds: number) {
@@ -102,16 +108,9 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   }
 
   function resetAllSettings() {
-    // Clear all F1 dashboard localStorage keys
-    const keysToRemove = [
-      "f1-multiviewer-host", "f1-notify", "f1-notify-lead",
-      "f1-refresh-interval", "f1-favorites-drivers", "f1-favorites-teams",
-      "f1-theme-mode", "f1-theme-accent", "f1-rss-feeds", "f1-rss-drivers",
-    ];
-    for (const key of keysToRemove) {
-      localStorage.removeItem(key);
-    }
-    // Also clear any other keys starting with f1-
+    // Sweep every key namespaced under "f1-". Avoids the rot-trap of an
+    // explicit allowlist that drifts from the keys actually written elsewhere
+    // (e.g. f1-fav-drivers vs f1-favorites-drivers).
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
       if (key?.startsWith("f1-")) localStorage.removeItem(key);

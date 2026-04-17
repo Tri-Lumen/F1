@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { getDriverNumberByAcronym } from "@/lib/driverOverrides";
 
 const DEFAULT_MV_HOST = "localhost:10101";
@@ -28,6 +28,22 @@ export default function OnboardButton({
   >("idle");
   const [mvConnected, setMvConnected] = useState<boolean | null>(null);
 
+  // Track the reset-to-idle timer so an unmount (or a second click) doesn't
+  // leak a pending `setStatus` onto a gone component.
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetToIdle = useCallback((delay: number) => {
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = setTimeout(() => {
+      setStatus("idle");
+      resetTimerRef.current = null;
+    }, delay);
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const url = getMultiviewerUrl();
@@ -54,7 +70,7 @@ export default function OnboardButton({
   async function openOnboard() {
     if (mvConnected === false) {
       setStatus("no-mv");
-      setTimeout(() => setStatus("idle"), 3000);
+      resetToIdle(3000);
       return;
     }
 
@@ -109,7 +125,7 @@ export default function OnboardButton({
               const retryJson = await retryRes.json();
               if (!retryJson.errors?.length) {
                 setStatus("success");
-                setTimeout(() => setStatus("idle"), 2000);
+                resetToIdle(2000);
                 return;
               }
             }
@@ -117,18 +133,18 @@ export default function OnboardButton({
             clearTimeout(retryTimeout);
           }
           setStatus("error");
-          setTimeout(() => setStatus("idle"), 3000);
+          resetToIdle(3000);
         } else {
           setStatus("success");
-          setTimeout(() => setStatus("idle"), 2000);
+          resetToIdle(2000);
         }
       } else {
         setStatus("error");
-        setTimeout(() => setStatus("idle"), 3000);
+        resetToIdle(3000);
       }
     } catch {
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
+      resetToIdle(3000);
     }
   }
 
@@ -147,7 +163,7 @@ export default function OnboardButton({
       disabled={status === "loading"}
       title={title}
       aria-label={title}
-      aria-busy={status === "loading" || undefined}
+      aria-busy={status === "loading" ? true : undefined}
       className={`group relative inline-flex items-center justify-center rounded-lg transition-all ${
         compact
           ? "h-7 w-7 bg-f1-dark/60 hover:bg-f1-accent/20"

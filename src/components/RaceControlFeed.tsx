@@ -46,7 +46,7 @@ export default function RaceControlFeed({
         <h3 className="font-bold text-lg">Race Control</h3>
       </div>
       <div className="max-h-[400px] overflow-y-auto divide-y divide-f1-border/30">
-        {recent.map((msg, i) => {
+        {recent.map((msg) => {
           const flagStyle = msg.flag ? FLAG_STYLES[msg.flag] ?? null : null;
           const icon = CATEGORY_ICONS[msg.category] ?? "ℹ️";
           const time = new Date(msg.date).toLocaleTimeString("en-GB", {
@@ -54,10 +54,13 @@ export default function RaceControlFeed({
             minute: "2-digit",
             second: "2-digit",
           });
+          // Key on message content (not array index) so new messages don't
+          // reshuffle the keys of existing rows and drop CSS transitions.
+          const rowKey = `${msg.date}|${msg.category}|${msg.flag ?? ""}|${msg.message}`;
 
           return (
             <div
-              key={`${msg.date}-${i}`}
+              key={rowKey}
               className={`px-4 py-3 ${flagStyle?.bg ?? ""}`}
             >
               <div className="flex items-start gap-3">

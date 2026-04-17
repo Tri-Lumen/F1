@@ -51,8 +51,14 @@ function decodeEntities(text: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'")
     .replace(/&apos;/g, "'")
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+      const cp = parseInt(hex, 16);
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : "";
+    })
+    .replace(/&#(\d+);/g, (_, dec) => {
+      const cp = parseInt(dec, 10);
+      return Number.isFinite(cp) && cp >= 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : "";
+    })
     .replace(/&nbsp;/g, " ")
     .replace(/&mdash;/g, "\u2014")
     .replace(/&ndash;/g, "\u2013")
@@ -120,7 +126,10 @@ function parseItem(itemXml: string, sourceName: string, sourceId: string): RssAr
   if (!title || !link) return null;
 
   const description = descMatch ? stripHtml(descMatch[1]).slice(0, 300) : "";
-  const pubDate = dateMatch ? decodeEntities(dateMatch[1]).trim() : new Date().toISOString();
+  // Articles without a pubDate previously defaulted to `new Date()`, which
+  // caused them to leapfrog dated entries on every refresh.  Leave the field
+  // empty so the sort comparator can demote them.
+  const pubDate = dateMatch ? decodeEntities(dateMatch[1]).trim() : "";
   const imageUrl = extractImage(itemXml);
 
   return {
@@ -210,10 +219,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Sort by date, newest first
+  // Sort by date, newest first.  Articles with missing / unparseable dates
+  // sort to the bottom instead of floating to the top.
   allArticles.sort((a, b) => {
-    const dateA = new Date(a.pubDate).getTime() || 0;
-    const dateB = new Date(b.pubDate).getTime() || 0;
+    const tA = a.pubDate ? new Date(a.pubDate).getTime() : NaN;
+    const tB = b.pubDate ? new Date(b.pubDate).getTime() : NaN;
+    const dateA = Number.isFinite(tA) ? tA : -Infinity;
+    const dateB = Number.isFinite(tB) ? tB : -Infinity;
     return dateB - dateA;
   });
 
