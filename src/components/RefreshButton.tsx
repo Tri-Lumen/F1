@@ -39,7 +39,7 @@ function RefreshButton({
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) {
+        if (prev <= 0) {
           refresh();
           return intervalRef.current / 1000;
         }
@@ -68,7 +68,7 @@ function RefreshButton({
         />
       </svg>
       <span>
-        Auto-refresh in {countdown}s
+        {countdown <= 0 ? "Refreshing…" : `Auto-refresh in ${countdown}s`}
       </span>
     </button>
   );

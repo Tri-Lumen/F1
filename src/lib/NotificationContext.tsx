@@ -141,9 +141,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       const savedScheduled = JSON.parse(localStorage.getItem(LS_SCHEDULED) ?? "[]");
       if (Array.isArray(savedScheduled)) {
-        // Filter out already-past notifications
+        // Filter out already-past and corrupt (NaN fireAt) notifications
         const now = Date.now();
-        setScheduled(savedScheduled.filter((s: ScheduledNotification) => s.fireAt > now && !s.fired));
+        setScheduled(
+          savedScheduled.filter(
+            (s: ScheduledNotification) =>
+              Number.isFinite(s.fireAt) && s.fireAt > now && !s.fired,
+          ),
+        );
       }
 
       const savedHistory = JSON.parse(localStorage.getItem(LS_HISTORY) ?? "[]");
@@ -253,13 +258,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const setLeadMinutes = useCallback((m: number) => {
     setLeadMinutesState(m);
     localStorage.setItem(LS_LEAD, String(m));
-    // Re-schedule all pending notifications with new lead time
+    // Re-schedule all pending notifications with new lead time, dropping any
+    // entries whose sessionDate parsed to NaN (corrupt storage / bad ISO).
     setScheduled((prev) =>
-      prev.map((s) => ({
-        ...s,
-        leadMinutes: m,
-        fireAt: new Date(s.sessionDate).getTime() - m * 60_000,
-      }))
+      prev.flatMap((s) => {
+        const sessionMs = new Date(s.sessionDate).getTime();
+        if (!Number.isFinite(sessionMs)) return [];
+        return [{ ...s, leadMinutes: m, fireAt: sessionMs - m * 60_000 }];
+      })
     );
   }, []);
 
@@ -270,7 +276,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const schedule = useCallback((sessionType: string, raceName: string, sessionDate: string) => {
     const id = makeId(sessionType, raceName, sessionDate);
-    const fireAt = new Date(sessionDate).getTime() - leadMinutes * 60_000;
+    const sessionMs = new Date(sessionDate).getTime();
+    if (!Number.isFinite(sessionMs)) return; // Bad ISO — refuse silently
+    const fireAt = sessionMs - leadMinutes * 60_000;
     if (fireAt <= Date.now()) return; // Already past
 
     setScheduled((prev) => {

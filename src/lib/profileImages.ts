@@ -26,13 +26,14 @@ const CAR_YEAR = "2026";
 const CAR_YEAR_FALLBACK = "2025";
 
 /**
- * Cache-bust suffix. Bumped per release (mirrors package.json) so that when a
- * user updates the app, all driver/team images are refetched even if the F1
- * CDN hasn't changed the URL itself. Without this, browsers and the
- * Cloudinary edge can keep serving stale 2025 (or earlier) photos for weeks.
+ * Cache-bust suffix. Derived from the build-time app version (which CI bumps
+ * on every release) so users always refetch driver/team images after an
+ * update without needing to manually bump a magic string. A sane fallback
+ * keeps dev builds working even without the env var.
  */
-const IMG_CACHE_BUST = "v=2026.04.16";
-const IMG_VERSION = `?${IMG_CACHE_BUST}`;
+const IMG_CACHE_BUST =
+  process.env.NEXT_PUBLIC_APP_VERSION ?? process.env.npm_package_version ?? "2026.04.16";
+const IMG_VERSION = `?v=${IMG_CACHE_BUST}`;
 
 /** Cloudinary transformations applied to every driver headshot. */
 const DRIVER_TRANSFORMS = "f_auto,q_auto,w_400,d_driver_fallback_image.png";
