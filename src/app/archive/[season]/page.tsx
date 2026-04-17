@@ -56,7 +56,10 @@ export default async function ArchiveSeasonPage({
         name: `${winner.Driver.givenName} ${winner.Driver.familyName}`,
         constructorId: winner.Constructor.constructorId,
         time: winner.Time?.time,
-        fastestLap: fl ? `${fl.Driver.familyName} ${fl.FastestLap?.Time?.time ?? ""}` : undefined,
+        fastestLap:
+          fl && fl.FastestLap?.Time?.time
+            ? `${fl.Driver.familyName} ${fl.FastestLap.Time.time}`
+            : undefined,
       });
     }
   }
