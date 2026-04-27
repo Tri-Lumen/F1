@@ -1,409 +1,302 @@
 export const revalidate = 60;
 
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
-
-export const metadata: Metadata = {
-  title: "Dashboard — F1 2026",
-  description: "Season overview with live session status, championship leaders, and recent race results",
-};
 import {
   getDriverStandings,
   getConstructorStandings,
   getRaceSchedule,
   getAllSeasonResults,
+  getNextScheduledSession,
   getRaceDate,
-  getTeamColor,
-  CURRENT_YEAR,
 } from "@/lib/api";
-import StandingsTable from "@/components/StandingsTable";
-import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
-import RaceCard from "@/components/RaceCard";
+import { getDriverConstructorId } from "@/lib/driverOverrides";
+import SidebarNav from "@/components/SidebarNav";
+import LeaderHero from "@/components/LeaderHero";
+import ChampionshipBar from "@/components/ChampionshipBar";
+import StudioDriverRow from "@/components/StudioDriverRow";
+import StudioConstructorRow from "@/components/StudioConstructorRow";
+import StudioRaceCard from "@/components/StudioRaceCard";
+import type { StudioRaceCardData } from "@/components/StudioRaceCard";
+import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
-import NextSessionCard from "@/components/NextSessionCard";
-import RefreshButton from "@/components/RefreshButton";
 
-function LoadingSkeleton({ rows = 5 }: { rows?: number }) {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div
-          key={i}
-          className="h-12 rounded-lg bg-f1-card animate-pulse"
-        />
-      ))}
-    </div>
-  );
-}
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
+
+export const metadata: Metadata = {
+  title: "Dashboard — F1 2026",
+  description:
+    "Season overview with championship standings and race results for the 2026 season",
+};
 
 async function DashboardContent() {
-  const [driverStandings, constructorStandings, races, allResults] = await Promise.all([
-    getDriverStandings(),
-    getConstructorStandings(),
-    getRaceSchedule(),
-    getAllSeasonResults(),
-  ]);
+  const [driverStandings, constructorStandings, races, allResults, nextSession] =
+    await Promise.all([
+      getDriverStandings(),
+      getConstructorStandings(),
+      getRaceSchedule(),
+      getAllSeasonResults(),
+      getNextScheduledSession(),
+    ]);
 
-  // Find next race (event-level, not session-level)
   const now = new Date();
+  const completedCount = races.filter((r) => getRaceDate(r) <= now).length;
+  const totalRaces = races.length;
   const nextRace = races.find((r) => getRaceDate(r) > now);
 
-  // Completed races — single filter pass for both display and count
-  const allCompleted = races.filter((r) => getRaceDate(r) <= now);
-  const completedRaces = allCompleted.slice(-3).reverse();
-  const totalRaces = races.length;
-  const completedCount = allCompleted.length;
-
-  const winsLeader = driverStandings.length > 0
-    ? driverStandings.reduce((best, d) =>
-        parseInt(d.wins) > parseInt(best.wins) ? d : best,
-        driverStandings[0]
-      )
-    : null;
-
-  // Compute different winners count
-  const uniqueWinners = new Set<string>();
-  const winStreakMap = new Map<string, number>();
-  let currentStreakDriver = "";
-  let currentStreak = 0;
-  let longestStreak = { name: "", familyName: "", constructorId: "", count: 0 };
-
-  const completedWithResultsAll = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
-  for (const race of completedWithResultsAll) {
-    const winner = race.Results?.find((r) => r.position === "1");
-    if (winner) {
-      const id = winner.Driver.driverId;
-      const name = `${winner.Driver.givenName} ${winner.Driver.familyName}`;
-      uniqueWinners.add(id);
-
-      if (id === currentStreakDriver) {
-        currentStreak++;
-      } else {
-        currentStreakDriver = id;
-        currentStreak = 1;
-      }
-      if (currentStreak > longestStreak.count) {
-        longestStreak = { name, familyName: winner.Driver.familyName, constructorId: winner.Constructor.constructorId, count: currentStreak };
-      }
+  // Compute recent form: last 5 race positions per driver
+  const completedWithResults = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
+  const recentRacesForForm = completedWithResults.slice(-5);
+  const formData: Record<string, number[]> = {};
+  for (const race of recentRacesForForm) {
+    for (const result of race.Results ?? []) {
+      const driverId = result.Driver.driverId;
+      const pos = parseInt(result.position);
+      if (!formData[driverId]) formData[driverId] = [];
+      formData[driverId].push(isNaN(pos) ? 20 : pos);
     }
   }
 
-  // Compute movers: biggest single-race position gains in the last completed race
-  const completedWithResults = completedWithResultsAll;
-  const lastRace = completedWithResults.length > 0
-    ? completedWithResults[completedWithResults.length - 1]
-    : null;
-  const movers = lastRace
-    ? (lastRace.Results ?? [])
-        .map((r) => ({
-          name: `${r.Driver.givenName} ${r.Driver.familyName}`,
-          familyName: r.Driver.familyName,
-          constructorId: r.Constructor.constructorId,
-          grid: parseInt(r.grid),
-          position: parseInt(r.position),
-          gain: parseInt(r.grid) > 0 ? parseInt(r.grid) - parseInt(r.position) : 0,
-        }))
-        .filter((m) => m.grid > 0)
-        .sort((a, b) => b.gain - a.gain)
-    : [];
+  // Recent race cards (last 3 completed, newest first)
+  const recentRaces: StudioRaceCardData[] = completedWithResults
+    .slice(-3)
+    .reverse()
+    .map((race) => {
+      const results = race.Results ?? [];
+      const winner = results.find((r) => r.position === "1");
+      const pole = results.find((r) => r.grid === "1");
+      const fastest = results.find((r) => r.FastestLap?.rank === "1");
+      const countryShort = (race.Circuit?.Location?.country ?? "???")
+        .slice(0, 3)
+        .toUpperCase();
+      return {
+        round: race.round,
+        name: race.raceName.replace(" Grand Prix", " GP"),
+        short: countryShort,
+        date: new Date(race.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        winnerFamily: winner?.Driver.familyName.toUpperCase() ?? "—",
+        winnerTeamId:
+          getDriverConstructorId(
+            winner?.Driver.driverId ?? "",
+            winner?.Constructor.constructorId,
+          ) ??
+          winner?.Constructor.constructorId ??
+          "",
+        poleFamily: pole ? pole.Driver.familyName.toUpperCase() : null,
+        fastestFamily: fastest ? fastest.Driver.familyName.toUpperCase() : null,
+      };
+    });
+
+  const leader = driverStandings[0];
+  const second = driverStandings[1];
+  const maxConstructorPts = constructorStandings[0]
+    ? parseFloat(constructorStandings[0].points)
+    : 0;
+  const leaderPts = leader ? parseFloat(leader.points) : 0;
+  const nextSessionISO = nextSession?.date.toISOString() ?? "";
+
+  if (!leader || !second) {
+    return (
+      <main style={{ marginLeft: 224, flex: 1, padding: "40px 28px", color: "#555", fontFamily: DM }}>
+        Season data not yet available. Check back soon.
+      </main>
+    );
+  }
 
   return (
-    <>
+    <main style={{ marginLeft: 224, flex: 1, padding: "24px 26px 48px", minWidth: 0 }}>
       <Suspense fallback={null}>
         <LiveSessionBanner />
       </Suspense>
 
-      {/* Season Progress */}
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-            Season
-          </p>
-          <p className="mt-1 text-2xl font-black">{CURRENT_YEAR}</p>
-          <div className="mt-2 h-1 rounded-full bg-f1-dark overflow-hidden">
-            <div
-              className="h-full rounded-full bg-f1-red"
-              style={{ width: `${totalRaces > 0 ? (completedCount / totalRaces) * 100 : 0}%` }}
-            />
-          </div>
-          <p className="mt-1 text-xs text-f1-text-muted">{completedCount}/{totalRaces} races</p>
-        </div>
-        <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent bg-f1-card/60 acrylic p-4">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-            Championship Leader
-          </p>
-          {driverStandings[0] ? (
-            <>
-              <p className="mt-1 text-base font-black text-f1-accent leading-tight">
-                {driverStandings[0].Driver.familyName.toUpperCase()}
-              </p>
-              <p className="text-xs text-f1-text-muted mt-0.5">{driverStandings[0].points} pts</p>
-              {driverStandings[1] && (
-                <p className="text-xs text-f1-text-muted/60">
-                  +{(parseFloat(driverStandings[0].points) - parseFloat(driverStandings[1].points)).toFixed(0)} over {driverStandings[1].Driver.familyName}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="mt-1 text-lg font-black text-f1-accent">TBD</p>
-          )}
-        </div>
-        <div className="rounded-xl border border-f1-border/50 border-t-2 border-t-f1-accent-secondary bg-f1-card/60 acrylic p-4">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-            Top Constructor
-          </p>
-          {constructorStandings[0] ? (
-            <>
-              <p className="mt-1 text-base font-black text-f1-accent-secondary leading-tight">
-                {constructorStandings[0].Constructor.name}
-              </p>
-              <p className="text-xs text-f1-text-muted mt-0.5">{constructorStandings[0].points} pts</p>
-              {constructorStandings[1] && (
-                <p className="text-xs text-f1-text-muted/60">
-                  +{(parseFloat(constructorStandings[0].points) - parseFloat(constructorStandings[1].points)).toFixed(0)} over {constructorStandings[1].Constructor.name.split(" ").at(-1)}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="mt-1 text-lg font-black text-f1-accent-secondary">TBD</p>
-          )}
-        </div>
-        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-            Wins Leader
-          </p>
-          {winsLeader ? (
-            <>
-              <p className="mt-1 text-2xl font-black">
-                {parseInt(winsLeader.wins)}
-                <span className="text-sm font-normal text-f1-text-muted ml-1">wins</span>
-              </p>
-              <p className="text-xs text-f1-text-muted mt-0.5">{winsLeader.Driver.familyName}</p>
-            </>
-          ) : (
-            <p className="mt-1 text-2xl font-black">—</p>
-          )}
-        </div>
-      </div>
+      <LeaderHero
+        leader={leader}
+        second={second}
+        completedRaces={completedCount}
+        totalRaces={totalRaces}
+      />
 
-      {/* Extra KPI row */}
-      {completedWithResults.length > 0 && (
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
-            <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-              Different Winners
-            </p>
-            <p className="mt-1 text-2xl font-black">{uniqueWinners.size}</p>
-            <p className="text-xs text-f1-text-muted mt-0.5">
-              in {completedWithResults.length} races
-            </p>
-          </div>
-          {longestStreak.count >= 2 && (
-            <div
-              className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4"
-              style={{ borderLeftColor: getTeamColor(longestStreak.constructorId), borderLeftWidth: 3 }}
+      {/* Championship stacked bar */}
+      {constructorStandings.length > 0 && (
+        <div
+          style={{
+            borderRadius: 12,
+            border: "1px solid #1c1c1c",
+            background: "#131313",
+            padding: "14px 18px",
+            marginBottom: 18,
+          }}
+        >
+          <ChampionshipBar standings={constructorStandings} />
+        </div>
+      )}
+
+      {/* 3-column grid: standings (×2) + next race */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gap: 16,
+          marginBottom: 18,
+        }}
+      >
+        {/* Driver standings — spans 2 cols */}
+        <div
+          style={{
+            gridColumn: "span 2",
+            borderRadius: 12,
+            border: "1px solid #1c1c1c",
+            background: "#131313",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "12px 14px",
+              borderBottom: "1px solid #1c1c1c",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: BC,
+                fontWeight: 800,
+                fontSize: 14,
+                letterSpacing: "0.04em",
+              }}
             >
-              <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-                Best Win Streak
-              </p>
-              <p className="mt-1 text-2xl font-black">{longestStreak.count}</p>
-              <p className="text-xs text-f1-text-muted mt-0.5">{longestStreak.familyName}</p>
-            </div>
-          )}
-          {(() => {
-            // Most podiums
-            const podiumMap = new Map<string, { name: string; familyName: string; constructorId: string; count: number }>();
-            for (const race of completedWithResults) {
-              for (const r of race.Results ?? []) {
-                if (parseInt(r.position) <= 3) {
-                  const id = r.Driver.driverId;
-                  const existing = podiumMap.get(id) ?? { name: `${r.Driver.givenName} ${r.Driver.familyName}`, familyName: r.Driver.familyName, constructorId: r.Constructor.constructorId, count: 0 };
-                  podiumMap.set(id, { ...existing, count: existing.count + 1 });
-                }
-              }
-            }
-            const podiumLeader = [...podiumMap.values()].sort((a, b) => b.count - a.count)[0];
-            if (!podiumLeader) return null;
-            return (
-              <div
-                className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4"
-                style={{ borderLeftColor: getTeamColor(podiumLeader.constructorId), borderLeftWidth: 3 }}
-              >
-                <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-                  Most Podiums
-                </p>
-                <p className="mt-1 text-2xl font-black">{podiumLeader.count}</p>
-                <p className="text-xs text-f1-text-muted mt-0.5">{podiumLeader.familyName}</p>
-              </div>
-            );
-          })()}
-          {(() => {
-            // Total DNFs
-            let dnfCount = 0;
-            for (const race of completedWithResults) {
-              for (const r of race.Results ?? []) {
-                if (r.status !== "Finished" && !r.status.startsWith("+")) dnfCount++;
-              }
-            }
-            return (
-              <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-4">
-                <p className="text-xs uppercase tracking-wider text-f1-text-muted">
-                  Season DNFs
-                </p>
-                <p className="mt-1 text-2xl font-black">{dnfCount}</p>
-                <p className="text-xs text-f1-text-muted mt-0.5">retirements</p>
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* Next Race (event-level context with links) */}
-      {nextRace && (
-        <div className="mb-8">
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
-            <span className="w-1 h-5 rounded-full bg-f1-accent" />
-            Next Race
-          </h2>
-          <RaceCard race={nextRace} />
-        </div>
-      )}
-
-      {/* Main Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Driver Standings */}
-        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic">
-          <div className="flex items-center justify-between border-b border-f1-border/40 p-4">
-            <h2 className="flex items-center gap-2 font-bold">
-              <span className="w-1 h-4 rounded-full bg-f1-accent" />
               Driver Standings
-            </h2>
-            <Link
-              href="/drivers"
-              className="text-xs text-f1-accent hover:underline"
+            </span>
+            <span
+              style={{
+                fontSize: 9,
+                color: "#3a3a3a",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                fontFamily: DM,
+              }}
             >
-              View All &rarr;
-            </Link>
-          </div>
-          <StandingsTable standings={driverStandings} limit={10} />
-        </div>
-
-        {/* Constructor Standings */}
-        <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic">
-          <div className="flex items-center justify-between border-b border-f1-border/40 p-4">
-            <h2 className="flex items-center gap-2 font-bold">
-              <span className="w-1 h-4 rounded-full bg-f1-accent-secondary" />
-              Constructor Standings
-            </h2>
-            <Link
-              href="/teams"
-              className="text-xs text-f1-accent hover:underline"
-            >
-              View All &rarr;
-            </Link>
-          </div>
-          <ConstructorStandingsTable standings={constructorStandings} />
-        </div>
-      </div>
-
-      {/* Recent Races */}
-      {completedRaces.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <span className="w-1 h-5 rounded-full bg-f1-accent-secondary" />
-              Recent Races
-            </h2>
-            <Link
-              href="/races"
-              className="text-xs text-f1-accent hover:underline"
-            >
-              View Full Calendar &rarr;
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {completedRaces.map((race) => (
-              <RaceCard key={race.round} race={race} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Movers & Shakers */}
-      {lastRace && movers.length > 0 && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <span className="w-1 h-5 rounded-full bg-green-400" />
-              Movers &amp; Shakers
-            </h2>
-            <span className="text-xs text-f1-text-muted">
-              {lastRace.raceName.replace(" Grand Prix", " GP")}
+              pts · last 5 form
             </span>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Top gainers */}
-            {movers.filter((m) => m.gain > 0).slice(0, 3).map((m) => {
-              const color = getTeamColor(m.constructorId);
-              return (
-                <div key={m.name} className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-3 flex items-center gap-3">
-                  <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{m.familyName}</p>
-                    <p className="text-xs text-f1-text-muted">P{m.grid} &#8594; P{m.position}</p>
-                  </div>
-                  <span className="text-lg font-black text-green-400">+{m.gain}</span>
-                </div>
-              );
-            })}
-            {/* Biggest loser */}
-            {movers.filter((m) => m.gain < 0).slice(-1).map((m) => {
-              const color = getTeamColor(m.constructorId);
-              return (
-                <div key={m.name} className="rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic p-3 flex items-center gap-3">
-                  <span className="h-8 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{m.familyName}</p>
-                    <p className="text-xs text-f1-text-muted">P{m.grid} &#8594; P{m.position}</p>
-                  </div>
-                  <span className="text-lg font-black text-red-400">{m.gain}</span>
-                </div>
-              );
-            })}
+          {driverStandings.slice(0, 10).map((s, i) => (
+            <StudioDriverRow
+              key={s.Driver.driverId}
+              standing={s}
+              rank={i + 1}
+              form={formData[s.Driver.driverId] ?? []}
+              leaderPts={leaderPts}
+              delay={i * 45 + 150}
+            />
+          ))}
+        </div>
+
+        {/* Next race card */}
+        {nextRace ? (
+          <StudioNextRaceCard race={nextRace} nextSessionDate={nextSessionISO} />
+        ) : (
+          <div
+            style={{
+              borderRadius: 12,
+              border: "1px solid #1c1c1c",
+              background: "#131313",
+              padding: 18,
+              color: "#555",
+              fontFamily: DM,
+              fontSize: 12,
+            }}
+          >
+            No upcoming race scheduled.
+          </div>
+        )}
+      </div>
+
+      {/* 2-column: constructors + recent results */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Constructor standings */}
+        <div
+          style={{
+            borderRadius: 12,
+            border: "1px solid #1c1c1c",
+            background: "#131313",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid #1c1c1c" }}>
+            <span
+              style={{
+                fontFamily: BC,
+                fontWeight: 800,
+                fontSize: 14,
+                letterSpacing: "0.04em",
+              }}
+            >
+              Constructors
+            </span>
+          </div>
+          {constructorStandings.map((s, i) => (
+            <StudioConstructorRow
+              key={s.Constructor.constructorId}
+              standing={s}
+              maxPts={maxConstructorPts}
+              delay={i * 50 + 200}
+            />
+          ))}
+        </div>
+
+        {/* Recent race results */}
+        <div>
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 800,
+              fontSize: 14,
+              letterSpacing: "0.04em",
+              marginBottom: 11,
+            }}
+          >
+            Recent Results
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {recentRaces.map((r, i) => (
+              <StudioRaceCard key={r.round} race={r} delay={i * 80 + 200} />
+            ))}
+            {recentRaces.length === 0 && (
+              <div style={{ color: "#555", fontFamily: DM, fontSize: 12, padding: "16px 0" }}>
+                No race results yet this season.
+              </div>
+            )}
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </main>
   );
 }
 
-export default function Home() {
-  return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">
-            <span className="text-f1-red">F1</span> Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
-            Live stats, standings, and results for the {CURRENT_YEAR} season
-          </p>
-        </div>
-        <RefreshButton intervalMs={60000} />
-      </div>
+export default async function Home() {
+  const driverStandings = await getDriverStandings();
 
-      {/* Next session countdown with circuit map */}
+  return (
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      <SidebarNav standings={driverStandings} />
       <Suspense
         fallback={
-          <div className="mb-8 h-60 rounded-xl bg-f1-card/60 animate-pulse" />
+          <main
+            style={{ marginLeft: 224, flex: 1, padding: "24px 26px" }}
+            className="space-y-4"
+          >
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-20 rounded-xl bg-f1-card animate-pulse" />
+            ))}
+          </main>
         }
       >
-        <NextSessionCard />
-      </Suspense>
-
-      {/* Season standings, recent races, etc. */}
-      <Suspense fallback={<LoadingSkeleton rows={10} />}>
         <DashboardContent />
       </Suspense>
     </div>
