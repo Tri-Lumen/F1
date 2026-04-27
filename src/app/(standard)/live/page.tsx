@@ -30,16 +30,42 @@ import RefreshButton from "@/components/RefreshButton";
 import NextSessionCard from "@/components/NextSessionCard";
 import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
 
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
+
+const cardStyle = {
+  borderRadius: 12,
+  border: "1px solid #1c1c1c",
+  background: "#131313",
+};
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        fontFamily: BC,
+        fontWeight: 800,
+        fontSize: 14,
+        letterSpacing: "0.04em",
+        padding: "12px 14px",
+        borderBottom: "1px solid #1c1c1c",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 async function LiveContent() {
   const session = await getLatestSession();
 
   if (!session) {
     return (
       <div>
-        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6 text-center">
-          <p className="text-f1-text-muted text-sm">
+        <div style={{ ...cardStyle, padding: "24px", textAlign: "center", marginBottom: 16 }}>
+          <p style={{ fontFamily: DM, fontSize: 13, color: "#555" }}>
             No session is currently active.{" "}
-            <Link href="/races" className="text-f1-accent hover:underline">
+            <Link href="/races" style={{ color: "#e10600" }}>
               View race calendar
             </Link>
           </p>
@@ -51,19 +77,18 @@ async function LiveContent() {
 
   const isLive = isSessionLive(session);
 
-  // Fetch each endpoint independently so partial failures don't break the whole page
-  const [drivers, positions, intervals, stints, radio, raceControl, weather, laps] = await Promise.all([
-    getLiveDrivers(session.session_key),
-    getLivePositions(session.session_key),
-    getLiveIntervals(session.session_key),
-    getLiveStints(session.session_key),
-    getTeamRadio(session.session_key),
-    getRaceControl(session.session_key),
-    getWeather(session.session_key),
-    getLiveLaps(session.session_key),
-  ]);
+  const [drivers, positions, intervals, stints, radio, raceControl, weather, laps] =
+    await Promise.all([
+      getLiveDrivers(session.session_key),
+      getLivePositions(session.session_key),
+      getLiveIntervals(session.session_key),
+      getLiveStints(session.session_key),
+      getTeamRadio(session.session_key),
+      getRaceControl(session.session_key),
+      getWeather(session.session_key),
+      getLiveLaps(session.session_key),
+    ]);
 
-  // Track which data sources are available for user feedback
   const dataStatus = {
     drivers: drivers.length > 0,
     positions: positions.length > 0,
@@ -73,25 +98,13 @@ async function LiveContent() {
   };
   const hasAnyData = dataStatus.drivers || dataStatus.positions;
 
-  // Get latest position for each driver
   const latestPositions = new Map<number, number>();
-  for (const p of positions) {
-    latestPositions.set(p.driver_number, p.position);
-  }
+  for (const p of positions) latestPositions.set(p.driver_number, p.position);
 
-  // Get latest interval for each driver
-  const latestIntervals = new Map<
-    number,
-    { gap: number | null; interval: number | null }
-  >();
-  for (const iv of intervals) {
-    latestIntervals.set(iv.driver_number, {
-      gap: iv.gap_to_leader,
-      interval: iv.interval,
-    });
-  }
+  const latestIntervals = new Map<number, { gap: number | null; interval: number | null }>();
+  for (const iv of intervals)
+    latestIntervals.set(iv.driver_number, { gap: iv.gap_to_leader, interval: iv.interval });
 
-  // Get current stint (latest) for each driver — O(n) single pass
   const currentStints = new Map<number, { compound: string; age: number }>();
   const latestStintNums = new Map<number, number>();
   for (const stint of stints) {
@@ -106,137 +119,222 @@ async function LiveContent() {
     }
   }
 
-  // Sort drivers by position
   const sortedDrivers = [...drivers].sort((a, b) => {
     const posA = latestPositions.get(a.driver_number) ?? 99;
     const posB = latestPositions.get(b.driver_number) ?? 99;
     return posA - posB;
   });
 
-  // Derive current lap from laps data
-  const currentLap = laps.length > 0
-    ? Math.max(...laps.map((l) => l.lap_number))
-    : null;
+  const currentLap =
+    laps.length > 0 ? Math.max(...laps.map((l) => l.lap_number)) : null;
 
-  // Derive latest flag from race control messages
   const latestFlagMsg = [...raceControl]
     .reverse()
     .find((m) => m.flag && m.flag !== "");
   const currentFlag = latestFlagMsg?.flag ?? null;
 
-  const flagStyles: Record<string, { bg: string; text: string; label: string }> = {
-    GREEN: { bg: "bg-green-500", text: "text-white", label: "GREEN FLAG" },
-    YELLOW: { bg: "bg-yellow-400", text: "text-black", label: "YELLOW FLAG" },
-    DOUBLE_YELLOW: { bg: "bg-yellow-400", text: "text-black", label: "DOUBLE YELLOW" },
-    RED: { bg: "bg-red-600", text: "text-white", label: "RED FLAG" },
-    BLUE: { bg: "bg-blue-500", text: "text-white", label: "BLUE FLAG" },
-    CHEQUERED: { bg: "bg-white", text: "text-black", label: "CHEQUERED" },
-    CLEAR: { bg: "bg-green-500", text: "text-white", label: "TRACK CLEAR" },
-    SAFETY_CAR: { bg: "bg-yellow-500", text: "text-black", label: "SAFETY CAR" },
-    VIRTUAL_SAFETY_CAR: { bg: "bg-yellow-400", text: "text-black", label: "VSC" },
+  const flagStyles: Record<string, { bg: string; color: string; label: string }> = {
+    GREEN: { bg: "#16a34a", color: "#fff", label: "GREEN FLAG" },
+    YELLOW: { bg: "#ca8a04", color: "#000", label: "YELLOW FLAG" },
+    DOUBLE_YELLOW: { bg: "#ca8a04", color: "#000", label: "DOUBLE YELLOW" },
+    RED: { bg: "#dc2626", color: "#fff", label: "RED FLAG" },
+    BLUE: { bg: "#2563eb", color: "#fff", label: "BLUE FLAG" },
+    CHEQUERED: { bg: "#f5f5f5", color: "#000", label: "CHEQUERED" },
+    CLEAR: { bg: "#16a34a", color: "#fff", label: "TRACK CLEAR" },
+    SAFETY_CAR: { bg: "#d97706", color: "#000", label: "SAFETY CAR" },
+    VIRTUAL_SAFETY_CAR: { bg: "#ca8a04", color: "#000", label: "VSC" },
   };
 
   return (
     <>
       {/* Session Header */}
-      <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="flex flex-col gap-1.5 shrink-0 mt-0.5">
+      <div style={{ ...cardStyle, padding: "18px 20px", marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 16,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, minWidth: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0, marginTop: 2 }}>
               {isLive ? (
-                <span className="flex items-center gap-1.5 rounded-full bg-f1-red px-3 py-1 text-sm font-bold text-white">
-                  <span className="h-2 w-2 rounded-full bg-white animate-pulse-live" />
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "#e10600",
+                    borderRadius: 99,
+                    padding: "3px 10px",
+                    fontFamily: BC,
+                    fontWeight: 800,
+                    fontSize: 11,
+                    letterSpacing: "0.08em",
+                    color: "#fff",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#fff",
+                      animation: "pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
                   LIVE
                 </span>
               ) : (
-                <span className="rounded-full bg-f1-dark px-3 py-1 text-sm font-bold text-f1-text-muted">
+                <span
+                  style={{
+                    background: "#1a1a1a",
+                    borderRadius: 99,
+                    padding: "3px 10px",
+                    fontFamily: BC,
+                    fontWeight: 700,
+                    fontSize: 11,
+                    letterSpacing: "0.08em",
+                    color: "#555",
+                  }}
+                >
                   SESSION ENDED
                 </span>
               )}
               {currentFlag && flagStyles[currentFlag] && (
-                <span className={`rounded-full px-3 py-1 text-xs font-bold ${flagStyles[currentFlag].bg} ${flagStyles[currentFlag].text}`}>
+                <span
+                  style={{
+                    background: flagStyles[currentFlag].bg,
+                    color: flagStyles[currentFlag].color,
+                    borderRadius: 99,
+                    padding: "3px 10px",
+                    fontFamily: BC,
+                    fontWeight: 800,
+                    fontSize: 10,
+                    letterSpacing: "0.08em",
+                  }}
+                >
                   {flagStyles[currentFlag].label}
                 </span>
               )}
             </div>
-            <div className="min-w-0">
-              <h2 className="text-xl font-black">
-                {session.country_name} &mdash; {session.session_name}
-              </h2>
-              <p className="text-sm text-f1-text-muted">
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: BC,
+                  fontWeight: 900,
+                  fontSize: 22,
+                  lineHeight: 1.1,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {session.country_name} — {session.session_name}
+              </div>
+              <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 2 }}>
                 {session.circuit_short_name}
-              </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
             {currentLap !== null && session.session_type === "Race" && (
-              <div className="text-right">
-                <p className="text-2xl font-black leading-none">{currentLap}</p>
-                <p className="text-xs text-f1-text-muted uppercase tracking-wider">Lap</p>
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontFamily: BC,
+                    fontWeight: 900,
+                    fontSize: 32,
+                    lineHeight: 1,
+                    color: "#e10600",
+                  }}
+                >
+                  {currentLap}
+                </div>
+                <div
+                  style={{
+                    fontFamily: DM,
+                    fontSize: 9,
+                    color: "#555",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Lap
+                </div>
               </div>
             )}
-            <div className="flex flex-col items-end gap-1 text-xs text-f1-text-muted">
-              <span className="hidden sm:block">MultiViewer integration enabled</span>
-              <svg
-                className="h-4 w-4 text-f1-accent"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Data availability warning */}
+      {/* Data warnings */}
       {isLive && !hasAnyData && (
-        <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
-          <p className="text-sm text-yellow-400 font-medium">
-            Unable to fetch live timing data from OpenF1. The data provider may be experiencing high traffic or the session data is not yet available. The page will automatically retry.
+        <div
+          style={{
+            ...cardStyle,
+            border: "1px solid rgba(202,138,4,0.3)",
+            background: "rgba(202,138,4,0.05)",
+            padding: "12px 16px",
+            marginBottom: 16,
+          }}
+        >
+          <p style={{ fontFamily: DM, fontSize: 13, color: "#ca8a04", fontWeight: 600 }}>
+            Unable to fetch live timing data from OpenF1. The data provider may be experiencing
+            high traffic or the session data is not yet available.
           </p>
         </div>
       )}
       {isLive && hasAnyData && (!dataStatus.intervals || !dataStatus.stints) && (
-        <div className="mb-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3">
-          <p className="text-xs text-yellow-400/80">
-            Some live data is temporarily unavailable ({[
+        <div
+          style={{
+            ...cardStyle,
+            border: "1px solid rgba(202,138,4,0.2)",
+            background: "rgba(202,138,4,0.04)",
+            padding: "10px 14px",
+            marginBottom: 16,
+          }}
+        >
+          <p style={{ fontFamily: DM, fontSize: 11, color: "rgba(202,138,4,0.8)" }}>
+            Some live data is temporarily unavailable (
+            {[
               !dataStatus.intervals && "intervals",
               !dataStatus.stints && "tire data",
               !dataStatus.radio && "team radio",
-            ].filter(Boolean).join(", ")}). Will retry on next refresh.
+            ]
+              .filter(Boolean)
+              .join(", ")}
+            ). Will retry on next refresh.
           </p>
         </div>
       )}
 
       {/* Live Timing Table */}
-      <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
-        <div className="border-b border-f1-border p-4">
-          <h3 className="font-bold text-lg">Live Timing</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <div style={{ ...cardStyle, overflow: "hidden", marginBottom: 16 }}>
+        <SectionHeader>Live Timing</SectionHeader>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
-                <th className="px-3 py-3 w-12">Pos</th>
-                <th className="px-3 py-3 hidden xs:table-cell w-10 text-center">#</th>
-                <th className="px-3 py-3">Driver</th>
-                <th className="px-3 py-3 hidden sm:table-cell">Team</th>
-                <th className="px-3 py-3 text-center">Tire</th>
-                <th className="px-3 py-3 text-center hidden sm:table-cell w-14">Age</th>
-                <th className="px-3 py-3 text-right hidden md:table-cell">
-                  Interval
-                </th>
-                <th className="px-3 py-3 text-right hidden md:table-cell">
-                  Gap
-                </th>
-                <th className="px-3 py-3 text-center w-16">Onboard</th>
+              <tr style={{ borderBottom: "1px solid #1c1c1c" }}>
+                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Interval", "Gap", "Onboard"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "8px 12px",
+                        fontFamily: BC,
+                        fontWeight: 700,
+                        fontSize: 9,
+                        letterSpacing: "0.1em",
+                        color: "#3a3a3a",
+                        textTransform: "uppercase",
+                        textAlign: h === "Gap" || h === "Interval" ? "right" : "left",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
@@ -247,77 +345,144 @@ async function LiveContent() {
                 const compound = tire
                   ? (COMPOUND_COLORS[tire.compound?.toUpperCase()] ?? COMPOUND_FALLBACK)
                   : null;
-                const compoundBg = compound?.bg ?? null;
-                const compoundLabel = compound?.label ?? null;
 
                 return (
                   <tr
                     key={driver.driver_number}
-                    className="border-b border-f1-border/50 transition-colors hover:bg-f1-dark/30"
+                    style={{ borderBottom: "1px solid #111" }}
                   >
-                    <td className="px-3 py-3 font-bold text-f1-text-muted">
-                      {pos}
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontFamily: BC,
+                          fontWeight: 900,
+                          fontSize: 16,
+                          color: "#ccc",
+                        }}
+                      >
+                        {pos}
+                      </span>
                     </td>
-                    <td className="px-3 py-3 hidden xs:table-cell text-center text-xs font-mono text-f1-text-muted/50">
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontFamily: "monospace",
+                        fontSize: 11,
+                        color: "#3a3a3a",
+                      }}
+                    >
                       {driver.driver_number}
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
+                    <td style={{ padding: "10px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span
-                          className="h-6 w-1 rounded-full"
                           style={{
-                            backgroundColor: driver.team_colour
+                            width: 3,
+                            height: 24,
+                            borderRadius: 2,
+                            background: driver.team_colour
                               ? `#${driver.team_colour}`
-                              : "#888",
+                              : "#555",
+                            flexShrink: 0,
                           }}
                         />
-                        <div>
-                          <span className="font-bold">
-                            {driver.name_acronym}
-                          </span>
-                          <span className="ml-2 text-xs text-f1-text-muted sm:hidden">
-                            {driver.team_name}
-                          </span>
-                        </div>
+                        <span
+                          style={{
+                            fontFamily: BC,
+                            fontWeight: 800,
+                            fontSize: 16,
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          {driver.name_acronym}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontFamily: DM,
+                        fontSize: 12,
+                        color: "#555",
+                      }}
+                    >
                       {driver.team_name}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      {tire && compoundBg && (
+                    <td style={{ padding: "10px 12px" }}>
+                      {tire && compound && (
                         <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${compoundBg} text-xs font-black text-black`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 24,
+                            height: 24,
+                            borderRadius: "50%",
+                            fontFamily: BC,
+                            fontWeight: 900,
+                            fontSize: 11,
+                            color: "#000",
+                          }}
+                          className={compound.bg}
                           title={`${tire.compound} - ${tire.age} laps`}
                         >
-                          {compoundLabel}
+                          {compound.label}
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-center hidden sm:table-cell">
-                      {tire && tire.age != null ? (
-                        <span className={`text-xs font-mono font-bold ${tire.age > 25 ? "text-orange-400" : tire.age > 15 ? "text-yellow-400" : "text-f1-text-muted"}`}>
+                    <td style={{ padding: "10px 12px" }}>
+                      {tire?.age != null ? (
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color:
+                              tire.age > 25
+                                ? "#fb923c"
+                                : tire.age > 15
+                                ? "#eab308"
+                                : "#555",
+                          }}
+                        >
                           {tire.age}L
                         </span>
                       ) : (
-                        <span className="text-xs text-f1-text-muted/40">—</span>
+                        <span style={{ color: "#333", fontSize: 11 }}>—</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-right hidden md:table-cell text-f1-text-muted font-mono text-xs">
-                      {pos === 1
-                        ? ""
-                        : iv?.interval != null
-                        ? `+${iv.interval.toFixed(3)}`
-                        : "-"}
+                    <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: 11,
+                          color: "#555",
+                        }}
+                      >
+                        {pos === 1
+                          ? ""
+                          : iv?.interval != null
+                          ? `+${iv.interval.toFixed(3)}`
+                          : "—"}
+                      </span>
                     </td>
-                    <td className="px-3 py-3 text-right hidden md:table-cell text-f1-text-muted font-mono text-xs">
-                      {pos === 1
-                        ? "LEADER"
-                        : iv?.gap != null
-                        ? `+${iv.gap.toFixed(3)}`
-                        : "-"}
+                    <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: 11,
+                          color: pos === 1 ? "#e10600" : "#555",
+                          fontWeight: pos === 1 ? 700 : 400,
+                        }}
+                      >
+                        {pos === 1
+                          ? "LEADER"
+                          : iv?.gap != null
+                          ? `+${iv.gap.toFixed(3)}`
+                          : "—"}
+                      </span>
                     </td>
-                    <td className="px-3 py-3 text-center">
+                    <td style={{ padding: "10px 12px", textAlign: "center" }}>
                       <OnboardButton
                         driverNumber={driver.driver_number}
                         acronym={driver.name_acronym}
@@ -333,24 +498,54 @@ async function LiveContent() {
       </div>
 
       {/* Lap Times */}
-      <div className="mb-6">
-        <LiveLapTimes laps={laps} drivers={drivers} latestPositions={latestPositions} />
+      <div style={{ ...cardStyle, overflow: "hidden", marginBottom: 16 }}>
+        <SectionHeader>Lap Times</SectionHeader>
+        <div style={{ padding: "0 0 8px" }}>
+          <LiveLapTimes laps={laps} drivers={drivers} latestPositions={latestPositions} />
+        </div>
       </div>
 
-      {/* Weather + Tire Strategy row */}
-      <div className="mb-6 grid gap-6 lg:grid-cols-[300px_1fr]">
-        <WeatherWidget weather={weather} />
-        <TireStrategy
-          stints={stints}
-          drivers={drivers}
-          latestPositions={latestPositions}
-        />
+      {/* Weather + Tire Strategy */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "300px 1fr",
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+          <SectionHeader>Weather</SectionHeader>
+          <div style={{ padding: 14 }}>
+            <WeatherWidget weather={weather} />
+          </div>
+        </div>
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+          <SectionHeader>Tire Strategy</SectionHeader>
+          <div style={{ padding: 14 }}>
+            <TireStrategy
+              stints={stints}
+              drivers={drivers}
+              latestPositions={latestPositions}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Race Control + Team Radio row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <RaceControlFeed messages={raceControl} />
-        <TeamRadioFeed messages={radio} drivers={drivers} />
+      {/* Race Control + Team Radio */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+          <SectionHeader>Race Control</SectionHeader>
+          <div style={{ padding: 14 }}>
+            <RaceControlFeed messages={raceControl} />
+          </div>
+        </div>
+        <div style={{ ...cardStyle, overflow: "hidden" }}>
+          <SectionHeader>Team Radio</SectionHeader>
+          <div style={{ padding: 14 }}>
+            <TeamRadioFeed messages={radio} drivers={drivers} />
+          </div>
+        </div>
       </div>
     </>
   );
@@ -358,33 +553,54 @@ async function LiveContent() {
 
 export default function LivePage() {
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
+    <>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: 22,
+        }}
+      >
         <div>
-          <h1 className="text-3xl font-black tracking-tight">
-            <span className="text-f1-red">Live</span> Session
-          </h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 900,
+              fontSize: 28,
+              letterSpacing: "0.02em",
+              lineHeight: 1,
+            }}
+          >
+            <span style={{ color: "#e10600" }}>LIVE</span> SESSION
+          </div>
+          <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
             Real-time timing, tire strategy, team radio &amp; onboard cameras
-          </p>
+          </div>
         </div>
         <RefreshButton intervalMs={15000} />
       </div>
 
       <Suspense
         fallback={
-          <div className="space-y-4">
-            <div className="h-24 rounded-xl bg-f1-card animate-pulse" />
-            <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="h-64 rounded-xl bg-f1-card animate-pulse" />
-              <div className="h-64 rounded-xl bg-f1-card animate-pulse" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ height: 96, borderRadius: 12, background: "#131313" }} />
+            <div style={{ height: 384, borderRadius: 12, background: "#131313" }} />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 16,
+              }}
+            >
+              <div style={{ height: 256, borderRadius: 12, background: "#131313" }} />
+              <div style={{ height: 256, borderRadius: 12, background: "#131313" }} />
             </div>
           </div>
         }
       >
         <LiveContent />
       </Suspense>
-    </div>
+    </>
   );
 }

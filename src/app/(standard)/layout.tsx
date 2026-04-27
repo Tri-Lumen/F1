@@ -1,24 +1,19 @@
-import { Suspense } from "react";
-import Nav from "@/components/Nav";
-import NavSessionLoader from "@/components/NavSessionLoader";
+import { getDriverStandings } from "@/lib/api";
+import SidebarNav from "@/components/SidebarNav";
 
-export default function StandardLayout({
+export default async function StandardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const sessionPill = (
-    <Suspense fallback={null}>
-      <NavSessionLoader />
-    </Suspense>
-  );
+  const standings = await getDriverStandings();
 
   return (
-    <>
-      <Nav sessionPill={sessionPill} />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div style={{ display: "flex", minHeight: "100vh" }}>
+      <SidebarNav standings={standings} />
+      <main style={{ marginLeft: 224, flex: 1, padding: "24px 26px 48px", minWidth: 0 }}>
         {children}
       </main>
-    </>
+    </div>
   );
 }

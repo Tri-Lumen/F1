@@ -19,7 +19,6 @@ import {
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
 import StandingsTable from "@/components/StandingsTable";
-import RefreshButton from "@/components/RefreshButton";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
 import { DriverNumber } from "@/components/ProfileImage";
 import { getDriverNumberUrl } from "@/lib/profileImages";
@@ -28,6 +27,9 @@ import {
   getDriverConstructorId,
   getDriverConstructorName,
 } from "@/lib/driverOverrides";
+
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
 
 interface DriverStats {
   podiums: number;
@@ -40,10 +42,7 @@ interface DriverStats {
   racesEntered: number;
 }
 
-function computeDriverStats(
-  driverId: string,
-  allRaces: Race[]
-): DriverStats {
+function computeDriverStats(driverId: string, allRaces: Race[]): DriverStats {
   let podiums = 0;
   let fastestLaps = 0;
   let dnfs = 0;
@@ -59,20 +58,11 @@ function computeDriverStats(
         racesEntered++;
         const pos = parseInt(result.position);
         totalPoints += parseFloat(result.points);
-
         if (pos <= 3) podiums++;
         if (pos < bestFinish) bestFinish = pos;
         if (result.grid === "1") poles++;
-        if (
-          result.FastestLap?.rank === "1"
-        )
-          fastestLaps++;
-        if (
-          result.status !== "Finished" &&
-          !result.status.startsWith("+")
-        )
-          dnfs++;
-
+        if (result.FastestLap?.rank === "1") fastestLaps++;
+        if (result.status !== "Finished" && !result.status.startsWith("+")) dnfs++;
         totalPosition += pos;
       }
     }
@@ -84,14 +74,8 @@ function computeDriverStats(
     fastestLaps,
     dnfs,
     bestFinish: bestFinish === 99 ? 0 : bestFinish,
-    avgFinish:
-      racesEntered > 0
-        ? Math.round((totalPosition / racesEntered) * 10) / 10
-        : 0,
-    pointsPerRace:
-      racesEntered > 0
-        ? Math.round((totalPoints / racesEntered) * 10) / 10
-        : 0,
+    avgFinish: racesEntered > 0 ? Math.round((totalPosition / racesEntered) * 10) / 10 : 0,
+    pointsPerRace: racesEntered > 0 ? Math.round((totalPoints / racesEntered) * 10) / 10 : 0,
     racesEntered,
   };
 }
@@ -103,10 +87,8 @@ async function DriversContent() {
     getRaceSchedule(),
   ]);
 
-  // Completed races only (have Results)
   const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
 
-  // --- Feature 1: Recent Form (last 5 results per driver) ---
   const recentFormMap = new Map<string, { pos: number; status: string }[]>();
   for (const s of standings) {
     const results: { pos: number; status: string }[] = [];
@@ -119,11 +101,9 @@ async function DriversContent() {
     recentFormMap.set(s.Driver.driverId, results);
   }
 
-  // --- Feature 2: Championship Clinch Status ---
   const now = new Date();
   const remainingSchedule = schedule.filter((r) => getRaceDate(r) > now);
   const remainingRaces = remainingSchedule.length;
-  // 25 pts for race win; +8 for sprint win only on sprint weekends
   const maxAvailable = remainingSchedule.reduce(
     (sum, r) => sum + 25 + (r.Sprint ? 8 : 0),
     0
@@ -152,7 +132,6 @@ async function DriversContent() {
     }
   }
 
-  // --- Feature 4: Season Highlights ---
   const winsMap = new Map<string, { name: string; count: number }>();
   const polesMap = new Map<string, { name: string; count: number }>();
   const flMap = new Map<string, { name: string; count: number }>();
@@ -172,7 +151,6 @@ async function DriversContent() {
       posMap.set(id, { name, total: ep.total + pos, count: ep.count + 1 });
     }
   }
-  // Win streak
   let streakName = "";
   let streakCount = 0;
   for (let i = completedRaces.length - 1; i >= 0; i--) {
@@ -200,61 +178,136 @@ async function DriversContent() {
     bestAvg && { label: "Best Avg Finish", value: (bestAvg.total / bestAvg.count).toFixed(1), name: bestAvg.name, icon: "📊" },
   ].filter(Boolean) as { label: string; value: string | number; name: string; icon: string }[];
 
+  const cardStyle = {
+    borderRadius: 12,
+    border: "1px solid #1c1c1c",
+    background: "#131313",
+  };
+
   return (
     <>
-      {/* Feature 2: Championship Clinch Status */}
+      {/* Championship Status */}
       {clinchInfo && completedRaces.length > 0 && (
-        <div className="mb-8 rounded-xl border border-f1-border bg-f1-card p-4">
-          <h2 className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-2">Championship Status</h2>
+        <div style={{ ...cardStyle, padding: "14px 18px", marginBottom: 18 }}>
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 800,
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              color: "#555",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            Championship Status
+          </div>
           {clinchInfo.clinched ? (
-            <p className="text-sm font-bold text-f1-accent">
+            <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "#e10600" }}>
               🏆 {clinchInfo.leaderName} has clinched the {CURRENT_YEAR} World Championship!
             </p>
           ) : (
-            <div className="flex flex-wrap items-center gap-4">
-              <p className="text-sm">
-                <span className="font-bold">{clinchInfo.leaderName}</span>{" "}
-                leads by <span className="font-bold text-f1-accent">{clinchInfo.gap} pts</span>
-              </p>
-              <p className="text-sm text-f1-text-muted">
-                Needs <span className="font-semibold text-f1-text">{clinchInfo.ptsNeeded} pts</span> to clinch mathematically
-              </p>
-              <p className="text-sm text-f1-text-muted">
-                {clinchInfo.remaining} races left &middot; {clinchInfo.maxAvailable} pts available
-              </p>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 24px" }}>
+              <span style={{ fontFamily: DM, fontSize: 13 }}>
+                <span style={{ fontWeight: 700 }}>{clinchInfo.leaderName}</span>{" "}
+                leads by{" "}
+                <span style={{ fontWeight: 700, color: "#e10600" }}>{clinchInfo.gap} pts</span>
+              </span>
+              <span style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
+                Needs <span style={{ color: "#ccc" }}>{clinchInfo.ptsNeeded} pts</span> to clinch
+              </span>
+              <span style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
+                {clinchInfo.remaining} races left · {clinchInfo.maxAvailable} pts available
+              </span>
             </div>
           )}
         </div>
       )}
 
-      {/* Feature 4: Season Highlights */}
+      {/* Season Highlights */}
       {highlights.length > 0 && completedRaces.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-3 text-xs uppercase tracking-wider text-f1-text-muted font-bold">Season Highlights</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div style={{ marginBottom: 18 }}>
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 800,
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              color: "#555",
+              textTransform: "uppercase",
+              marginBottom: 10,
+            }}
+          >
+            Season Highlights
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+              gap: 8,
+            }}
+          >
             {highlights.map((h) => (
-              <div key={h.label} className="rounded-xl border border-f1-border bg-f1-card p-3 text-center">
-                <p className="text-lg">{h.icon}</p>
-                <p className="text-xs text-f1-text-muted mt-1">{h.label}</p>
-                <p className="text-xl font-black">{h.value}</p>
-                <p className="text-xs text-f1-text-muted truncate">{h.name.split(" ").at(-1)}</p>
+              <div
+                key={h.label}
+                style={{ ...cardStyle, padding: "12px 10px", textAlign: "center" }}
+              >
+                <div style={{ fontSize: 18 }}>{h.icon}</div>
+                <div
+                  style={{
+                    fontFamily: DM,
+                    fontSize: 9,
+                    color: "#555",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    marginTop: 4,
+                  }}
+                >
+                  {h.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: BC,
+                    fontWeight: 900,
+                    fontSize: 22,
+                    lineHeight: 1.1,
+                    marginTop: 2,
+                  }}
+                >
+                  {h.value}
+                </div>
+                <div style={{ fontFamily: DM, fontSize: 10, color: "#555", marginTop: 2 }}>
+                  {h.name.split(" ").at(-1)}
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Full Standings Table */}
-      <div className="mb-10 rounded-xl border border-f1-border bg-f1-card">
-        <div className="border-b border-f1-border p-4">
-          <h2 className="font-bold text-lg">Championship Standings</h2>
+      {/* Championship Standings Table */}
+      <div style={{ ...cardStyle, overflow: "hidden", marginBottom: 18 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 14px",
+            borderBottom: "1px solid #1c1c1c",
+          }}
+        >
+          <span
+            style={{ fontFamily: BC, fontWeight: 800, fontSize: 14, letterSpacing: "0.04em" }}
+          >
+            Championship Standings
+          </span>
         </div>
         <StandingsTable standings={standings} recentForm={recentFormMap} />
       </div>
 
       {/* Points Progression Chart */}
       {completedRaces.length > 0 && (
-        <div className="mb-10">
+        <div style={{ ...cardStyle, padding: 18, marginBottom: 18 }}>
           <PointsProgressionChart
             completedRaces={completedRaces}
             driverStandings={standings}
@@ -263,129 +316,189 @@ async function DriversContent() {
         </div>
       )}
 
-      {/* Detailed Driver Cards */}
-      <h2 className="mb-4 text-lg font-bold text-f1-text-muted">
+      {/* Driver Profile Cards */}
+      <div
+        style={{
+          fontFamily: BC,
+          fontWeight: 800,
+          fontSize: 10,
+          letterSpacing: "0.1em",
+          color: "#555",
+          textTransform: "uppercase",
+          marginBottom: 12,
+        }}
+      >
         Driver Profiles &amp; Stats
-      </h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          gap: 12,
+        }}
+      >
         {standings.map((s) => {
           const stats = computeDriverStats(s.Driver.driverId, allRaces);
-          const constructorId = getDriverConstructorId(
-            s.Driver.driverId,
-            s.Constructors[0]?.constructorId,
-          ) ?? "";
-          const constructorName = getDriverConstructorName(
-            s.Driver.driverId,
-            s.Constructors[0]?.name,
-          ) ?? "";
-          const displayNumber = getDriverNumber(
-            s.Driver.driverId,
-            s.Driver.permanentNumber,
-          );
+          const constructorId =
+            getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? "";
+          const constructorName =
+            getDriverConstructorName(s.Driver.driverId, s.Constructors[0]?.name) ?? "";
+          const displayNumber = getDriverNumber(s.Driver.driverId, s.Driver.permanentNumber);
           const teamColor = getTeamColor(constructorId);
 
           return (
             <div
               key={s.Driver.driverId}
               id={s.Driver.driverId}
-              className="group rounded-xl border border-f1-border bg-f1-card p-5 transition-all hover:border-f1-border hover:bg-f1-card-hover"
+              style={{ ...cardStyle, overflow: "hidden" }}
             >
-              <div
-                className="h-0.5 w-full rounded-full mb-4 -mt-1"
-                style={{ backgroundColor: teamColor }}
-              />
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-10 w-1.5 rounded-full"
-                      style={{ backgroundColor: teamColor }}
+              <div style={{ height: 2, background: teamColor }} />
+              <div style={{ padding: "14px 16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    marginBottom: 12,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{
+                        width: 3,
+                        height: 40,
+                        borderRadius: 2,
+                        background: teamColor,
+                        flexShrink: 0,
+                      }}
                     />
                     <div>
-                      <p className="text-sm text-f1-text-muted">
-                        {getCountryFlag(s.Driver.nationality)}{" "}
-                        {s.Driver.givenName}
-                      </p>
-                      <p className="text-xl font-black uppercase tracking-tight">
-                        {s.Driver.familyName}
-                      </p>
+                      <div style={{ fontFamily: DM, fontSize: 11, color: "#555" }}>
+                        {getCountryFlag(s.Driver.nationality)} {s.Driver.givenName}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: BC,
+                          fontWeight: 900,
+                          fontSize: 20,
+                          lineHeight: 1.1,
+                          letterSpacing: "0.02em",
+                        }}
+                      >
+                        {s.Driver.familyName.toUpperCase()}
+                      </div>
+                      <div style={{ fontFamily: DM, fontSize: 10, color: "#555", marginTop: 1 }}>
+                        {constructorName}
+                      </div>
                     </div>
                   </div>
-                  <p className="mt-1 text-sm text-f1-text-muted">
-                    {constructorName}
-                  </p>
+                  <div>
+                    {getDriverNumberUrl(s.Driver.driverId) ? (
+                      <DriverNumber
+                        src={getDriverNumberUrl(s.Driver.driverId)!}
+                        number={displayNumber}
+                        className="h-9 w-auto opacity-20"
+                        color={teamColor}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: BC,
+                          fontWeight: 900,
+                          fontSize: 32,
+                          color: "#1e1e1e",
+                          fontStyle: "italic",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {displayNumber}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right flex items-start">
-                  {getDriverNumberUrl(s.Driver.driverId) ? (
-                    <DriverNumber
-                      src={getDriverNumberUrl(s.Driver.driverId)!}
-                      number={displayNumber}
-                      className="h-9 w-auto opacity-30"
-                      color={teamColor}
-                    />
-                  ) : (
-                    <span className="text-3xl font-black italic text-f1-text-muted/30">
-                      {displayNumber}
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              {/* Stats Grid */}
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">POS</p>
-                  <p className="text-lg font-black">{s.position}</p>
+                {/* Stats Grid */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: 6,
+                    marginBottom: 12,
+                  }}
+                >
+                  {[
+                    ["POS", s.position],
+                    ["PTS", s.points],
+                    ["WINS", s.wins],
+                    ["PODS", stats.podiums],
+                    ["POLES", stats.poles],
+                    ["FL", stats.fastestLaps],
+                    ["DNFs", stats.dnfs],
+                    ["AVG", stats.avgFinish],
+                    ["PPR", stats.pointsPerRace],
+                  ].map(([label, val]) => (
+                    <div
+                      key={String(label)}
+                      style={{
+                        background: "#0e0e0e",
+                        borderRadius: 6,
+                        padding: "6px 4px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: DM,
+                          fontSize: 8,
+                          color: "#555",
+                          letterSpacing: "0.08em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {label}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: BC,
+                          fontWeight: 900,
+                          fontSize: 18,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {val}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">PTS</p>
-                  <p className="text-lg font-black">{s.points}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">WINS</p>
-                  <p className="text-lg font-black">{s.wins}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">PODS</p>
-                  <p className="text-lg font-black">{stats.podiums}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">POLES</p>
-                  <p className="text-lg font-black">{stats.poles}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">FL</p>
-                  <p className="text-lg font-black">{stats.fastestLaps}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">DNFs</p>
-                  <p className="text-lg font-black">{stats.dnfs}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">AVG</p>
-                  <p className="text-lg font-black">{stats.avgFinish}</p>
-                </div>
-                <div className="rounded-lg bg-f1-dark p-2 text-center">
-                  <p className="text-xs text-f1-text-muted">PPR</p>
-                  <p className="text-lg font-black">{stats.pointsPerRace}</p>
-                </div>
-              </div>
 
-              <div className="mt-3 flex items-center justify-between">
-                <Link
-                  href={`/drivers/${s.Driver.driverId}`}
-                  className="text-xs font-medium text-f1-accent hover:underline"
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
                 >
-                  View Profile &rarr;
-                </Link>
-                <a
-                  href={s.Driver.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-f1-text-muted hover:underline"
-                >
-                  Wikipedia
-                </a>
+                  <Link
+                    href={`/drivers/${s.Driver.driverId}`}
+                    style={{
+                      fontFamily: DM,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#e10600",
+                      textDecoration: "none",
+                    }}
+                  >
+                    View Profile →
+                  </Link>
+                  <a
+                    href={s.Driver.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontFamily: DM, fontSize: 11, color: "#444" }}
+                  >
+                    Wikipedia
+                  </a>
+                </div>
               </div>
             </div>
           );
@@ -397,26 +510,31 @@ async function DriversContent() {
 
 export default function DriversPage() {
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">
-            Drivers Championship
-          </h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
-            {CURRENT_YEAR} Season &middot; Full driver stats and standings
-          </p>
+    <>
+      <div style={{ marginBottom: 22 }}>
+        <div
+          style={{
+            fontFamily: BC,
+            fontWeight: 900,
+            fontSize: 28,
+            letterSpacing: "0.02em",
+            lineHeight: 1,
+          }}
+        >
+          DRIVERS CHAMPIONSHIP
         </div>
-        <RefreshButton />
+        <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+          {CURRENT_YEAR} Season · Full driver stats and standings
+        </div>
       </div>
 
       <Suspense
         fallback={
-          <div className="space-y-3">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-16 rounded-lg bg-f1-card animate-pulse"
+                style={{ height: 64, borderRadius: 10, background: "#131313" }}
               />
             ))}
           </div>
@@ -424,6 +542,6 @@ export default function DriversPage() {
       >
         <DriversContent />
       </Suspense>
-    </div>
+    </>
   );
 }
