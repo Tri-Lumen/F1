@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import "./globals.css";
-import Nav from "@/components/Nav";
-import NavSessionLoader from "@/components/NavSessionLoader";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
@@ -18,16 +15,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Layout is synchronous so the HTML document streams to the client
-  // immediately. The session pill (which requires a network round-trip to
-  // the F1 schedule API) is rendered by an async server component wrapped
-  // in Suspense — it streams in independently without blocking first paint.
-  const sessionPill = (
-    <Suspense fallback={null}>
-      <NavSessionLoader />
-    </Suspense>
-  );
-
   return (
     <html lang="en" data-mode="dark" suppressHydrationWarning>
       <head>
@@ -35,7 +22,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://media.formula1.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300..700&display=swap"
           rel="stylesheet"
         />
         <script
@@ -114,10 +101,7 @@ export default function RootLayout({
           <FavoritesProvider>
             <RssFeedProvider>
               <NotificationProvider>
-                <Nav sessionPill={sessionPill} />
-                <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                  {children}
-                </main>
+                {children}
               </NotificationProvider>
             </RssFeedProvider>
           </FavoritesProvider>
