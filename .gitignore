@@ -20,6 +20,9 @@
 # Electron distributable output is excluded instead:
 /dist-electron
 
+# vite build output (from design-preview builds run at root)
+/dist
+
 # misc
 .DS_Store
 *.pem
