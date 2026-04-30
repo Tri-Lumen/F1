@@ -36,7 +36,7 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
       style={{
         borderRadius: 10,
         overflow: "hidden",
-        border: `1px solid ${hovered ? `${color}44` : "#1e1e1e"}`,
+        border: `1px solid ${hovered ? `${color}44` : "var(--color-f1-border)"}`,
         opacity: vis ? 1 : 0,
         transform: vis ? (hovered ? "translateY(-2px)" : "none") : "translateY(12px)",
         transition: "opacity 0.4s, transform 0.3s, border-color 0.2s",
@@ -52,7 +52,7 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
       <div
         style={{
           padding: "13px 14px",
-          background: "#171717",
+          background: "var(--color-f1-dark)",
           backgroundImage: liveryBg,
         }}
       >
@@ -68,7 +68,7 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
             <div
               style={{
                 fontSize: 9,
-                color: "#464646",
+                color: "var(--color-f1-text-muted)",
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
                 fontFamily: DM,
@@ -93,7 +93,7 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
               fontFamily: BC,
               fontWeight: 900,
               fontSize: 22,
-              color: "#242424",
+              color: "var(--color-f1-card)",
               lineHeight: 1,
             }}
           >
@@ -103,14 +103,16 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
           {[
             ["Winner", race.winnerFamily, color],
-            ["Pole", race.poleFamily, "#888"],
+            ["Pole", race.poleFamily, "var(--color-f1-text-muted)"],
+            // Brand-style "fastest lap" purple — semantic signal, intentionally
+            // not theme-driven so it stays recognizable across all themes.
             ["Fastest", race.fastestFamily, "#a78bfa"],
           ].map(([lbl, name, c]) => (
             <div key={String(lbl)}>
               <div
                 style={{
                   fontSize: 8,
-                  color: "#3a3a3a",
+                  color: "var(--color-f1-text-muted)",
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   marginBottom: 2,

@@ -58,8 +58,9 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
     <div
       style={{
         borderRadius: 12,
-        border: "1px solid rgba(225,6,0,0.22)",
-        background: "linear-gradient(140deg, rgba(225,6,0,0.07) 0%, #151515 60%)",
+        border: "1px solid color-mix(in srgb, var(--color-f1-accent) 22%, transparent)",
+        background:
+          "linear-gradient(140deg, color-mix(in srgb, var(--color-f1-accent) 7%, transparent) 0%, var(--color-f1-dark) 60%)",
         overflow: "hidden",
         height: "100%",
         display: "flex",
@@ -70,11 +71,11 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
       <div
         style={{
           height: 140,
-          background: "#111",
+          background: "var(--color-f1-black)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          borderBottom: "1px solid #1a1a1a",
+          borderBottom: "1px solid var(--color-f1-border)",
           position: "relative",
           overflow: "hidden",
           flexShrink: 0,
@@ -91,7 +92,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
             left: 14,
             fontSize: 9,
             letterSpacing: "0.1em",
-            color: "#353535",
+            color: "var(--color-f1-text-muted)",
             textTransform: "uppercase",
             fontFamily: DM,
           }}
@@ -104,7 +105,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
               fontFamily: BC,
               fontWeight: 900,
               fontSize: 28,
-              color: "#1c1c1c",
+              color: "var(--color-f1-card)",
             }}
           >
             {race.Circuit.Location.country.slice(0, 3).toUpperCase()}
@@ -117,10 +118,10 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.1em",
-              color: "#e10600",
+              color: "var(--color-f1-accent)",
               textTransform: "uppercase",
-              background: "rgba(225,6,0,0.12)",
-              border: "1px solid rgba(225,6,0,0.25)",
+              background: "color-mix(in srgb, var(--color-f1-accent) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--color-f1-accent) 25%, transparent)",
               borderRadius: 99,
               padding: "2px 7px",
             }}
@@ -145,7 +146,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
           <span
             style={{
               fontSize: 12,
-              color: "#555",
+              color: "var(--color-f1-text-muted)",
               fontFamily: DM,
               fontWeight: 400,
               marginLeft: 8,
@@ -182,10 +183,10 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
                     fontSize: 11,
                     color:
                       label === "Race"
-                        ? "#e10600"
+                        ? "var(--color-f1-accent)"
                         : label === "Qualifying"
-                        ? "#ccc"
-                        : "#484848",
+                        ? "var(--color-f1-text)"
+                        : "var(--color-f1-text-muted)",
                   }}
                 >
                   {label}
@@ -195,7 +196,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
                     fontFamily: BC,
                     fontWeight: 600,
                     fontSize: 11,
-                    color: "#3a3a3a",
+                    color: "var(--color-f1-text-muted)",
                     letterSpacing: "0.04em",
                   }}
                 >
