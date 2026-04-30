@@ -75,33 +75,149 @@ function stripHtml(html: string): string {
   return decodeEntities(html.replace(/<[^>]*>/g, "")).trim();
 }
 
+/** Tracking-pixel and 1x1 sentinel domains/paths to drop. */
+const TRACKING_PATTERNS = [
+  /\/?pixel\.gif/i,
+  /\/spacer\.gif/i,
+  /\/1x1\.(gif|png)/i,
+  /\/blank\.(gif|png)/i,
+  /feedburner\.com\/~ff\//i,
+  /feeds\.feedburner\.com\/~r\//i,
+  /doubleclick\.net/i,
+  /googletagmanager\.com/i,
+];
+
+function looksLikeTrackingPixel(url: string): boolean {
+  return TRACKING_PATTERNS.some((re) => re.test(url));
+}
+
+/** Resolve a possibly-relative image URL against a base article link. */
+function resolveImageUrl(url: string, baseUrl: string | null): string | undefined {
+  const cleaned = url.trim();
+  if (!cleaned) return undefined;
+  if (looksLikeTrackingPixel(cleaned)) return undefined;
+  // Protocol-relative (//host/path) — pin to https
+  if (cleaned.startsWith("//")) return `https:${cleaned}`;
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  if (!baseUrl) return undefined;
+  try {
+    return new URL(cleaned, baseUrl).toString();
+  } catch {
+    return undefined;
+  }
+}
+
 /** Extract first image URL from HTML content or media tags */
-function extractImage(item: string): string | undefined {
+function extractImage(item: string, baseUrl: string | null): string | undefined {
+  const candidates: (string | undefined)[] = [];
+
   // media:content or media:thumbnail (handles media:group nesting too)
   const mediaMatch = item.match(/<media:(content|thumbnail)[^>]+url=["']([^"']+)["']/);
-  if (mediaMatch) return mediaMatch[2];
+  if (mediaMatch) candidates.push(mediaMatch[2]);
 
   // enclosure with image type (both attribute orderings)
   const enclosureMatch = item.match(/<enclosure[^>]+type=["']image\/[^"']*["'][^>]+url=["']([^"']+)["']/);
-  if (enclosureMatch) return enclosureMatch[1];
+  if (enclosureMatch) candidates.push(enclosureMatch[1]);
   const enclosureMatch2 = item.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]+type=["']image/);
-  if (enclosureMatch2) return enclosureMatch2[1];
+  if (enclosureMatch2) candidates.push(enclosureMatch2[1]);
 
   // enclosure URL ending in an image extension (some feeds omit the type attribute)
   const enclosureImgExt = item.match(/<enclosure[^>]+url=["']([^"']+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^"']*)?)["']/i);
-  if (enclosureImgExt) return enclosureImgExt[1];
+  if (enclosureImgExt) candidates.push(enclosureImgExt[1]);
 
   // <image><url>...</url></image> (RSS channel-level sometimes nested in items)
   const imageUrlTag = item.match(/<image[^>]*>[\s\S]*?<url[^>]*>([\s\S]*?)<\/url>/);
-  if (imageUrlTag) return decodeEntities(imageUrlTag[1]).trim();
+  if (imageUrlTag) candidates.push(decodeEntities(imageUrlTag[1]).trim());
+
+  // <thumbnail>...</thumbnail> without media: prefix
+  const plainThumbnail = item.match(/<thumbnail[^>]*>([\s\S]*?)<\/thumbnail>/);
+  if (plainThumbnail) candidates.push(decodeEntities(plainThumbnail[1]).trim());
+
+  // <itunes:image href="..."/>
+  const itunesImage = item.match(/<itunes:image[^>]+href=["']([^"']+)["']/);
+  if (itunesImage) candidates.push(itunesImage[1]);
 
   // img tag in description/content/content:encoded (also handles data-src for lazy loading)
   const imgMatch = item.match(/<img[^>]+src=["']([^"']+)["']/);
-  if (imgMatch) return imgMatch[1];
+  if (imgMatch) candidates.push(imgMatch[1]);
   const dataSrcMatch = item.match(/<img[^>]+data-src=["']([^"']+)["']/);
-  if (dataSrcMatch) return dataSrcMatch[1];
+  if (dataSrcMatch) candidates.push(dataSrcMatch[1]);
 
+  for (const c of candidates) {
+    if (!c) continue;
+    const resolved = resolveImageUrl(decodeEntities(c), baseUrl);
+    if (resolved) return resolved;
+  }
   return undefined;
+}
+
+/**
+ * Fetch the article HTML and try to extract an Open Graph / Twitter image.
+ *
+ * Many F1 feeds (Autosport, GP Blog, others) omit images from the RSS feed
+ * even though every article has an og:image meta tag.  Hitting the page once
+ * lets us populate the preview thumbnail when the feed itself doesn't.
+ *
+ * Cached at the fetch layer for 24h since article URLs are stable.
+ */
+async function fetchOgImage(articleUrl: string): Promise<string | undefined> {
+  if (!isAllowedUrl(articleUrl)) return undefined;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4_000);
+  try {
+    const res = await fetch(articleUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "F1Dashboard/1.0",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      next: { revalidate: 86_400 },
+    });
+    if (!res.ok) return undefined;
+    // Read just the <head> — og:image lives there and pulling the whole body
+    // wastes bandwidth on long-form articles.
+    const text = await res.text();
+    const head = text.slice(0, 64_000);
+
+    const patterns = [
+      /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url)?["']/i,
+      /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image(?::src)?["']/i,
+    ];
+    for (const re of patterns) {
+      const m = head.match(re);
+      if (m) {
+        const resolved = resolveImageUrl(decodeEntities(m[1]), articleUrl);
+        if (resolved) return resolved;
+      }
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Backfill missing imageUrl fields by hitting article pages for og:image.
+ * Bounded concurrency keeps us from stampeding 100 outbound requests at once.
+ */
+async function backfillOgImages(articles: RssArticle[], concurrency = 8): Promise<void> {
+  const targets = articles.filter((a) => !a.imageUrl);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < targets.length) {
+      const idx = cursor++;
+      const article = targets[idx];
+      const img = await fetchOgImage(article.link);
+      if (img) article.imageUrl = img;
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, targets.length) }, () => worker())
+  );
 }
 
 /** Parse a single RSS/Atom item/entry element */
@@ -130,7 +246,7 @@ function parseItem(itemXml: string, sourceName: string, sourceId: string): RssAr
   // caused them to leapfrog dated entries on every refresh.  Leave the field
   // empty so the sort comparator can demote them.
   const pubDate = dateMatch ? decodeEntities(dateMatch[1]).trim() : "";
-  const imageUrl = extractImage(itemXml);
+  const imageUrl = extractImage(itemXml, link);
 
   return {
     title,
@@ -229,6 +345,13 @@ export async function GET(request: NextRequest) {
     return dateB - dateA;
   });
 
-  // Limit to 100 most recent articles
-  return NextResponse.json({ articles: allArticles.slice(0, 100) });
+  // Trim before backfill so we don't waste outbound requests on items the
+  // client will never render.
+  const trimmed = allArticles.slice(0, 100);
+
+  // Hit article pages for og:image when the feed didn't carry an inline image.
+  // Cached for 24h at the fetch layer, so this is only expensive on first load.
+  await backfillOgImages(trimmed);
+
+  return NextResponse.json({ articles: trimmed });
 }
