@@ -34,7 +34,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
         borderRadius: 13,
         overflow: "hidden",
         marginBottom: 18,
-        background: "#0f0f0f",
+        background: "var(--color-f1-dark)",
         border: `1px solid ${color}20`,
         opacity: vis ? 1 : 0,
         transition: "opacity 0.7s",
@@ -74,7 +74,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
             style={{
               fontSize: 9,
               letterSpacing: "0.15em",
-              color: "#3e3e3e",
+              color: "var(--color-f1-text-muted)",
               textTransform: "uppercase",
               fontFamily: DM,
               marginBottom: 8,
@@ -94,7 +94,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
               marginBottom: 10,
             }}
           >
-            <span style={{ color: "#888" }}>
+            <span style={{ color: "var(--color-f1-text-muted)" }}>
               {leader.Driver.givenName.toUpperCase()}{" "}
             </span>
             <span style={{ color }}>{leader.Driver.familyName.toUpperCase()}</span>
@@ -160,7 +160,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
                   style={{
                     fontSize: 9,
                     letterSpacing: "0.1em",
-                    color: "#404040",
+                    color: "var(--color-f1-text-muted)",
                     textTransform: "uppercase",
                     fontFamily: DM,
                     marginTop: 3,
@@ -177,7 +177,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
                 style={{
                   fontSize: 9,
                   letterSpacing: "0.1em",
-                  color: "#404040",
+                  color: "var(--color-f1-text-muted)",
                   textTransform: "uppercase",
                   fontFamily: DM,
                   marginBottom: 6,
@@ -189,7 +189,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
                 style={{
                   height: 3,
                   borderRadius: 2,
-                  background: "#1e1e1e",
+                  background: "var(--color-f1-card)",
                   overflow: "hidden",
                 }}
               >
@@ -197,7 +197,8 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
                   style={{
                     height: "100%",
                     borderRadius: 2,
-                    background: "linear-gradient(90deg, #e10600, #e10600aa)",
+                    background:
+                      "linear-gradient(90deg, var(--color-f1-accent), color-mix(in srgb, var(--color-f1-accent) 67%, transparent))",
                     width: `${seasonPct}%`,
                   }}
                 />

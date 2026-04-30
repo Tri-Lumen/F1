@@ -35,8 +35,8 @@ const DM = "'DM Sans', sans-serif";
 
 const cardStyle = {
   borderRadius: 12,
-  border: "1px solid #1c1c1c",
-  background: "#131313",
+  border: "1px solid var(--color-f1-border)",
+  background: "var(--color-f1-dark)",
 };
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
@@ -48,7 +48,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
         fontSize: 14,
         letterSpacing: "0.04em",
         padding: "12px 14px",
-        borderBottom: "1px solid #1c1c1c",
+        borderBottom: "1px solid var(--color-f1-border)",
       }}
     >
       {children}
@@ -63,9 +63,9 @@ async function LiveContent() {
     return (
       <div>
         <div style={{ ...cardStyle, padding: "24px", textAlign: "center", marginBottom: 16 }}>
-          <p style={{ fontFamily: DM, fontSize: 13, color: "#555" }}>
+          <p style={{ fontFamily: DM, fontSize: 13, color: "var(--color-f1-text-muted)" }}>
             No session is currently active.{" "}
-            <Link href="/races" style={{ color: "#e10600" }}>
+            <Link href="/races" style={{ color: "var(--color-f1-accent)" }}>
               View race calendar
             </Link>
           </p>
@@ -165,7 +165,7 @@ async function LiveContent() {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "#e10600",
+                    background: "var(--color-f1-accent)",
                     borderRadius: 99,
                     padding: "3px 10px",
                     fontFamily: BC,
@@ -189,14 +189,14 @@ async function LiveContent() {
               ) : (
                 <span
                   style={{
-                    background: "#1a1a1a",
+                    background: "var(--color-f1-card)",
                     borderRadius: 99,
                     padding: "3px 10px",
                     fontFamily: BC,
                     fontWeight: 700,
                     fontSize: 11,
                     letterSpacing: "0.08em",
-                    color: "#555",
+                    color: "var(--color-f1-text-muted)",
                   }}
                 >
                   SESSION ENDED
@@ -231,7 +231,7 @@ async function LiveContent() {
               >
                 {session.country_name} — {session.session_name}
               </div>
-              <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 2 }}>
+              <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 2 }}>
                 {session.circuit_short_name}
               </div>
             </div>
@@ -245,7 +245,7 @@ async function LiveContent() {
                     fontWeight: 900,
                     fontSize: 32,
                     lineHeight: 1,
-                    color: "#e10600",
+                    color: "var(--color-f1-accent)",
                   }}
                 >
                   {currentLap}
@@ -254,7 +254,7 @@ async function LiveContent() {
                   style={{
                     fontFamily: DM,
                     fontSize: 9,
-                    color: "#555",
+                    color: "var(--color-f1-text-muted)",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                   }}
@@ -314,7 +314,7 @@ async function LiveContent() {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #1c1c1c" }}>
+              <tr style={{ borderBottom: "1px solid var(--color-f1-border)" }}>
                 {["Pos", "#", "Driver", "Team", "Tire", "Age", "Interval", "Gap", "Onboard"].map(
                   (h) => (
                     <th
@@ -325,7 +325,7 @@ async function LiveContent() {
                         fontWeight: 700,
                         fontSize: 9,
                         letterSpacing: "0.1em",
-                        color: "#3a3a3a",
+                        color: "var(--color-f1-text-muted)",
                         textTransform: "uppercase",
                         textAlign: h === "Gap" || h === "Interval" ? "right" : "left",
                         whiteSpace: "nowrap",
@@ -349,7 +349,7 @@ async function LiveContent() {
                 return (
                   <tr
                     key={driver.driver_number}
-                    style={{ borderBottom: "1px solid #111" }}
+                    style={{ borderBottom: "1px solid var(--color-f1-border)" }}
                   >
                     <td style={{ padding: "10px 12px" }}>
                       <span
@@ -357,7 +357,7 @@ async function LiveContent() {
                           fontFamily: BC,
                           fontWeight: 900,
                           fontSize: 16,
-                          color: "#ccc",
+                          color: "var(--color-f1-text)",
                         }}
                       >
                         {pos}
@@ -368,7 +368,7 @@ async function LiveContent() {
                         padding: "10px 12px",
                         fontFamily: "monospace",
                         fontSize: 11,
-                        color: "#3a3a3a",
+                        color: "var(--color-f1-text-muted)",
                       }}
                     >
                       {driver.driver_number}
@@ -382,7 +382,7 @@ async function LiveContent() {
                             borderRadius: 2,
                             background: driver.team_colour
                               ? `#${driver.team_colour}`
-                              : "#555",
+                              : "var(--color-f1-text-muted)",
                             flexShrink: 0,
                           }}
                         />
@@ -403,7 +403,7 @@ async function LiveContent() {
                         padding: "10px 12px",
                         fontFamily: DM,
                         fontSize: 12,
-                        color: "#555",
+                        color: "var(--color-f1-text-muted)",
                       }}
                     >
                       {driver.team_name}
@@ -442,13 +442,13 @@ async function LiveContent() {
                                 ? "#fb923c"
                                 : tire.age > 15
                                 ? "#eab308"
-                                : "#555",
+                                : "var(--color-f1-text-muted)",
                           }}
                         >
                           {tire.age}L
                         </span>
                       ) : (
-                        <span style={{ color: "#333", fontSize: 11 }}>—</span>
+                        <span style={{ color: "var(--color-f1-text-muted)", fontSize: 11 }}>—</span>
                       )}
                     </td>
                     <td style={{ padding: "10px 12px", textAlign: "right" }}>
@@ -456,7 +456,7 @@ async function LiveContent() {
                         style={{
                           fontFamily: "monospace",
                           fontSize: 11,
-                          color: "#555",
+                          color: "var(--color-f1-text-muted)",
                         }}
                       >
                         {pos === 1
@@ -471,7 +471,7 @@ async function LiveContent() {
                         style={{
                           fontFamily: "monospace",
                           fontSize: 11,
-                          color: pos === 1 ? "#e10600" : "#555",
+                          color: pos === 1 ? "var(--color-f1-accent)" : "var(--color-f1-text-muted)",
                           fontWeight: pos === 1 ? 700 : 400,
                         }}
                       >
@@ -572,9 +572,9 @@ export default function LivePage() {
               lineHeight: 1,
             }}
           >
-            <span style={{ color: "#e10600" }}>LIVE</span> SESSION
+            <span style={{ color: "var(--color-f1-accent)" }}>LIVE</span> SESSION
           </div>
-          <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+          <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
             Real-time timing, tire strategy, team radio &amp; onboard cameras
           </div>
         </div>
@@ -584,8 +584,8 @@ export default function LivePage() {
       <Suspense
         fallback={
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ height: 96, borderRadius: 12, background: "#131313" }} />
-            <div style={{ height: 384, borderRadius: 12, background: "#131313" }} />
+            <div style={{ height: 96, borderRadius: 12, background: "var(--color-f1-dark)" }} />
+            <div style={{ height: 384, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             <div
               style={{
                 display: "grid",
@@ -593,8 +593,8 @@ export default function LivePage() {
                 gap: 16,
               }}
             >
-              <div style={{ height: 256, borderRadius: 12, background: "#131313" }} />
-              <div style={{ height: 256, borderRadius: 12, background: "#131313" }} />
+              <div style={{ height: 256, borderRadius: 12, background: "var(--color-f1-dark)" }} />
+              <div style={{ height: 256, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             </div>
           </div>
         }

@@ -40,7 +40,7 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
         gap: 7,
         padding: "5px 14px",
         cursor: "pointer",
-        background: hovered ? "#181818" : "transparent",
+        background: hovered ? "var(--color-f1-card-hover)" : "transparent",
         transition: "background 0.12s",
       }}
     >
@@ -49,7 +49,7 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
           fontFamily: BC,
           fontWeight: 800,
           fontSize: 12,
-          color: "#333",
+          color: "var(--color-f1-text-muted)",
           width: 14,
           flexShrink: 0,
         }}
@@ -72,7 +72,7 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
           fontSize: 12,
           flex: 1,
           letterSpacing: "0.02em",
-          color: "#ccc",
+          color: "var(--color-f1-text)",
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
@@ -98,8 +98,8 @@ export default function SidebarNav({ standings }: Props) {
         position: "fixed",
         left: 0,
         top: 0,
-        background: "#0c0c0c",
-        borderRight: "1px solid #1c1c1c",
+        background: "var(--color-f1-black)",
+        borderRight: "1px solid var(--color-f1-border)",
         display: "flex",
         flexDirection: "column",
         zIndex: 200,
@@ -107,12 +107,12 @@ export default function SidebarNav({ standings }: Props) {
       }}
     >
       {/* Logo */}
-      <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid #181818" }}>
+      <div style={{ padding: "22px 20px 18px", borderBottom: "1px solid var(--color-f1-border)" }}>
         <Link href="/" style={{ display: "flex", alignItems: "baseline", gap: 8, textDecoration: "none" }}>
-          <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 30, color: "#e10600", lineHeight: 1 }}>
+          <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 30, color: "var(--color-f1-accent)", lineHeight: 1 }}>
             F1
           </span>
-          <span style={{ fontFamily: BC, fontWeight: 600, fontSize: 14, color: "#383838", letterSpacing: "0.1em" }}>
+          <span style={{ fontFamily: BC, fontWeight: 600, fontSize: 14, color: "var(--color-f1-text-muted)", letterSpacing: "0.1em" }}>
             2026
           </span>
         </Link>
@@ -134,8 +134,8 @@ export default function SidebarNav({ standings }: Props) {
                 padding: "8px 12px",
                 borderRadius: 8,
                 marginBottom: 1,
-                background: isActive ? "rgba(225,6,0,0.10)" : "transparent",
-                color: isActive ? "#e10600" : "rgba(255,255,255,0.35)",
+                background: isActive ? "color-mix(in srgb, var(--color-f1-accent) 10%, transparent)" : "transparent",
+                color: isActive ? "var(--color-f1-accent)" : "var(--color-f1-text-muted)",
                 fontFamily: DM,
                 fontWeight: 600,
                 fontSize: 13,
@@ -154,7 +154,7 @@ export default function SidebarNav({ standings }: Props) {
         style={{
           flex: 1,
           overflowY: "auto",
-          borderTop: "1px solid #181818",
+          borderTop: "1px solid var(--color-f1-border)",
           paddingTop: 12,
         }}
       >
@@ -163,7 +163,7 @@ export default function SidebarNav({ standings }: Props) {
             padding: "0 14px 8px",
             fontSize: 9,
             letterSpacing: "0.14em",
-            color: "#383838",
+            color: "var(--color-f1-text-muted)",
             textTransform: "uppercase",
             fontFamily: DM,
           }}

@@ -180,8 +180,8 @@ async function DriversContent() {
 
   const cardStyle = {
     borderRadius: 12,
-    border: "1px solid #1c1c1c",
-    background: "#131313",
+    border: "1px solid var(--color-f1-border)",
+    background: "var(--color-f1-dark)",
   };
 
   return (
@@ -195,7 +195,7 @@ async function DriversContent() {
               fontWeight: 800,
               fontSize: 10,
               letterSpacing: "0.1em",
-              color: "#555",
+              color: "var(--color-f1-text-muted)",
               textTransform: "uppercase",
               marginBottom: 8,
             }}
@@ -203,7 +203,7 @@ async function DriversContent() {
             Championship Status
           </div>
           {clinchInfo.clinched ? (
-            <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "#e10600" }}>
+            <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "var(--color-f1-accent)" }}>
               🏆 {clinchInfo.leaderName} has clinched the {CURRENT_YEAR} World Championship!
             </p>
           ) : (
@@ -211,12 +211,12 @@ async function DriversContent() {
               <span style={{ fontFamily: DM, fontSize: 13 }}>
                 <span style={{ fontWeight: 700 }}>{clinchInfo.leaderName}</span>{" "}
                 leads by{" "}
-                <span style={{ fontWeight: 700, color: "#e10600" }}>{clinchInfo.gap} pts</span>
+                <span style={{ fontWeight: 700, color: "var(--color-f1-accent)" }}>{clinchInfo.gap} pts</span>
               </span>
-              <span style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
-                Needs <span style={{ color: "#ccc" }}>{clinchInfo.ptsNeeded} pts</span> to clinch
+              <span style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)" }}>
+                Needs <span style={{ color: "var(--color-f1-text)" }}>{clinchInfo.ptsNeeded} pts</span> to clinch
               </span>
-              <span style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
+              <span style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)" }}>
                 {clinchInfo.remaining} races left · {clinchInfo.maxAvailable} pts available
               </span>
             </div>
@@ -233,7 +233,7 @@ async function DriversContent() {
               fontWeight: 800,
               fontSize: 10,
               letterSpacing: "0.1em",
-              color: "#555",
+              color: "var(--color-f1-text-muted)",
               textTransform: "uppercase",
               marginBottom: 10,
             }}
@@ -257,7 +257,7 @@ async function DriversContent() {
                   style={{
                     fontFamily: DM,
                     fontSize: 9,
-                    color: "#555",
+                    color: "var(--color-f1-text-muted)",
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     marginTop: 4,
@@ -276,7 +276,7 @@ async function DriversContent() {
                 >
                   {h.value}
                 </div>
-                <div style={{ fontFamily: DM, fontSize: 10, color: "#555", marginTop: 2 }}>
+                <div style={{ fontFamily: DM, fontSize: 10, color: "var(--color-f1-text-muted)", marginTop: 2 }}>
                   {h.name.split(" ").at(-1)}
                 </div>
               </div>
@@ -293,7 +293,7 @@ async function DriversContent() {
             justifyContent: "space-between",
             alignItems: "center",
             padding: "12px 14px",
-            borderBottom: "1px solid #1c1c1c",
+            borderBottom: "1px solid var(--color-f1-border)",
           }}
         >
           <span
@@ -323,7 +323,7 @@ async function DriversContent() {
           fontWeight: 800,
           fontSize: 10,
           letterSpacing: "0.1em",
-          color: "#555",
+          color: "var(--color-f1-text-muted)",
           textTransform: "uppercase",
           marginBottom: 12,
         }}
@@ -373,7 +373,7 @@ async function DriversContent() {
                       }}
                     />
                     <div>
-                      <div style={{ fontFamily: DM, fontSize: 11, color: "#555" }}>
+                      <div style={{ fontFamily: DM, fontSize: 11, color: "var(--color-f1-text-muted)" }}>
                         {getCountryFlag(s.Driver.nationality)} {s.Driver.givenName}
                       </div>
                       <div
@@ -387,7 +387,7 @@ async function DriversContent() {
                       >
                         {s.Driver.familyName.toUpperCase()}
                       </div>
-                      <div style={{ fontFamily: DM, fontSize: 10, color: "#555", marginTop: 1 }}>
+                      <div style={{ fontFamily: DM, fontSize: 10, color: "var(--color-f1-text-muted)", marginTop: 1 }}>
                         {constructorName}
                       </div>
                     </div>
@@ -406,7 +406,7 @@ async function DriversContent() {
                           fontFamily: BC,
                           fontWeight: 900,
                           fontSize: 32,
-                          color: "#1e1e1e",
+                          color: "var(--color-f1-card)",
                           fontStyle: "italic",
                           lineHeight: 1,
                         }}
@@ -440,7 +440,7 @@ async function DriversContent() {
                     <div
                       key={String(label)}
                       style={{
-                        background: "#0e0e0e",
+                        background: "var(--color-f1-black)",
                         borderRadius: 6,
                         padding: "6px 4px",
                         textAlign: "center",
@@ -450,7 +450,7 @@ async function DriversContent() {
                         style={{
                           fontFamily: DM,
                           fontSize: 8,
-                          color: "#555",
+                          color: "var(--color-f1-text-muted)",
                           letterSpacing: "0.08em",
                           textTransform: "uppercase",
                         }}
@@ -484,7 +484,7 @@ async function DriversContent() {
                       fontFamily: DM,
                       fontSize: 11,
                       fontWeight: 600,
-                      color: "#e10600",
+                      color: "var(--color-f1-accent)",
                       textDecoration: "none",
                     }}
                   >
@@ -494,7 +494,7 @@ async function DriversContent() {
                     href={s.Driver.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontFamily: DM, fontSize: 11, color: "#444" }}
+                    style={{ fontFamily: DM, fontSize: 11, color: "var(--color-f1-text-muted)" }}
                   >
                     Wikipedia
                   </a>
@@ -523,7 +523,7 @@ export default function DriversPage() {
         >
           DRIVERS CHAMPIONSHIP
         </div>
-        <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+        <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
           {CURRENT_YEAR} Season · Full driver stats and standings
         </div>
       </div>
@@ -534,7 +534,7 @@ export default function DriversPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                style={{ height: 64, borderRadius: 10, background: "#131313" }}
+                style={{ height: 64, borderRadius: 10, background: "var(--color-f1-dark)" }}
               />
             ))}
           </div>

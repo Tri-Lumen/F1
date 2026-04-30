@@ -72,7 +72,7 @@ export default async function LiveSessionBanner() {
                   style={{
                     backgroundColor: d.team_colour
                       ? `#${d.team_colour}`
-                      : "#888",
+                      : "var(--color-f1-text-muted)",
                   }}
                 />
                 <span className="font-medium">{d.name_acronym}</span>
