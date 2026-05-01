@@ -14,7 +14,7 @@ Live timing · Standings · Race results · Driver and team analytics · Histori
 [![Docker](https://img.shields.io/badge/DOCKER-131313?style=for-the-badge&logo=docker&logoColor=2496ED)](https://www.docker.com)
 [![License: ISC](https://img.shields.io/badge/LICENSE-ISC-e10600?style=for-the-badge)](LICENSE)
 
-![Delta Dashboard — home](docs/screenshots/dashboard.png)
+<!-- screenshot: docs/screenshots/dashboard.png — full home page in the running app -->
 
 </div>
 
@@ -24,7 +24,7 @@ Live timing · Standings · Race results · Driver and team analytics · Histori
 
 The home page is built around a broadcast-style championship leader hero with team-livery textures, a stacked constructor bar, and animated count-up rows for the top 10 drivers — each carrying a sparkline of their last five-race form.
 
-![Dashboard — championship hero, standings, recent results](docs/screenshots/dashboard-detail.png)
+<!-- screenshot: docs/screenshots/dashboard-detail.png — championship hero + driver standings sparklines -->
 
 | Block | What it shows |
 |---|---|
@@ -40,7 +40,7 @@ The home page is built around a broadcast-style championship leader hero with te
 
 Follow every session as it happens. Real-time positions, intervals, and gap-to-leader update every 15 s. Tire compound and stint age, team radio with audio playback, race control feed, and a weather widget round out the picture.
 
-![Live timing — positions, intervals, tire strategy](docs/screenshots/live.png)
+<!-- screenshot: docs/screenshots/live.png — live timing page during an active session -->
 
 - **Positions & intervals** — live gap-to-leader and gap-to-car-ahead
 - **Tire strategy** — compound, stint age, lap of last stop
@@ -55,9 +55,8 @@ Follow every session as it happens. Real-time positions, intervals, and gap-to-l
 
 Every race has its own detail page covering the podium, full classification, qualifying order, sprint results, and pit-stop summary. Driver and constructor profiles include points-progression charts, qualifying gap analysis, and teammate head-to-head records.
 
-![Drivers — standings page](docs/screenshots/drivers.png)
-
-![Race detail — podium, classification, qualifying](docs/screenshots/race-detail.png)
+<!-- screenshot: docs/screenshots/drivers.png — /drivers Studio profile cards grid -->
+<!-- screenshot: docs/screenshots/race-detail.png — /race/:round podium + classification + qualifying -->
 
 ---
 
@@ -65,7 +64,7 @@ Every race has its own detail page covering the podium, full classification, qua
 
 Season-level analytics break down wins, podiums, points-per-race, DNFs by team, fastest-lap leaders, pit-stop performance, driver consistency, and a championship-evolution chart that traces the points race round by round.
 
-![Stats — championship evolution and per-team breakdowns](docs/screenshots/stats.png)
+<!-- screenshot: docs/screenshots/stats.png — /stats championship evolution chart + breakdowns -->
 
 ---
 
