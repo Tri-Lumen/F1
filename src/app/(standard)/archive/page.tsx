@@ -41,7 +41,7 @@ export default function ArchivePage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {ARCHIVE_SEASONS.map((season) => {
           const info = SEASON_DATA[season];
-          const teamColor = info ? getTeamColor(info.constructorId) : "#888";
+          const teamColor = info ? getTeamColor(info.constructorId) : "var(--color-f1-text-muted)";
           const lastName = info?.driverChampion.split(" ").pop();
 
           return (

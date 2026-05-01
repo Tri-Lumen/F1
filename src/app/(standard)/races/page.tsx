@@ -69,8 +69,8 @@ async function RacesContent() {
 
   const cardStyle = {
     borderRadius: 12,
-    border: "1px solid #1c1c1c",
-    background: "#131313",
+    border: "1px solid var(--color-f1-border)",
+    background: "var(--color-f1-dark)",
   };
 
   const sectionLabel = {
@@ -78,7 +78,7 @@ async function RacesContent() {
     fontWeight: 800,
     fontSize: 10,
     letterSpacing: "0.1em",
-    color: "#555",
+    color: "var(--color-f1-text-muted)",
     textTransform: "uppercase" as const,
     marginBottom: 12,
   };
@@ -95,7 +95,7 @@ async function RacesContent() {
             marginBottom: 8,
           }}
         >
-          <span style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
+          <span style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)" }}>
             Season Progress
           </span>
           <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 13, letterSpacing: "0.04em" }}>
@@ -106,7 +106,7 @@ async function RacesContent() {
           style={{
             height: 4,
             borderRadius: 2,
-            background: "#0e0e0e",
+            background: "var(--color-f1-black)",
             overflow: "hidden",
           }}
         >
@@ -114,7 +114,7 @@ async function RacesContent() {
             style={{
               height: "100%",
               borderRadius: 2,
-              background: "#e10600",
+              background: "var(--color-f1-accent)",
               width: `${races.length > 0 ? (completed.length / races.length) * 100 : 0}%`,
               transition: "width 0.4s ease",
             }}
@@ -127,7 +127,7 @@ async function RacesContent() {
         <div style={{ marginBottom: 28 }}>
           <div style={sectionLabel}>
             Upcoming Races{" "}
-            <span style={{ color: "#3a3a3a" }}>({upcoming.length} remaining)</span>
+            <span style={{ color: "var(--color-f1-text-muted)" }}>({upcoming.length} remaining)</span>
           </div>
           <div
             style={{
@@ -148,7 +148,7 @@ async function RacesContent() {
         <div>
           <div style={sectionLabel}>
             Completed Races{" "}
-            <span style={{ color: "#3a3a3a" }}>({completedCards.length} completed)</span>
+            <span style={{ color: "var(--color-f1-text-muted)" }}>({completedCards.length} completed)</span>
           </div>
           <div
             style={{
@@ -182,7 +182,7 @@ export default function RacesPage() {
         >
           RACE CALENDAR
         </div>
-        <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+        <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
           {CURRENT_YEAR} Season · Full schedule with results
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function RacesPage() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                style={{ height: 160, borderRadius: 10, background: "#131313" }}
+                style={{ height: 160, borderRadius: 10, background: "var(--color-f1-dark)" }}
               />
             ))}
           </div>

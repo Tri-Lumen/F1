@@ -66,7 +66,7 @@ export default function ChampionshipBar({ standings }: Props) {
         style={{
           fontSize: 9,
           letterSpacing: "0.13em",
-          color: "#3a3a3a",
+          color: "var(--color-f1-text-muted)",
           textTransform: "uppercase",
           fontFamily: DM,
           marginBottom: 8,
@@ -114,9 +114,9 @@ export default function ChampionshipBar({ standings }: Props) {
                   flexShrink: 0,
                 }}
               />
-              <span style={{ fontSize: 10, color: "#555", fontFamily: DM }}>
+              <span style={{ fontSize: 10, color: "var(--color-f1-text-muted)", fontFamily: DM }}>
                 {s.Constructor.name}{" "}
-                <strong style={{ color: "#888" }}>{s.points}</strong>
+                <strong style={{ color: "var(--color-f1-text)" }}>{s.points}</strong>
               </span>
             </div>
           );

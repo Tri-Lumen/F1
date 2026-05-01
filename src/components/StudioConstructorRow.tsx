@@ -28,7 +28,7 @@ export default function StudioConstructorRow({ standing, maxPts, delay = 0 }: Pr
         alignItems: "center",
         gap: 10,
         padding: "7px 14px",
-        borderBottom: "1px solid #1a1a1a",
+        borderBottom: "1px solid var(--color-f1-border)",
         opacity: vis ? 1 : 0,
         transition: "opacity 0.35s",
       }}
@@ -63,7 +63,7 @@ export default function StudioConstructorRow({ standing, maxPts, delay = 0 }: Pr
           flex: 1,
           height: 3,
           borderRadius: 2,
-          background: "#1e1e1e",
+          background: "var(--color-f1-dark)",
           overflow: "hidden",
         }}
       >

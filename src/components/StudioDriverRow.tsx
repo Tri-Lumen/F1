@@ -22,12 +22,12 @@ function PosPill({ pos }: { pos: number }) {
         width: 26,
         height: 22,
         borderRadius: 4,
-        background: c ? `${c}1a` : "#1e1e1e",
-        color: c || "#666",
+        background: c ? `${c}1a` : "var(--color-f1-dark)",
+        color: c || "var(--color-f1-text-muted)",
         fontSize: 12,
         fontWeight: 800,
         fontFamily: BC,
-        border: `1px solid ${c ? `${c}40` : "#2a2a2a"}`,
+        border: `1px solid ${c ? `${c}40` : "var(--color-f1-border)"}`,
         flexShrink: 0,
       }}
     >
@@ -66,12 +66,12 @@ export default function StudioDriverRow({ standing, rank, form, leaderPts, delay
         alignItems: "center",
         gap: 10,
         padding: "7px 14px",
-        borderBottom: "1px solid #191919",
+        borderBottom: "1px solid var(--color-f1-border)",
         opacity: vis ? 1 : 0,
         transform: vis ? "none" : "translateX(-8px)",
         transition: "opacity 0.35s, transform 0.35s",
         cursor: "pointer",
-        background: hovered ? "#1c1c1c" : "transparent",
+        background: hovered ? "var(--color-f1-card-hover)" : "transparent",
       }}
     >
       <PosPill pos={rank} />
@@ -101,7 +101,7 @@ export default function StudioDriverRow({ standing, rank, form, leaderPts, delay
         <div
           style={{
             fontSize: 9,
-            color: "#404040",
+            color: "var(--color-f1-text-muted)",
             fontFamily: DM,
             textTransform: "capitalize",
           }}
@@ -116,7 +116,7 @@ export default function StudioDriverRow({ standing, rank, form, leaderPts, delay
             flex: 1,
             height: 2,
             borderRadius: 1,
-            background: "#1e1e1e",
+            background: "var(--color-f1-dark)",
             overflow: "hidden",
           }}
         >

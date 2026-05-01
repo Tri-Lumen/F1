@@ -61,7 +61,7 @@ function StudioCountdownTiles({ target }: { target: string }) {
           style={{
             flex: 1,
             textAlign: "center",
-            background: "#111",
+            background: "var(--color-f1-black)",
             borderRadius: 7,
             padding: "8px 4px",
           }}
@@ -72,7 +72,7 @@ function StudioCountdownTiles({ target }: { target: string }) {
               fontWeight: 900,
               fontSize: 26,
               lineHeight: 1,
-              color: "#e10600",
+              color: "var(--color-f1-accent)",
             }}
           >
             {String(value).padStart(2, "0")}
@@ -81,7 +81,7 @@ function StudioCountdownTiles({ target }: { target: string }) {
             style={{
               fontSize: 8,
               letterSpacing: "0.1em",
-              color: "#444",
+              color: "var(--color-f1-text-muted)",
               textTransform: "uppercase",
               marginTop: 2,
               fontFamily: DM,

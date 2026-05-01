@@ -15,4 +15,5 @@ installer
 scripts
 build
 dist-electron
+design-preview
 *.md

@@ -490,7 +490,7 @@ async function RaceContent({ round }: { round: string }) {
                       <tbody>
                         {driverSummaries.map((d) => {
                           const raceResult = results.find((r) => r.Driver.driverId === d.driverId);
-                          const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "#888";
+                          const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)";
                           const isFastest = d.driverId === fastest?.driverId;
                           return (
                             <tr key={d.driverId} className={`border-b border-f1-border/50 ${isFastest ? "bg-f1-accent/5" : ""}`}>
@@ -542,7 +542,7 @@ async function RaceContent({ round }: { round: string }) {
                   .sort((a, b) => parseInt(a.lap) - parseInt(b.lap))
                   .map((p, i) => {
                     const raceResult = results.find((r) => r.Driver.driverId === p.driverId);
-                    const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "#888";
+                    const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)";
                     const driverName = raceResult
                       ? `${raceResult.Driver.givenName} ${raceResult.Driver.familyName}`
                       : p.driverId.replace(/_/g, " ");
