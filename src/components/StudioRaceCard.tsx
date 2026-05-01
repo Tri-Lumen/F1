@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useFadeIn } from "@/lib/hooks";
 import { getTeamColor } from "@/lib/api";
 
@@ -23,7 +23,7 @@ interface Props {
   delay?: number;
 }
 
-export default function StudioRaceCard({ race, delay = 0 }: Props) {
+function StudioRaceCardImpl({ race, delay = 0 }: Props) {
   const [hovered, setHovered] = useState(false);
   const vis = useFadeIn(delay);
   const color = getTeamColor(race.winnerTeamId);
@@ -137,3 +137,6 @@ export default function StudioRaceCard({ race, delay = 0 }: Props) {
     </div>
   );
 }
+
+const StudioRaceCard = memo(StudioRaceCardImpl);
+export default StudioRaceCard;

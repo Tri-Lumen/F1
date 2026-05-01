@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useCountUp, useBarWidth, useFadeIn } from "@/lib/hooks";
 import { getTeamColor } from "@/lib/api";
 import type { ConstructorStanding } from "@/lib/types";
@@ -13,7 +14,7 @@ interface Props {
   delay?: number;
 }
 
-export default function StudioConstructorRow({ standing, maxPts, delay = 0 }: Props) {
+function StudioConstructorRowImpl({ standing, maxPts, delay = 0 }: Props) {
   const color = getTeamColor(standing.Constructor.constructorId);
   const pts = parseFloat(standing.points);
   const pct = maxPts > 0 ? (pts / maxPts) * 100 : 0;
@@ -92,3 +93,6 @@ export default function StudioConstructorRow({ standing, maxPts, delay = 0 }: Pr
     </div>
   );
 }
+
+const StudioConstructorRow = memo(StudioConstructorRowImpl);
+export default StudioConstructorRow;

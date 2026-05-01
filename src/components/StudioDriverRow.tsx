@@ -5,7 +5,7 @@ import { getTeamColor } from "@/lib/api";
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import SparkLine from "@/components/SparkLine";
 import type { DriverStanding } from "@/lib/types";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -44,7 +44,7 @@ interface Props {
   delay?: number;
 }
 
-export default function StudioDriverRow({ standing, rank, form, leaderPts, delay = 0 }: Props) {
+function StudioDriverRowImpl({ standing, rank, form, leaderPts, delay = 0 }: Props) {
   const [hovered, setHovered] = useState(false);
   const constructorId =
     getDriverConstructorId(standing.Driver.driverId, standing.Constructors[0]?.constructorId) ?? "";
@@ -147,3 +147,17 @@ export default function StudioDriverRow({ standing, rank, form, leaderPts, delay
     </div>
   );
 }
+
+// Equality fn: only re-render when displayed values change.  `form` is a fresh
+// array reference on every parent render, so compare element-wise instead.
+const StudioDriverRow = memo(StudioDriverRowImpl, (a, b) => {
+  if (a.rank !== b.rank || a.delay !== b.delay || a.leaderPts !== b.leaderPts) return false;
+  if (a.standing !== b.standing) return false;
+  if (a.form === b.form) return true;
+  if (a.form.length !== b.form.length) return false;
+  for (let i = 0; i < a.form.length; i++) {
+    if (a.form[i] !== b.form[i]) return false;
+  }
+  return true;
+});
+export default StudioDriverRow;

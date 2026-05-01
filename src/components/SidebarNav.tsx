@@ -20,6 +20,14 @@ const NAV_LINKS = [
   { href: "/news", label: "News" },
 ];
 
+const MORE_LINKS = [
+  { href: "/fastest-laps", label: "Fastest Laps" },
+  { href: "/compare", label: "Compare" },
+  { href: "/archive", label: "Archive" },
+  { href: "/favorites", label: "Favorites" },
+  { href: "/settings", label: "Settings" },
+];
+
 interface Props {
   standings: DriverStanding[];
 }
@@ -89,6 +97,8 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
 
 export default function SidebarNav({ standings }: Props) {
   const pathname = usePathname();
+  const isMoreActive = MORE_LINKS.some((l) => pathname.startsWith(l.href));
+  const [moreOpen, setMoreOpen] = useState(isMoreActive);
 
   return (
     <aside
@@ -147,6 +157,73 @@ export default function SidebarNav({ standings }: Props) {
             </Link>
           );
         })}
+
+        {/* More toggle */}
+        <button
+          onClick={() => setMoreOpen((o) => !o)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            padding: "8px 12px",
+            borderRadius: 8,
+            marginTop: 2,
+            background: isMoreActive ? "rgba(225,6,0,0.07)" : "transparent",
+            color: isMoreActive ? "#e10600" : "rgba(255,255,255,0.25)",
+            fontFamily: DM,
+            fontWeight: 600,
+            fontSize: 13,
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.15s",
+          }}
+        >
+          <span>More</span>
+          <span
+            style={{
+              fontSize: 9,
+              opacity: 0.6,
+              transform: moreOpen ? "rotate(180deg)" : "none",
+              transition: "transform 0.2s",
+              display: "inline-block",
+            }}
+          >
+            ▼
+          </span>
+        </button>
+
+        {/* Collapsible more links */}
+        {moreOpen && (
+          <div style={{ paddingLeft: 8 }}>
+            {MORE_LINKS.map((link) => {
+              const isActive = pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    marginBottom: 1,
+                    background: isActive ? "rgba(225,6,0,0.10)" : "transparent",
+                    color: isActive ? "#e10600" : "rgba(255,255,255,0.28)",
+                    fontFamily: DM,
+                    fontWeight: 500,
+                    fontSize: 12,
+                    transition: "all 0.15s",
+                    textDecoration: "none",
+                  }}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       {/* Mini driver standings */}

@@ -8,10 +8,27 @@ on:
       - main
     tags:
       - 'v[0-9]*'
+    # Skip the 3-platform matrix smoke build on main pushes that don't
+    # affect the Electron output (docs, Docker-only, design preview, etc.).
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'design-preview/**'
+      - 'docker-compose.yml'
+      - 'docker-install.sh'
+      - 'Dockerfile'
+      - '.github/workflows/docker-publish.yml'
+      - '.github/workflows/build-bootstrapper.yml'
+      - 'LICENSE'
   workflow_dispatch:
 
 permissions:
   contents: write   # required to create releases and upload assets
+
+# Cancel superseded smoke builds on main; never cancel a tag build mid-flight.
+concurrency:
+  group: electron-publish-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   build:

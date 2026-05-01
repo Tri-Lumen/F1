@@ -15,6 +15,11 @@ on:
 permissions:
   contents: write
 
+# Cancel superseded runs on the same branch.
+concurrency:
+  group: build-bootstrapper-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   build-windows-bootstrapper:
     runs-on: windows-latest

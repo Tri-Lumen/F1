@@ -40,7 +40,7 @@ async function StatsContent() {
 
   if (completedRaces.length === 0 && completedSprints.length === 0) {
     return (
-      <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
+      <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
         <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
       </div>
     );
@@ -305,24 +305,24 @@ async function StatsContent() {
     <div className="space-y-8">
       {/* Season summary KPIs */}
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Races Complete</p>
           <p className="text-4xl font-black">{completedRaces.length}</p>
           {completedSprints.length > 0 && (
             <p className="text-xs text-f1-text-muted mt-0.5">+ {completedSprints.length} sprint{completedSprints.length !== 1 ? "s" : ""}</p>
           )}
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Total Points</p>
           <p className="text-4xl font-black">{Math.round(totalPoints)}</p>
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Total DNFs</p>
           <p className="text-4xl font-black">
             {[...teamDNFMap.values()].reduce((s, t) => s + t.dnfs, 0)}
           </p>
         </div>
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Drivers</p>
           <p className="text-4xl font-black">{driverStandings.length}</p>
         </div>
@@ -332,7 +332,7 @@ async function StatsContent() {
       <div className="grid gap-4 sm:grid-cols-2">
         {biggestGain.gain > 0 && (
           <div
-            className="rounded-xl border border-f1-border bg-f1-card p-5"
+            className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-5"
             style={{ borderLeftColor: getTeamColor(biggestGain.constructorId), borderLeftWidth: 4 }}
           >
             <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-2">Best Single-Race Gain</p>
@@ -343,7 +343,7 @@ async function StatsContent() {
         )}
         {biggestLoss.loss > 0 && (
           <div
-            className="rounded-xl border border-f1-border bg-f1-card p-5"
+            className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-5"
             style={{ borderLeftColor: getTeamColor(biggestLoss.constructorId), borderLeftWidth: 4 }}
           >
             <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-2">Worst Single-Race Drop</p>
@@ -356,12 +356,12 @@ async function StatsContent() {
 
       {/* Positions gained season total */}
       {posGainSorted.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Season Positions Gained</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Season Positions Gained</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Total grid positions gained from start to finish across all races (positive = moved forward)</p>
           </div>
-          <div className="divide-y divide-f1-border/40">
+          <div className="divide-y divide-[#1c1c1c]">
             {posGainSorted.map((d, i) => {
               const color = getTeamColor(d.constructorId);
               const maxGain = posGainSorted[0]?.gained ?? 1;
@@ -377,7 +377,7 @@ async function StatsContent() {
                         {d.gained >= 0 ? "+" : ""}{d.gained}
                       </p>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                    <div className="h-1.5 rounded-full overflow-hidden bg-[#0e0e0e]">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.8 }}
@@ -394,15 +394,15 @@ async function StatsContent() {
 
       {/* Points per race */}
       {pprSorted.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Points Per Race</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Points Per Race</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Average championship points scored per race entry</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                <tr className="border-b border-[#1c1c1c] text-left text-xs uppercase tracking-wider text-f1-text-muted">
                   <th className="px-3 py-3 w-10">Rank</th>
                   <th className="px-3 py-3">Driver</th>
                   <th className="px-3 py-3 text-right">PPR</th>
@@ -414,7 +414,7 @@ async function StatsContent() {
                 {pprSorted.map((d, i) => {
                   const color = getTeamColor(d.constructorId);
                   return (
-                    <tr key={d.name} className="border-b border-f1-border/50 hover:bg-f1-card/50">
+                    <tr key={d.name} className="border-b border-[#1c1c1c] hover:bg-[#1a1a1a]">
                       <td className="px-3 py-3 font-bold text-f1-text-muted">{i + 1}</td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
@@ -439,11 +439,11 @@ async function StatsContent() {
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Team DNF breakdown */}
         {teamDNFSorted.length > 0 && (
-          <div className="rounded-xl border border-f1-border bg-f1-card">
-            <div className="border-b border-f1-border p-4">
-              <h2 className="font-bold text-lg">DNFs by Team</h2>
+          <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+            <div className="border-b border-[#1c1c1c] p-4">
+              <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>DNFs by Team</h2>
             </div>
-            <div className="divide-y divide-f1-border/40">
+            <div className="divide-y divide-[#1c1c1c]">
               {teamDNFSorted.map((t) => {
                 const color = getTeamColor(t.constructorId);
                 const maxDnf = teamDNFSorted[0]?.dnfs ?? 1;
@@ -455,7 +455,7 @@ async function StatsContent() {
                         <p className="text-sm font-medium">{t.name}</p>
                         <p className="text-sm font-black text-red-400">{t.dnfs}</p>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                      <div className="h-1.5 rounded-full overflow-hidden bg-[#0e0e0e]">
                         <div
                           className="h-full rounded-full bg-red-500/60"
                           style={{ width: `${(t.dnfs / maxDnf) * 100}%` }}
@@ -471,12 +471,12 @@ async function StatsContent() {
 
         {/* Laps led (approximation via winner's laps) */}
         {lapsLedSorted.length > 0 && (
-          <div className="rounded-xl border border-f1-border bg-f1-card">
-            <div className="border-b border-f1-border p-4">
-              <h2 className="font-bold text-lg">Race Winning Laps</h2>
+          <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+            <div className="border-b border-[#1c1c1c] p-4">
+              <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Race Winning Laps</h2>
               <p className="text-xs text-f1-text-muted mt-0.5">Total laps completed as race winner</p>
             </div>
-            <div className="divide-y divide-f1-border/40">
+            <div className="divide-y divide-[#1c1c1c]">
               {lapsLedSorted.map((d, i) => {
                 const color = getTeamColor(d.constructorId);
                 const maxLaps = lapsLedSorted[0]?.laps ?? 1;
@@ -491,7 +491,7 @@ async function StatsContent() {
                         </p>
                         <p className="text-sm font-black" style={{ color }}>{d.laps}</p>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                      <div className="h-1.5 rounded-full overflow-hidden bg-[#0e0e0e]">
                         <div
                           className="h-full rounded-full"
                           style={{ width: `${(d.laps / maxLaps) * 100}%`, backgroundColor: color, opacity: 0.75 }}
@@ -508,9 +508,9 @@ async function StatsContent() {
 
       {/* Overtakes by race */}
       {overtakesByRaceSorted.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Overtakes by Grand Prix</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Overtakes by Grand Prix</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Total positions gained from grid to finish across all drivers (proxy for racing action)</p>
           </div>
           <div className="p-4">
@@ -521,7 +521,7 @@ async function StatsContent() {
                   <div key={r.round} className="flex items-center gap-3">
                     <span className="text-xs text-f1-text-muted w-5 text-right">{r.round}</span>
                     <span className="text-xs text-f1-text truncate w-24 flex-shrink-0">{r.raceName}</span>
-                    <div className="flex-1 h-5 rounded overflow-hidden bg-f1-dark flex items-center">
+                    <div className="flex-1 h-5 rounded overflow-hidden bg-[#0e0e0e] flex items-center">
                       <div
                         className="h-full rounded bg-f1-accent/60 flex items-center justify-end pr-1.5 transition-all"
                         style={{ width: `${Math.max(2, (r.total / maxTotal) * 100)}%` }}
@@ -539,9 +539,9 @@ async function StatsContent() {
 
       {/* Pit Stop Statistics */}
       {teamPitSorted.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Pit Stop Performance by Team</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Pit Stop Performance by Team</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">
               Average pit stop duration (seconds) across {totalPitStops} stops this season
             </p>
@@ -554,7 +554,7 @@ async function StatsContent() {
               </p>
             </div>
           )}
-          <div className="divide-y divide-f1-border/40">
+          <div className="divide-y divide-[#1c1c1c]">
             {teamPitSorted.map((t, i) => {
               const color = getTeamColor(t.constructorId);
               const maxAvg = teamPitSorted[teamPitSorted.length - 1]?.avg ?? 1;
@@ -574,7 +574,7 @@ async function StatsContent() {
                         <span className="text-sm font-black" style={{ color }}>{t.avg.toFixed(2)}s</span>
                       </div>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                    <div className="h-1.5 rounded-full overflow-hidden bg-[#0e0e0e]">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.75 }}
@@ -591,12 +591,12 @@ async function StatsContent() {
 
       {/* Driver Consistency */}
       {consistencySorted.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Driver Consistency</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Driver Consistency</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Lowest standard deviation in finishing position (excluding DNFs) — most consistent performers</p>
           </div>
-          <div className="divide-y divide-f1-border/40">
+          <div className="divide-y divide-[#1c1c1c]">
             {consistencySorted.map((d, i) => {
               const color = getTeamColor(d.constructorId);
               const maxStd = consistencySorted[consistencySorted.length - 1]?.stdDev ?? 1;
@@ -614,7 +614,7 @@ async function StatsContent() {
                         <span className="text-sm font-black" style={{ color }}>&plusmn;{d.stdDev.toFixed(1)}</span>
                       </div>
                     </div>
-                    <div className="h-1.5 rounded-full overflow-hidden bg-f1-dark">
+                    <div className="h-1.5 rounded-full overflow-hidden bg-[#0e0e0e]">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${pct}%`, backgroundColor: color, opacity: 0.7 }}
@@ -630,9 +630,9 @@ async function StatsContent() {
 
       {/* Championship Points Evolution */}
       {top8Evolution.length > 0 && numRounds > 1 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card overflow-hidden">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Championship Evolution</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] overflow-hidden">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Championship Evolution</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">
               Cumulative points for top drivers after each round
             </p>
@@ -769,15 +769,28 @@ async function StatsContent() {
   );
 }
 
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
+
 export default function StatsPage() {
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Season Stats</h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
-            {CURRENT_YEAR} Season &middot; In-depth statistics and analysis
-          </p>
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 900,
+              fontSize: 28,
+              letterSpacing: "0.02em",
+              lineHeight: 1,
+            }}
+          >
+            SEASON STATS
+          </div>
+          <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+            {CURRENT_YEAR} Season · In-depth statistics and analysis
+          </div>
         </div>
         <RefreshButton />
       </div>
@@ -786,7 +799,7 @@ export default function StatsPage() {
         fallback={
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-48 rounded-xl bg-f1-card animate-pulse" />
+              <div key={`stats-skel-${i}`} className="h-48 rounded-xl bg-[#131313] animate-pulse" />
             ))}
           </div>
         }

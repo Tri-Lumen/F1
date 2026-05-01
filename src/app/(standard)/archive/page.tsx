@@ -6,6 +6,9 @@ export const metadata = {
   description: "Historical F1 season results from 2016 to 2025",
 };
 
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
+
 interface SeasonSummary {
   driverChampion: string;
   constructorChampion: string;
@@ -29,16 +32,24 @@ const SEASON_DATA: Record<string, SeasonSummary> = {
 export default function ArchivePage() {
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-black tracking-tight">
-          <span className="text-f1-red">F1</span> Archive
-        </h1>
-        <p className="mt-1 text-sm text-f1-text-muted">
+      <div className="mb-6">
+        <div
+          style={{
+            fontFamily: BC,
+            fontWeight: 900,
+            fontSize: 28,
+            letterSpacing: "0.02em",
+            lineHeight: 1,
+          }}
+        >
+          ARCHIVE
+        </div>
+        <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
           Championship standings and race results from 2016 to 2025
-        </p>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {ARCHIVE_SEASONS.map((season) => {
           const info = SEASON_DATA[season];
           const teamColor = info ? getTeamColor(info.constructorId) : "var(--color-f1-text-muted)";
@@ -48,23 +59,42 @@ export default function ArchivePage() {
             <Link
               key={season}
               href={`/archive/${season}`}
-              className="group relative rounded-xl border border-f1-border bg-f1-card overflow-hidden transition-all hover:border-f1-accent hover:shadow-lg hover:shadow-f1-accent/10"
+              className="group relative overflow-hidden rounded-xl border border-[#1c1c1c] bg-[#131313] transition-all hover:-translate-y-0.5"
+              style={{ transition: "transform 0.2s, border-color 0.2s" }}
             >
-              {/* Colour strip */}
+              {/* Team-colour strip */}
               <div
-                className="h-1 w-full"
-                style={{ backgroundColor: teamColor }}
+                className="h-[3px] w-full"
+                style={{
+                  background: `linear-gradient(90deg, ${teamColor}, ${teamColor}55)`,
+                }}
               />
 
               <div className="p-5">
                 {/* Year + race count */}
                 <div className="flex items-start justify-between mb-4">
-                  <p className="text-4xl font-black group-hover:text-f1-accent transition-colors">
+                  <p
+                    style={{
+                      fontFamily: BC,
+                      fontWeight: 900,
+                      fontSize: 36,
+                      letterSpacing: "0.02em",
+                      lineHeight: 1,
+                    }}
+                  >
                     {season}
                   </p>
                   {info && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-f1-text-muted bg-f1-dark px-2 py-1 rounded-full mt-1">
-                      {info.races} races
+                    <span
+                      className="rounded-full bg-[#0e0e0e] px-2 py-1 text-[10px]"
+                      style={{
+                        fontFamily: BC,
+                        fontWeight: 800,
+                        letterSpacing: "0.1em",
+                        color: "#666",
+                      }}
+                    >
+                      {info.races} RACES
                     </span>
                   )}
                 </div>
@@ -73,27 +103,75 @@ export default function ArchivePage() {
                   <div className="space-y-2">
                     {/* Driver champion */}
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-f1-text-muted/60 w-16 shrink-0">Driver</span>
-                      <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className="w-16 shrink-0 text-[9px]"
+                        style={{
+                          fontFamily: DM,
+                          fontWeight: 700,
+                          letterSpacing: "0.1em",
+                          color: "#3a3a3a",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Driver
+                      </span>
+                      <div className="flex min-w-0 items-center gap-1.5">
                         <span
-                          className="h-3.5 w-1 rounded-full shrink-0"
+                          className="h-3.5 w-1 shrink-0 rounded-full"
                           style={{ backgroundColor: teamColor }}
                         />
-                        <span className="font-bold text-sm truncate">{lastName}</span>
+                        <span
+                          className="truncate"
+                          style={{
+                            fontFamily: BC,
+                            fontWeight: 800,
+                            fontSize: 14,
+                            letterSpacing: "0.02em",
+                          }}
+                        >
+                          {lastName?.toUpperCase()}
+                        </span>
                       </div>
                     </div>
                     {/* Constructor champion */}
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-f1-text-muted/60 w-16 shrink-0">Team</span>
-                      <span className="text-sm text-f1-text-muted truncate">{info.constructorChampion}</span>
+                      <span
+                        className="w-16 shrink-0 text-[9px]"
+                        style={{
+                          fontFamily: DM,
+                          fontWeight: 700,
+                          letterSpacing: "0.1em",
+                          color: "#3a3a3a",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Team
+                      </span>
+                      <span
+                        className="truncate text-sm"
+                        style={{ fontFamily: DM, color: "#888" }}
+                      >
+                        {info.constructorChampion}
+                      </span>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-f1-text-muted">Season data</p>
+                  <p style={{ fontFamily: DM, fontSize: 12, color: "#555" }}>
+                    Season data
+                  </p>
                 )}
 
-                <p className="mt-4 text-[10px] text-f1-accent/70 font-semibold uppercase tracking-wider group-hover:text-f1-accent transition-colors">
-                  View season →
+                <p
+                  className="mt-4 text-[10px] transition-colors"
+                  style={{
+                    fontFamily: BC,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    color: teamColor,
+                    opacity: 0.7,
+                  }}
+                >
+                  VIEW SEASON →
                 </p>
               </div>
             </Link>
