@@ -1,54 +1,75 @@
-# Delta Dashboard
+<div align="center">
 
-Your pit wall for the 2026 Formula 1 season. Live timing, championship standings, race results, driver and team analytics, and a full historical archive back to 2016 — wrapped in a single, cross-platform app.
+# DELTA DASHBOARD
 
-![Next.js](https://img.shields.io/badge/Next.js_16-black?logo=nextdotjs)
-![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-06B6D4?logo=tailwindcss&logoColor=white)
-![Electron](https://img.shields.io/badge/Electron_33-47848F?logo=electron&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-ISC-blue)
+### Your pit wall for the 2026 Formula 1 season
 
----
+Live timing · Standings · Race results · Driver and team analytics · Historical archive back to 2016
 
-## What's Inside
+[![Next.js 16](https://img.shields.io/badge/NEXT.JS_16-000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React 19](https://img.shields.io/badge/REACT_19-131313?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TYPESCRIPT-131313?style=for-the-badge&logo=typescript&logoColor=3178C6)](https://www.typescriptlang.org)
+[![Tailwind 4](https://img.shields.io/badge/TAILWIND_4-131313?style=for-the-badge&logo=tailwindcss&logoColor=06B6D4)](https://tailwindcss.com)
+[![Electron 33](https://img.shields.io/badge/ELECTRON_33-131313?style=for-the-badge&logo=electron&logoColor=9FEAF9)](https://www.electronjs.org)
+[![Docker](https://img.shields.io/badge/DOCKER-131313?style=for-the-badge&logo=docker&logoColor=2496ED)](https://www.docker.com)
+[![License: ISC](https://img.shields.io/badge/LICENSE-ISC-e10600?style=for-the-badge)](LICENSE)
 
-### Live Timing
+![Delta Dashboard — home](docs/screenshots/dashboard.png)
 
-Follow every session as it happens. Real-time positions, intervals, and gap-to-leader update automatically every 15 seconds. Tire compound and age tracking shows each driver's stint history at a glance. Team radio messages stream in with audio playback, and one-click onboard camera links open directly in MultiViewer. A race control feed surfaces flags, penalties, and steward decisions as they happen, while the weather widget tracks air and track temperature, wind speed, and rainfall.
-
-### Race Weekend Awareness
-
-A nav bar countdown ticks down to the next session in days, hours, and minutes. When a session goes green, a pulsing red LIVE badge appears and the dashboard banner switches to highlight the active event. Browser notifications can remind you before a session starts so you never miss lights out.
-
-### Standings & Results
-
-Full driver and constructor championship tables, updated throughout the season. Every race has its own detail page covering the podium, full classification, qualifying order, sprint results, and pit stop summaries. Circuit maps give you a visual overview of each track. A dedicated fastest-lap rankings page rounds it out.
-
-### Driver & Team Profiles
-
-Each driver and constructor gets a profile page with points progression charts across the season, qualifying gap analysis, teammate head-to-head records, and stat cards for wins, podiums, poles, and DNFs.
-
-### News
-
-An aggregated news feed pulls articles from Motorsport.com, Autosport, PlanetF1, RaceFans, The Race, and more. Toggle sources on or off, and articles are automatically tagged to relevant drivers.
-
-### Analytics & History
-
-Season-level analytics break down wins, podiums, and points leaders. A head-to-head comparison tool lets you pit any two drivers against each other. The historical archive covers every season from 2016 through 2025 with full standings and results.
-
-### Personalization
-
-Pin your favorite drivers and teams to get a custom summary view. Switch between dark and light themes styled with official F1 branding, and choose from team-branded accent themes or retro throwbacks. A full theme builder lets you dial in every color, adjust border radius and glow intensity, or toggle reduced motion for accessibility.
-
-### Cross-Platform
-
-Run it in the browser, install the desktop app on Windows, macOS, or Linux with automatic updates, or self-host with Docker and Portainer. The layout is fully responsive from mobile to widescreen.
+</div>
 
 ---
 
-## Pages
+## ▍ DASHBOARD
+
+The home page is built around a broadcast-style championship leader hero with team-livery textures, a stacked constructor bar, and animated count-up rows for the top 10 drivers — each carrying a sparkline of their last five-race form.
+
+![Dashboard — championship hero, standings, recent results](docs/screenshots/dashboard-detail.png)
+
+| Block | What it shows |
+|---|---|
+| **Leader hero** | Championship leader with team livery, points gap to P2, season progress |
+| **Constructors bar** | Stacked points bar per constructor, scaled to the leader |
+| **Driver standings** | Top 10 with sparkline form, animated points, leader-relative bar |
+| **Recent results** | Last 3 completed races with winner, pole, and fastest lap |
+| **Next race card** | Country flag, livery accent, and weekend countdown |
+
+---
+
+## ▍ LIVE TIMING
+
+Follow every session as it happens. Real-time positions, intervals, and gap-to-leader update every 15 s. Tire compound and stint age, team radio with audio playback, race control feed, and a weather widget round out the picture.
+
+![Live timing — positions, intervals, tire strategy](docs/screenshots/live.png)
+
+- **Positions & intervals** — live gap-to-leader and gap-to-car-ahead
+- **Tire strategy** — compound, stint age, lap of last stop
+- **Team radio** — streamed clips with playback
+- **Onboard cameras** — one-click links into MultiViewer
+- **Race control** — flags, penalties, and steward decisions
+- **Weather** — air & track temp, wind, rainfall
+
+---
+
+## ▍ STANDINGS · RACES · DRIVERS · TEAMS
+
+Every race has its own detail page covering the podium, full classification, qualifying order, sprint results, and pit-stop summary. Driver and constructor profiles include points-progression charts, qualifying gap analysis, and teammate head-to-head records.
+
+![Drivers — standings page](docs/screenshots/drivers.png)
+
+![Race detail — podium, classification, qualifying](docs/screenshots/race-detail.png)
+
+---
+
+## ▍ ANALYTICS
+
+Season-level analytics break down wins, podiums, points-per-race, DNFs by team, fastest-lap leaders, pit-stop performance, driver consistency, and a championship-evolution chart that traces the points race round by round.
+
+![Stats — championship evolution and per-team breakdowns](docs/screenshots/stats.png)
+
+---
+
+## ▍ ROUTES
 
 | Route | Description |
 |---|---|
@@ -60,20 +81,18 @@ Run it in the browser, install the desktop app on Windows, macOS, or Linux with 
 | `/drivers/:id` | Driver profile — results, points chart, qualifying gaps, teammate H2H |
 | `/teams` | Constructor standings with driver lineups |
 | `/teams/:id` | Team profile — driver comparison, points chart, results breakdown |
-| `/stats` | Season analytics — wins, podiums, points leaders, team battles |
-| `/fastest-laps` | Fastest lap rankings per race |
+| `/stats` | Season analytics — wins, podiums, points-per-race, DNFs, pit stops |
+| `/fastest-laps` | Fastest-lap rankings per race |
 | `/compare` | Head-to-head driver comparison |
 | `/news` | Aggregated F1 news from RSS feeds |
-| `/archive` | Historical season browser (2016-2025) |
+| `/archive` | Historical season browser (2016 – 2025) |
 | `/archive/:season` | Past-season standings and results |
 | `/favorites` | Personalized view of pinned drivers and teams |
 | `/settings` | Theme, accent color, and favorites preferences |
 
 ---
 
-## Quick Start
-
-### Desktop App
+## ▍ QUICK START · DESKTOP
 
 One-line installers that pull the latest release from GitHub. After the first install, the built-in Electron auto-updater keeps the app current.
 
@@ -95,7 +114,7 @@ curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install
 curl -fsSL https://raw.githubusercontent.com/Tri-Lumen/F1/main/installer/install-linux.sh | bash
 ```
 
-#### Direct Downloads
+#### Direct downloads
 
 Grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/releases/latest):
 
@@ -106,7 +125,44 @@ Grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/r
 | macOS (Intel) | [Delta-Dashboard-x64.dmg](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard-x64.dmg) |
 | Linux | [Delta-Dashboard.AppImage](https://github.com/Tri-Lumen/F1/releases/latest/download/Delta-Dashboard.AppImage) |
 
-### From Source
+---
+
+## ▍ QUICK START · DOCKER
+
+```bash
+docker compose up -d
+```
+
+The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev/watchtower/) for automatic hourly image updates — when a new image is pushed to `ghcr.io/tri-lumen/f1:latest`, your container restarts on the new build with no manual action.
+
+#### Manual build
+
+```bash
+docker build -t delta-dashboard .
+docker run -p 3000:3000 delta-dashboard
+```
+
+#### Portainer
+
+**Pre-built image (recommended)** — Stacks → Add stack → Web editor:
+
+```yaml
+services:
+  delta-dashboard:
+    image: ghcr.io/tri-lumen/f1:latest
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+```
+
+**From Git** — Stacks → Add stack → Repository, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.
+
+---
+
+## ▍ QUICK START · SOURCE
 
 ```bash
 npm install
@@ -122,7 +178,7 @@ npm run build
 npm start
 ```
 
-### Electron (Development)
+Electron development:
 
 ```bash
 npm run electron:dev      # build + launch Electron
@@ -131,56 +187,31 @@ npm run electron:build    # package for current platform
 
 ---
 
-## Docker & Self-Hosting
-
-### Docker Compose
-
-```bash
-docker compose up -d
-```
-
-The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev/watchtower/) for automatic hourly image updates.
-
-### Manual Build
-
-```bash
-docker build -t delta-dashboard .
-docker run -p 3000:3000 delta-dashboard
-```
-
-### Portainer
-
-**Pre-built image (recommended)** — Stacks > Add stack > Web editor:
-
-```yaml
-services:
-  delta-dashboard:
-    image: ghcr.io/tri-lumen/f1:latest
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-```
-
-**From Git** — Stacks > Add stack > Repository, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.
-
----
-
-## Tech Stack
+## ▍ TECH STACK
 
 | Layer | Technology |
 |---|---|
 | **Framework** | [Next.js 16](https://nextjs.org) (App Router) + React 19 |
 | **Language** | TypeScript 5.9 |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com) + Studio design system (Barlow Condensed / DM Sans) |
 | **Desktop** | [Electron 33](https://www.electronjs.org) + electron-updater |
-| **Standings & Results** | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) |
-| **Live Timing** | [OpenF1](https://openf1.org) |
-| **News Feeds** | RSS (Motorsport.com, Autosport, PlanetF1, RaceFans, The Race) |
+| **Standings & results** | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) |
+| **Live timing** | [OpenF1](https://openf1.org) |
+| **News feeds** | RSS (Motorsport.com, Autosport, PlanetF1, RaceFans, The Race) |
 | **Containerization** | Docker (Node 22 Alpine) + Watchtower |
 
-## License
+---
+
+## ▍ DEPLOYMENT MODEL
+
+The Docker image at `ghcr.io/tri-lumen/f1:latest` is automatically rebuilt and republished on every merge to `main` via the [`docker-publish`](.github/workflows/docker-publish.yml) workflow. The compose file itself is versioned in the repo — you fetch it once and Watchtower handles every subsequent image rollout.
+
+The image build is skipped for changes that don't affect the runtime image (docs, installer scripts, electron-only files, design preview), so README updates won't trigger a re-publish.
+
+The Electron desktop apps are built and uploaded to GitHub Releases on every `v*` tag via the [`electron-publish`](.github/workflows/electron-publish.yml) workflow, and electron-updater handles the rest.
+
+---
+
+## ▍ LICENSE
 
 ISC

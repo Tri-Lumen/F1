@@ -3,10 +3,29 @@ name: Build and publish Docker image
 on:
   push:
     branches: [main]
+    # Skip the rebuild for changes that don't affect the runtime image:
+    # docs, installer scripts, electron-only files, design preview, and
+    # the other workflows.  Watchtower will not have anything new to pull.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'installer/**'
+      - 'electron/**'
+      - 'design-preview/**'
+      - 'build/**'
+      - '.github/workflows/electron-publish.yml'
+      - '.github/workflows/build-bootstrapper.yml'
+      - 'LICENSE'
   workflow_dispatch:
 
 env:
   IMAGE_NAME: ghcr.io/tri-lumen/f1
+
+# Cancel an in-flight image build when a newer commit lands on main —
+# only the latest commit's image needs to be tagged :latest.
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-push:
@@ -47,6 +66,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Re-use buildx layers across runs via the GitHub Actions cache.
+          # Cuts a clean rebuild from ~4 minutes to ~30 s when only app code
+          # changes (npm install layer is reused).
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Make package public
         run: |
