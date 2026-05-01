@@ -10,7 +10,7 @@ import {
   getNextScheduledSession,
   getRaceDate,
 } from "@/lib/api";
-import { getDriverConstructorId } from "@/lib/driverOverrides";
+import { buildStudioRaceCardData } from "@/lib/raceCards";
 import SidebarNav from "@/components/SidebarNav";
 import LeaderHero from "@/components/LeaderHero";
 import ChampionshipBar from "@/components/ChampionshipBar";
@@ -40,10 +40,16 @@ async function DashboardContent() {
       getNextScheduledSession(),
     ]);
 
+  // Single pass over the schedule: classify completed vs upcoming and find
+  // the next race in one walk so we don't re-parse race dates three times.
   const now = new Date();
-  const completedCount = races.filter((r) => getRaceDate(r) <= now).length;
+  let completedCount = 0;
+  let nextRace: typeof races[number] | undefined;
+  for (const r of races) {
+    if (getRaceDate(r) <= now) completedCount++;
+    else if (!nextRace) nextRace = r;
+  }
   const totalRaces = races.length;
-  const nextRace = races.find((r) => getRaceDate(r) > now);
 
   // Compute recent form: last 5 race positions per driver
   const completedWithResults = allResults.filter((r) => (r.Results?.length ?? 0) > 0);
@@ -52,7 +58,7 @@ async function DashboardContent() {
   for (const race of recentRacesForForm) {
     for (const result of race.Results ?? []) {
       const driverId = result.Driver.driverId;
-      const pos = parseInt(result.position);
+      const pos = parseInt(result.position, 10);
       if (!formData[driverId]) formData[driverId] = [];
       formData[driverId].push(isNaN(pos) ? 20 : pos);
     }
@@ -62,34 +68,7 @@ async function DashboardContent() {
   const recentRaces: StudioRaceCardData[] = completedWithResults
     .slice(-3)
     .reverse()
-    .map((race) => {
-      const results = race.Results ?? [];
-      const winner = results.find((r) => r.position === "1");
-      const pole = results.find((r) => r.grid === "1");
-      const fastest = results.find((r) => r.FastestLap?.rank === "1");
-      const countryShort = (race.Circuit?.Location?.country ?? "???")
-        .slice(0, 3)
-        .toUpperCase();
-      return {
-        round: race.round,
-        name: race.raceName.replace(" Grand Prix", " GP"),
-        short: countryShort,
-        date: new Date(race.date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        winnerFamily: winner?.Driver.familyName.toUpperCase() ?? "—",
-        winnerTeamId:
-          getDriverConstructorId(
-            winner?.Driver.driverId ?? "",
-            winner?.Constructor.constructorId,
-          ) ??
-          winner?.Constructor.constructorId ??
-          "",
-        poleFamily: pole ? pole.Driver.familyName.toUpperCase() : null,
-        fastestFamily: fastest ? fastest.Driver.familyName.toUpperCase() : null,
-      };
-    });
+    .map(buildStudioRaceCardData);
 
   const leader = driverStandings[0];
   const second = driverStandings[1];

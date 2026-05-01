@@ -11,6 +11,9 @@ import {
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
 
+const BC = "'Barlow Condensed', sans-serif";
+const DM = "'DM Sans', sans-serif";
+
 export const metadata: Metadata = {
   title: "Fastest Laps — F1 2026",
   description: "Fastest lap rankings, leaders, and records across all races",
@@ -84,7 +87,7 @@ async function FastestLapsContent() {
 
   if (completedRaces.length === 0) {
     return (
-      <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
+      <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
         <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
       </div>
     );
@@ -97,7 +100,7 @@ async function FastestLapsContent() {
         {/* Fastest lap leaderboard top driver */}
         {leaderboard[0] && (
           <div
-            className="rounded-xl border border-f1-border bg-f1-card p-4"
+            className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4"
             style={{ borderLeftColor: getTeamColor(leaderboard[0].constructorId), borderLeftWidth: 4 }}
           >
             <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Most Fastest Laps</p>
@@ -117,7 +120,7 @@ async function FastestLapsContent() {
 
         {/* Fastest lap of season */}
         {fastestEntry && (
-          <div className="rounded-xl border border-f1-border bg-f1-card p-4 border-l-4 border-l-purple-500">
+          <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 border-l-4 border-l-purple-500">
             <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Fastest Lap of Season</p>
             <div className="flex items-center justify-between">
               <div>
@@ -134,7 +137,7 @@ async function FastestLapsContent() {
         )}
 
         {/* Total races with FL data */}
-        <div className="rounded-xl border border-f1-border bg-f1-card p-4">
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Races Recorded</p>
           <p className="text-4xl font-black">{entries.length}</p>
           <p className="text-xs text-f1-text-muted">of {completedRaces.length} completed</p>
@@ -143,11 +146,11 @@ async function FastestLapsContent() {
 
       {/* Driver leaderboard */}
       {leaderboard.length > 0 && (
-        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Fastest Lap Leaderboard</h2>
+        <div className="mb-6 rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Fastest Lap Leaderboard</h2>
           </div>
-          <div className="divide-y divide-f1-border/40">
+          <div className="divide-y divide-[#1c1c1c]">
             {leaderboard.map((d, i) => {
               const color = getTeamColor(d.constructorId);
               return (
@@ -190,9 +193,9 @@ async function FastestLapsContent() {
         if (teamSorted.length === 0) return null;
 
         return (
-          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
-            <div className="border-b border-f1-border p-4">
-              <h2 className="font-bold text-lg">Fastest Laps by Team</h2>
+          <div className="mb-6 rounded-xl border border-[#1c1c1c] bg-[#131313]">
+            <div className="border-b border-[#1c1c1c] p-4">
+              <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Fastest Laps by Team</h2>
             </div>
             <div className="p-4">
               <div className="space-y-2">
@@ -203,7 +206,7 @@ async function FastestLapsContent() {
                     <div key={t.constructorId} className="flex items-center gap-3">
                       <span className="h-5 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                       <span className="text-sm font-medium w-32 truncate flex-shrink-0">{t.name}</span>
-                      <div className="flex-1 h-5 rounded overflow-hidden bg-f1-dark flex items-center">
+                      <div className="flex-1 h-5 rounded overflow-hidden bg-[#0e0e0e] flex items-center">
                         <div
                           className="h-full rounded flex items-center justify-end pr-1.5"
                           style={{ width: `${Math.max(8, (t.count / maxCount) * 100)}%`, backgroundColor: color, opacity: 0.7 }}
@@ -236,9 +239,9 @@ async function FastestLapsContent() {
         const maxBucket = Math.max(...positionBuckets.map((b) => b.count), 1);
 
         return (
-          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
-            <div className="border-b border-f1-border p-4">
-              <h2 className="font-bold text-lg">Who Sets Fastest Laps?</h2>
+          <div className="mb-6 rounded-xl border border-[#1c1c1c] bg-[#131313]">
+            <div className="border-b border-[#1c1c1c] p-4">
+              <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Who Sets Fastest Laps?</h2>
               <p className="text-xs text-f1-text-muted mt-0.5">Distribution by race finishing position — do leaders or chasers set the purple lap?</p>
             </div>
             <div className="p-4">
@@ -246,7 +249,7 @@ async function FastestLapsContent() {
                 {positionBuckets.map((b) => (
                   <div key={b.label} className="flex items-center gap-3">
                     <span className="text-sm font-bold w-16 text-f1-text-muted">{b.label}</span>
-                    <div className="flex-1 h-7 rounded overflow-hidden bg-f1-dark flex items-center">
+                    <div className="flex-1 h-7 rounded overflow-hidden bg-[#0e0e0e] flex items-center">
                       <div
                         className="h-full rounded bg-purple-500/60 flex items-center justify-end pr-2"
                         style={{ width: `${Math.max(5, (b.count / maxBucket) * 100)}%` }}
@@ -281,9 +284,9 @@ async function FastestLapsContent() {
         const maxCount = Math.max(...counts.map((b) => b.count), 1);
 
         return (
-          <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
-            <div className="border-b border-f1-border p-4">
-              <h2 className="font-bold text-lg">When Are Fastest Laps Set?</h2>
+          <div className="mb-6 rounded-xl border border-[#1c1c1c] bg-[#131313]">
+            <div className="border-b border-[#1c1c1c] p-4">
+              <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>When Are Fastest Laps Set?</h2>
               <p className="text-xs text-f1-text-muted mt-0.5">Distribution by lap number — late-race stops often trigger a purple lap attempt</p>
             </div>
             <div className="p-4">
@@ -316,14 +319,14 @@ async function FastestLapsContent() {
 
       {/* Per-race fastest laps table */}
       {entries.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
-          <div className="border-b border-f1-border p-4">
-            <h2 className="font-bold text-lg">Race-by-Race Fastest Laps</h2>
+        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+          <div className="border-b border-[#1c1c1c] p-4">
+            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Race-by-Race Fastest Laps</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                <tr className="border-b border-[#1c1c1c] text-left text-xs uppercase tracking-wider text-f1-text-muted">
                   <th className="px-3 py-3 w-12">Rd</th>
                   <th className="px-3 py-3">Grand Prix</th>
                   <th className="px-3 py-3">Driver</th>
@@ -341,7 +344,7 @@ async function FastestLapsContent() {
                   return (
                     <tr
                       key={e.round}
-                      className={`border-b border-f1-border/50 transition-colors hover:bg-f1-card/50 ${isFastest ? "bg-purple-500/5" : ""}`}
+                      className={`border-b border-[#1c1c1c] transition-colors hover:bg-[#1a1a1a] ${isFastest ? "bg-purple-500/5" : ""}`}
                     >
                       <td className="px-3 py-3 text-f1-text-muted font-bold">{e.round}</td>
                       <td className="px-3 py-3">
@@ -393,12 +396,22 @@ async function FastestLapsContent() {
 export default function FastestLapsPage() {
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight">Fastest Laps</h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
-            {CURRENT_YEAR} Season &middot; Purple lap records race by race
-          </p>
+          <div
+            style={{
+              fontFamily: BC,
+              fontWeight: 900,
+              fontSize: 28,
+              letterSpacing: "0.02em",
+              lineHeight: 1,
+            }}
+          >
+            FASTEST LAPS
+          </div>
+          <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
+            {CURRENT_YEAR} Season · Purple lap records race by race
+          </div>
         </div>
         <RefreshButton />
       </div>
@@ -406,8 +419,8 @@ export default function FastestLapsPage() {
       <Suspense
         fallback={
           <div className="space-y-4">
-            <div className="h-24 rounded-xl bg-f1-card animate-pulse" />
-            <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
+            <div className="h-24 rounded-xl bg-[#131313] animate-pulse" />
+            <div className="h-96 rounded-xl bg-[#131313] animate-pulse" />
           </div>
         }
       >

@@ -149,13 +149,42 @@ export async function getRaceResults(round: string): Promise<RaceResult[]> {
   return data?.MRData?.RaceTable?.Races?.[0]?.Results ?? [];
 }
 
+/**
+ * Return a revalidation TTL for a completed-race endpoint.
+ * Once a race was more than 2 hours ago we can safely cache it for 24 h;
+ * if it's still within the live window we flush every request.
+ */
+function raceRevalidate(raceDateISO: string | undefined): number | false {
+  if (!raceDateISO) return false;
+  const raceEnd = new Date(raceDateISO).getTime() + 2 * 60 * 60 * 1000;
+  return Date.now() > raceEnd ? 86400 : false;
+}
+
 export async function getRaceWithResults(round: string): Promise<Race | null> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/results/?limit=30`, false);
+  // First do a cheap schedule fetch (already cached at 5 min) to decide TTL
+  const schedule = await getRaceSchedule();
+  const raceEntry = schedule.find((r) => r.round === round);
+  const ttl = raceRevalidate(
+    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
+  );
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(
+    `/${CURRENT_SEASON}/${round}/results/?limit=30`,
+    ttl,
+  );
   return data?.MRData?.RaceTable?.Races?.[0] ?? null;
 }
 
 export async function getQualifyingResults(round: string): Promise<QualifyingResult[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/qualifying/?limit=30`, false);
+  const schedule = await getRaceSchedule();
+  const raceEntry = schedule.find((r) => r.round === round);
+  // Qualifying ends ~2 h before race day; use race date as conservative upper bound
+  const ttl = raceRevalidate(
+    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
+  );
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(
+    `/${CURRENT_SEASON}/${round}/qualifying/?limit=30`,
+    ttl,
+  );
   return data?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults ?? [];
 }
 
@@ -185,7 +214,15 @@ export async function getAllSprintResults(): Promise<Race[]> {
 }
 
 export async function getPitStops(round: string): Promise<PitStop[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/pitstops/?limit=100`, false);
+  const schedule = await getRaceSchedule();
+  const raceEntry = schedule.find((r) => r.round === round);
+  const ttl = raceRevalidate(
+    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
+  );
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(
+    `/${CURRENT_SEASON}/${round}/pitstops/?limit=100`,
+    ttl,
+  );
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
 }
 

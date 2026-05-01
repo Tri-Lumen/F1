@@ -8,7 +8,7 @@ import {
   getRaceDate,
   CURRENT_YEAR,
 } from "@/lib/api";
-import { getDriverConstructorId } from "@/lib/driverOverrides";
+import { buildStudioRaceCardData } from "@/lib/raceCards";
 
 export const metadata: Metadata = {
   title: "Race Calendar — F1 2026",
@@ -27,45 +27,27 @@ async function RacesContent() {
     getAllSeasonResults(),
   ]);
 
+  // Walk the schedule once, splitting into upcoming/completed without
+  // re-parsing each race date for every filter pass.
   const now = new Date();
-  const upcoming = races.filter((r) => getRaceDate(r) > now);
-  const completed = races.filter((r) => getRaceDate(r) <= now).reverse();
+  const upcoming: typeof races = [];
+  const completed: typeof races = [];
+  for (const r of races) {
+    if (getRaceDate(r) > now) upcoming.push(r);
+    else completed.push(r);
+  }
+  completed.reverse();
 
-  // Build StudioRaceCardData for completed races
-  const completedResultsMap = new Map<string, typeof allResults[0]>();
+  // Index results by round so each completed race is a single Map lookup
+  // instead of an O(n) scan.
+  const resultsByRound = new Map<string, typeof allResults[0]>();
   for (const race of allResults) {
-    completedResultsMap.set(race.round, race);
+    resultsByRound.set(race.round, race);
   }
 
-  const completedCards: StudioRaceCardData[] = completed.map((race) => {
-    const raceData = completedResultsMap.get(race.round);
-    const results = raceData?.Results ?? [];
-    const winner = results.find((r) => r.position === "1");
-    const pole = results.find((r) => r.grid === "1");
-    const fastest = results.find((r) => r.FastestLap?.rank === "1");
-    const countryShort = (race.Circuit?.Location?.country ?? "???")
-      .slice(0, 3)
-      .toUpperCase();
-    return {
-      round: race.round,
-      name: race.raceName.replace(" Grand Prix", " GP"),
-      short: countryShort,
-      date: new Date(race.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      winnerFamily: winner?.Driver.familyName.toUpperCase() ?? "—",
-      winnerTeamId:
-        getDriverConstructorId(
-          winner?.Driver.driverId ?? "",
-          winner?.Constructor.constructorId,
-        ) ??
-        winner?.Constructor.constructorId ??
-        "",
-      poleFamily: pole ? pole.Driver.familyName.toUpperCase() : null,
-      fastestFamily: fastest ? fastest.Driver.familyName.toUpperCase() : null,
-    };
-  });
+  const completedCards: StudioRaceCardData[] = completed.map((race) =>
+    buildStudioRaceCardData(resultsByRound.get(race.round) ?? race),
+  );
 
   const cardStyle = {
     borderRadius: 12,
