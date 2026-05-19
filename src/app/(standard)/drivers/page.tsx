@@ -20,8 +20,12 @@ import {
 import type { Race } from "@/lib/types";
 import StandingsTable from "@/components/StandingsTable";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
-import { DriverNumber } from "@/components/ProfileImage";
-import { getDriverNumberUrl } from "@/lib/profileImages";
+import { DriverImage, DriverNumber } from "@/components/ProfileImage";
+import {
+  getDriverNumberUrl,
+  getDriverCardImageUrl,
+  getDriverImageUrl,
+} from "@/lib/profileImages";
 import {
   getDriverNumber,
   getDriverConstructorId,
@@ -392,29 +396,55 @@ async function DriversContent() {
                       </div>
                     </div>
                   </div>
-                  <div>
-                    {getDriverNumberUrl(s.Driver.driverId) ? (
-                      <DriverNumber
-                        src={getDriverNumberUrl(s.Driver.driverId)!}
-                        number={displayNumber}
-                        className="h-9 w-auto opacity-20"
-                        color={teamColor}
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          fontFamily: BC,
-                          fontWeight: 900,
-                          fontSize: 32,
-                          color: "var(--color-f1-card)",
-                          fontStyle: "italic",
-                          lineHeight: 1,
-                        }}
-                      >
-                        {displayNumber}
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    // Prefer the F1.com card portrait (full-body, livery overall)
+                    // when the sync manifest has one; otherwise fall through to
+                    // the legacy number-graphic / numeric badge.
+                    const cardImg = getDriverCardImageUrl(s.Driver.driverId);
+                    const fallbackImg = cardImg
+                      ? getDriverImageUrl(s.Driver.driverId)
+                      : undefined;
+                    if (cardImg) {
+                      return (
+                        <div style={{ width: 80, height: 80, position: "relative", flexShrink: 0 }}>
+                          <DriverImage
+                            src={cardImg}
+                            fallbackSrc={fallbackImg}
+                            alt={`${s.Driver.givenName} ${s.Driver.familyName}`}
+                            className="absolute inset-0 h-full w-full object-contain object-bottom"
+                          />
+                        </div>
+                      );
+                    }
+                    if (getDriverNumberUrl(s.Driver.driverId)) {
+                      return (
+                        <div>
+                          <DriverNumber
+                            src={getDriverNumberUrl(s.Driver.driverId)!}
+                            number={displayNumber}
+                            className="h-9 w-auto opacity-20"
+                            color={teamColor}
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div>
+                        <span
+                          style={{
+                            fontFamily: BC,
+                            fontWeight: 900,
+                            fontSize: 32,
+                            color: "var(--color-f1-card)",
+                            fontStyle: "italic",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {displayNumber}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Stats Grid */}

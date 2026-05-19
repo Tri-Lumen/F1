@@ -22,6 +22,7 @@ import RefreshButton from "@/components/RefreshButton";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
 import { getDriverNumber } from "@/lib/driverOverrides";
+import { getTeamLogoUrl } from "@/lib/profileImages";
 
 interface TeamStats {
   podiums: number;
@@ -168,6 +169,16 @@ async function TeamsContent() {
                       <span className="rounded bg-f1-dark px-2 py-1 text-xs font-bold text-f1-text-muted">
                         P{s.position}
                       </span>
+                      {getTeamLogoUrl(s.Constructor.constructorId) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={getTeamLogoUrl(s.Constructor.constructorId)!}
+                          alt={`${s.Constructor.name} logo`}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-7 w-auto object-contain"
+                        />
+                      )}
                       <h3 className="text-2xl font-black">
                         {s.Constructor.name}
                       </h3>
