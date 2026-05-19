@@ -244,6 +244,33 @@ export interface RaceTableData {
   };
 }
 
+// Predictions / pick'em types
+export interface Prediction {
+  /** Ergast round number ("1", "2", …) */
+  round: string;
+  /** Ergast driverId for pole position pick */
+  pole: string;
+  /** Podium picks, slot 1/2/3 — Ergast driverIds */
+  p1: string;
+  p2: string;
+  p3: string;
+  /** Optional fastest-lap pick */
+  fastestLap?: string;
+  /** ISO timestamp when the prediction was last saved */
+  submittedAt: string;
+}
+
+export interface PredictionScoreBreakdown {
+  pole: number;
+  p1: number;
+  p2: number;
+  p3: number;
+  /** Points awarded when a podium driver was picked but in the wrong slot */
+  podiumOffSlot: number;
+  fastestLap: number;
+  total: number;
+}
+
 // RSS feed types
 export interface RssFeedSource {
   id: string;
