@@ -20,6 +20,18 @@
  */
 
 import { DRIVER_OVERRIDES_2026 } from "./driverOverrides";
+import {
+  DRIVER_PORTRAITS,
+  TEAM_PORTRAITS,
+  type DriverPortraitEntry,
+  type TeamPortraitEntry,
+} from "./portraitsManifest.generated";
+import {
+  LOCAL_DRIVER_PORTRAITS,
+  LOCAL_TEAM_PORTRAITS,
+} from "./portraitsLocal";
+
+export type { DriverPortraitEntry, TeamPortraitEntry };
 
 const F1_CDN = "https://media.formula1.com";
 const CAR_YEAR = "2026";
@@ -138,7 +150,8 @@ function resolveDriverSlug(driverId: string): string | undefined {
   return DRIVER_OVERRIDES_2026[driverId]?.assetCode ?? DRIVER_NUMBER_SLUGS[driverId];
 }
 
-export function getDriverImageUrl(driverId: string): string | undefined {
+/** Computed (legacy) headshot URL — used as fallback if the manifest is empty. */
+function computedDriverImageUrl(driverId: string): string | undefined {
   const override = DRIVER_OVERRIDES_2026[driverId];
   if (override?.assetCode && override.assetInitial && override.assetGiven && override.assetFamily) {
     return driverUrl(override.assetInitial, override.assetCode, override.assetGiven, override.assetFamily);
@@ -147,16 +160,59 @@ export function getDriverImageUrl(driverId: string): string | undefined {
 }
 
 /**
- * Returns a prior-season portrait URL to use when the current-season asset
- * hasn't been uploaded yet — e.g. Bortoleto's Audi overalls (GABBOR02) fall
- * back to his launch portrait (GABBOR01) if the new code 404s.
+ * Primary driver portrait URL.
+ *
+ * Prefers (in order):
+ *   1. The full-body card image scraped from F1.com's /en/drivers tiles
+ *      (committed to portraitsManifest.generated.ts via `npm run sync-portraits`)
+ *   2. The square headshot scraped from F1.com
+ *   3. The local backup .webp in public/portraits/drivers
+ *   4. The deterministic media.formula1.com URL built from driver name/code
+ *
+ * The fallback chain in DriverImage handles the case where a primary URL 404s.
+ */
+export function getDriverImageUrl(driverId: string): string | undefined {
+  const manifest: DriverPortraitEntry | undefined = DRIVER_PORTRAITS[driverId];
+  return (
+    manifest?.card ??
+    manifest?.headshot ??
+    LOCAL_DRIVER_PORTRAITS[driverId]?.card ??
+    computedDriverImageUrl(driverId)
+  );
+}
+
+/**
+ * Returns a fallback portrait URL to use when the primary asset hasn't loaded.
+ * Walks down the same tier list as the primary, stopping one rung lower so
+ * DriverImage can transparently retry.
  */
 export function getDriverImageFallbackUrl(driverId: string): string | undefined {
+  const manifest: DriverPortraitEntry | undefined = DRIVER_PORTRAITS[driverId];
+  if (manifest?.card && manifest.headshot) return manifest.headshot;
+  if (manifest?.card || manifest?.headshot) {
+    return LOCAL_DRIVER_PORTRAITS[driverId]?.card ?? computedDriverImageUrl(driverId);
+  }
+  if (LOCAL_DRIVER_PORTRAITS[driverId]?.card) return computedDriverImageUrl(driverId);
   if (DRIVER_OVERRIDES_2026[driverId]?.assetCode) return DRIVER_IMAGES[driverId];
   return undefined;
 }
 
+/**
+ * Full-body card-style portrait — manifest if synced, otherwise the local
+ * backup .webp. Returns undefined only when neither layer has the driver.
+ */
+export function getDriverCardImageUrl(driverId: string): string | undefined {
+  return DRIVER_PORTRAITS[driverId]?.card ?? LOCAL_DRIVER_PORTRAITS[driverId]?.card;
+}
+
+/** Helmet thumbnail when F1.com exposes one. */
+export function getDriverHelmetUrl(driverId: string): string | undefined {
+  return DRIVER_PORTRAITS[driverId]?.helmet;
+}
+
 export function getDriverNumberUrl(driverId: string): string | undefined {
+  const manifest = DRIVER_PORTRAITS[driverId]?.number;
+  if (manifest) return manifest;
   const slug = resolveDriverSlug(driverId);
   if (!slug) return undefined;
   return `${F1_CDN}/${NUMBER_TRANSFORMS}/content/dam/fom-website/2018-redesign-assets/drivers/number-logos/${slug}.png${IMG_VERSION}`;
@@ -164,15 +220,28 @@ export function getDriverNumberUrl(driverId: string): string | undefined {
 
 /**
  * Returns an array of candidate URLs for the team car image, ordered by
- * preference (2026 first, then 2025 fallback). The CarImage component
- * tries each URL until one loads successfully.
+ * preference: synced manifest URL, then the local backup .webp in
+ * public/portraits/teams, then the deterministic media.formula1.com guesses.
+ * CarImage walks the list until one loads successfully.
  */
 export function getTeamCarImageUrls(constructorId: string): string[] | undefined {
-  return TEAM_CAR_IMAGES[constructorId];
+  const manifest: TeamPortraitEntry | undefined = TEAM_PORTRAITS[constructorId];
+  const local = LOCAL_TEAM_PORTRAITS[constructorId]?.car;
+  const computed = TEAM_CAR_IMAGES[constructorId] ?? [];
+  const candidates: string[] = [];
+  if (manifest?.car) candidates.push(manifest.car);
+  if (local) candidates.push(local);
+  candidates.push(...computed);
+  return candidates.length > 0 ? candidates : undefined;
 }
 
 /** Returns the first (preferred) URL for backwards compatibility. */
 export function getTeamCarImageUrl(constructorId: string): string | undefined {
-  const urls = TEAM_CAR_IMAGES[constructorId];
+  const urls = getTeamCarImageUrls(constructorId);
   return urls?.[0];
+}
+
+/** Team logo / badge URL when F1.com exposes one on /en/teams. */
+export function getTeamLogoUrl(constructorId: string): string | undefined {
+  return TEAM_PORTRAITS[constructorId]?.logo;
 }

@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "sync-portraits": "node scripts/sync-f1-portraits.mjs",
     "electron:dev": "next build && electron .",
     "electron:build": "next build && electron-builder",
     "electron:build:win": "next build && electron-builder --win",

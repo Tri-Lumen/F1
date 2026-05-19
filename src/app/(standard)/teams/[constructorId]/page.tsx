@@ -30,7 +30,12 @@ export async function generateMetadata({
     description: `Team results, driver comparison, and stats for ${name}`,
   };
 }
-import { getTeamCarImageUrls, getDriverImageUrl, getDriverImageFallbackUrl } from "@/lib/profileImages";
+import {
+  getTeamCarImageUrls,
+  getDriverImageUrl,
+  getDriverImageFallbackUrl,
+  getTeamLogoUrl,
+} from "@/lib/profileImages";
 import { getDriverNumber } from "@/lib/driverOverrides";
 
 function formatDate(dateStr: string) {
@@ -63,6 +68,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
 
   const teamColor = getTeamColor(constructorId);
   const carImageUrls = getTeamCarImageUrls(constructorId);
+  const teamLogoUrl = getTeamLogoUrl(constructorId);
   const drivers = driverStandings.filter(
     (d) => d.Constructors[0]?.constructorId === constructorId
   );
@@ -160,12 +166,24 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
                 <p className="text-sm text-f1-text-muted">
                   {standing.Constructor.nationality} Constructor
                 </p>
-                <h1
-                  className="text-4xl font-black uppercase tracking-tight leading-none mt-1"
-                  style={{ color: teamColor }}
-                >
-                  {standing.Constructor.name}
-                </h1>
+                <div className="mt-1 flex items-center gap-3">
+                  {teamLogoUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={teamLogoUrl}
+                      alt={`${standing.Constructor.name} logo`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-10 w-auto object-contain shrink-0"
+                    />
+                  )}
+                  <h1
+                    className="text-4xl font-black uppercase tracking-tight leading-none"
+                    style={{ color: teamColor }}
+                  >
+                    {standing.Constructor.name}
+                  </h1>
+                </div>
                 <div className="mt-2 flex items-center gap-3">
                   <span className="rounded bg-f1-dark px-2 py-0.5 text-xs font-bold text-f1-text-muted">
                     P{standing.position}

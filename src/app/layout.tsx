@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
 import { NotificationProvider } from "@/lib/NotificationContext";
+import { PredictionsProvider } from "@/lib/PredictionsContext";
 
 export const metadata: Metadata = {
   title: "Delta Dashboard — 2026 Season",
@@ -101,7 +102,9 @@ export default function RootLayout({
           <FavoritesProvider>
             <RssFeedProvider>
               <NotificationProvider>
-                {children}
+                <PredictionsProvider>
+                  {children}
+                </PredictionsProvider>
               </NotificationProvider>
             </RssFeedProvider>
           </FavoritesProvider>

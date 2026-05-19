@@ -23,6 +23,8 @@ const NAV_LINKS = [
 const MORE_LINKS = [
   { href: "/fastest-laps", label: "Fastest Laps" },
   { href: "/compare", label: "Compare" },
+  { href: "/replay", label: "Replay" },
+  { href: "/predictions", label: "Pick'em" },
   { href: "/archive", label: "Archive" },
   { href: "/favorites", label: "Favorites" },
   { href: "/settings", label: "Settings" },

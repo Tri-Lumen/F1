@@ -268,6 +268,26 @@ export async function getLiveSessions(): Promise<LiveSession[]> {
   return fetchOpenF1<LiveSession>(`/sessions?year=${CURRENT_SEASON}`);
 }
 
+/**
+ * All sessions for the current season that have already ended — replay-ready.
+ * Sorted by start time descending (most recent first).
+ */
+export async function getCompletedSessions(): Promise<LiveSession[]> {
+  const all = await getLiveSessions();
+  const now = Date.now();
+  return all
+    .filter((s) => new Date(s.date_end).getTime() < now)
+    .sort(
+      (a, b) => new Date(b.date_start).getTime() - new Date(a.date_start).getTime(),
+    );
+}
+
+/** Single session lookup by key (used by the replay page). */
+export async function getSessionByKey(sessionKey: number): Promise<LiveSession | null> {
+  const data = await fetchOpenF1<LiveSession>(`/sessions?session_key=${sessionKey}`);
+  return data[0] ?? null;
+}
+
 export async function getLatestSession(): Promise<LiveSession | null> {
   // Try the direct "latest" query first — most reliable for live/recent sessions
   const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
@@ -360,6 +380,11 @@ export async function getRaceControl(sessionKey: number): Promise<RaceControlMes
 export async function getWeather(sessionKey: number): Promise<WeatherData | null> {
   const data = await fetchOpenF1<WeatherData>(`/weather?session_key=${sessionKey}`);
   return data.length > 0 ? data[data.length - 1] : null;
+}
+
+/** Fetch the full weather time-series for a session (replay scrubber needs every sample). */
+export async function getWeatherSeries(sessionKey: number): Promise<WeatherData[]> {
+  return fetchOpenF1<WeatherData>(`/weather?session_key=${sessionKey}`);
 }
 
 // --- Archive API (historical seasons, 24 h cache) ---
