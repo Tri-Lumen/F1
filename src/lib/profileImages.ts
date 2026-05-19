@@ -26,6 +26,10 @@ import {
   type DriverPortraitEntry,
   type TeamPortraitEntry,
 } from "./portraitsManifest.generated";
+import {
+  LOCAL_DRIVER_PORTRAITS,
+  LOCAL_TEAM_PORTRAITS,
+} from "./portraitsLocal";
 
 export type { DriverPortraitEntry, TeamPortraitEntry };
 
@@ -162,35 +166,43 @@ function computedDriverImageUrl(driverId: string): string | undefined {
  *   1. The full-body card image scraped from F1.com's /en/drivers tiles
  *      (committed to portraitsManifest.generated.ts via `npm run sync-portraits`)
  *   2. The square headshot scraped from F1.com
- *   3. The deterministic media.formula1.com URL built from driver name/code
+ *   3. The local backup .webp in public/portraits/drivers
+ *   4. The deterministic media.formula1.com URL built from driver name/code
  *
  * The fallback chain in DriverImage handles the case where a primary URL 404s.
  */
 export function getDriverImageUrl(driverId: string): string | undefined {
   const manifest: DriverPortraitEntry | undefined = DRIVER_PORTRAITS[driverId];
-  return manifest?.card ?? manifest?.headshot ?? computedDriverImageUrl(driverId);
+  return (
+    manifest?.card ??
+    manifest?.headshot ??
+    LOCAL_DRIVER_PORTRAITS[driverId]?.card ??
+    computedDriverImageUrl(driverId)
+  );
 }
 
 /**
- * Returns a fallback portrait URL to use when the primary asset hasn't loaded
- * — either the manifest's headshot (when the card is primary) or the
- * prior-season computed URL (e.g. Bortoleto's Audi GABBOR02 → GABBOR01).
+ * Returns a fallback portrait URL to use when the primary asset hasn't loaded.
+ * Walks down the same tier list as the primary, stopping one rung lower so
+ * DriverImage can transparently retry.
  */
 export function getDriverImageFallbackUrl(driverId: string): string | undefined {
   const manifest: DriverPortraitEntry | undefined = DRIVER_PORTRAITS[driverId];
   if (manifest?.card && manifest.headshot) return manifest.headshot;
-  if (manifest?.card || manifest?.headshot) return computedDriverImageUrl(driverId);
+  if (manifest?.card || manifest?.headshot) {
+    return LOCAL_DRIVER_PORTRAITS[driverId]?.card ?? computedDriverImageUrl(driverId);
+  }
+  if (LOCAL_DRIVER_PORTRAITS[driverId]?.card) return computedDriverImageUrl(driverId);
   if (DRIVER_OVERRIDES_2026[driverId]?.assetCode) return DRIVER_IMAGES[driverId];
   return undefined;
 }
 
 /**
- * Full-body card-style portrait shown on F1.com's /en/drivers tiles.
- * Returns undefined when the manifest hasn't been synced yet so callers can
- * fall back to `getDriverImageUrl` without rendering a broken image.
+ * Full-body card-style portrait — manifest if synced, otherwise the local
+ * backup .webp. Returns undefined only when neither layer has the driver.
  */
 export function getDriverCardImageUrl(driverId: string): string | undefined {
-  return DRIVER_PORTRAITS[driverId]?.card;
+  return DRIVER_PORTRAITS[driverId]?.card ?? LOCAL_DRIVER_PORTRAITS[driverId]?.card;
 }
 
 /** Helmet thumbnail when F1.com exposes one. */
@@ -208,15 +220,19 @@ export function getDriverNumberUrl(driverId: string): string | undefined {
 
 /**
  * Returns an array of candidate URLs for the team car image, ordered by
- * preference. When a manifest entry exists for the team, its car URL is
- * prepended so it wins over the deterministic guesses. CarImage walks the
- * list until one loads successfully.
+ * preference: synced manifest URL, then the local backup .webp in
+ * public/portraits/teams, then the deterministic media.formula1.com guesses.
+ * CarImage walks the list until one loads successfully.
  */
 export function getTeamCarImageUrls(constructorId: string): string[] | undefined {
   const manifest: TeamPortraitEntry | undefined = TEAM_PORTRAITS[constructorId];
-  const computed = TEAM_CAR_IMAGES[constructorId];
-  if (manifest?.car) return [manifest.car, ...(computed ?? [])];
-  return computed;
+  const local = LOCAL_TEAM_PORTRAITS[constructorId]?.car;
+  const computed = TEAM_CAR_IMAGES[constructorId] ?? [];
+  const candidates: string[] = [];
+  if (manifest?.car) candidates.push(manifest.car);
+  if (local) candidates.push(local);
+  candidates.push(...computed);
+  return candidates.length > 0 ? candidates : undefined;
 }
 
 /** Returns the first (preferred) URL for backwards compatibility. */
