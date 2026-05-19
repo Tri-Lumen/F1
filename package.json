@@ -1,6 +1,6 @@
 {
   "name": "delta-dashboard",
-  "version": "1.2.1",
+  "version": "1.2.3",
   "description": "Delta Dashboard",
   "main": "electron/main.js",
   "scripts": {
