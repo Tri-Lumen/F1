@@ -242,28 +242,6 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
   }
 }
 
-/**
- * Fetch from OpenF1 with a recent-time filter, falling back to an unfiltered
- * query when the time-windowed result is empty (e.g. session just started).
- */
-async function fetchOpenF1WithTimeFilter<T>(
-  endpoint: string,
-  sessionKey: number,
-  windowMs: number = 5 * 60_000,
-): Promise<T[]> {
-  const since = new Date(Date.now() - windowMs).toISOString();
-  // OpenF1 uses an unconventional `date>value` operator syntax in the query
-  // string — the literal `>` is part of the parameter name, not an operator
-  // between key and value.  Do NOT route this through URLSearchParams; it
-  // would percent-encode the `>` and the API returns an empty set.
-  const filtered = await fetchOpenF1<T>(
-    `/${endpoint}?session_key=${sessionKey}&date>${encodeURIComponent(since)}`
-  );
-  if (filtered.length > 0) return filtered;
-  // Fallback: unfiltered (for sessions that just started or non-live sessions)
-  return fetchOpenF1<T>(`/${endpoint}?session_key=${sessionKey}`);
-}
-
 export async function getLiveSessions(): Promise<LiveSession[]> {
   return fetchOpenF1<LiveSession>(`/sessions?year=${CURRENT_SEASON}`);
 }
@@ -328,12 +306,21 @@ export async function getLiveDrivers(sessionKey: number): Promise<LiveTimingDriv
   return fetchOpenF1<LiveTimingDriver>(`/drivers?session_key=${sessionKey}`);
 }
 
+/**
+ * Position and interval records are an event stream — OpenF1 only emits a row
+ * when a driver's value *changes*.  To know the current state of every driver
+ * (live: latest per driver; replay: a snapshot at an arbitrary time) we need the
+ * whole session, not a recent time window.  A windowed query silently drops any
+ * driver who hasn't changed inside the window — leaving holes in the live grid —
+ * and truncates the replay timeline of a recently-ended session to its last few
+ * minutes.  So we always fetch the full session history here.
+ */
 export async function getLivePositions(sessionKey: number): Promise<LivePosition[]> {
-  return fetchOpenF1WithTimeFilter<LivePosition>("position", sessionKey);
+  return fetchOpenF1<LivePosition>(`/position?session_key=${sessionKey}`);
 }
 
 export async function getLiveIntervals(sessionKey: number): Promise<LiveInterval[]> {
-  return fetchOpenF1WithTimeFilter<LiveInterval>("intervals", sessionKey);
+  return fetchOpenF1<LiveInterval>(`/intervals?session_key=${sessionKey}`);
 }
 
 export async function getLiveStints(sessionKey: number): Promise<LiveStint[]> {
