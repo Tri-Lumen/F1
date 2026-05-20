@@ -105,16 +105,21 @@ async function LiveContent() {
   for (const iv of intervals)
     latestIntervals.set(iv.driver_number, { gap: iv.gap_to_leader, interval: iv.interval });
 
+  const currentLap =
+    laps.length > 0 ? Math.max(...laps.map((l) => l.lap_number)) : null;
+
   const currentStints = new Map<number, { compound: string; age: number }>();
   const latestStintNums = new Map<number, number>();
   for (const stint of stints) {
     const prev = latestStintNums.get(stint.driver_number) ?? -1;
     if (stint.stint_number > prev) {
       latestStintNums.set(stint.driver_number, stint.stint_number);
-      const lapEnd = stint.lap_end ?? stint.lap_start + 5;
+      // For an in-progress stint (no lap_end) tire age runs from lap_start to
+      // the current race lap — not a hardcoded guess.
+      const lapEnd = stint.lap_end ?? currentLap ?? stint.lap_start;
       currentStints.set(stint.driver_number, {
         compound: stint.compound,
-        age: stint.tyre_age_at_start + (lapEnd - stint.lap_start),
+        age: stint.tyre_age_at_start + Math.max(lapEnd - stint.lap_start, 0),
       });
     }
   }
@@ -124,9 +129,6 @@ async function LiveContent() {
     const posB = latestPositions.get(b.driver_number) ?? 99;
     return posA - posB;
   });
-
-  const currentLap =
-    laps.length > 0 ? Math.max(...laps.map((l) => l.lap_number)) : null;
 
   const latestFlagMsg = [...raceControl]
     .reverse()
