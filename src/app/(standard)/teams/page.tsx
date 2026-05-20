@@ -19,6 +19,7 @@ import {
 import type { Race, RaceResult } from "@/lib/types";
 import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
 import RefreshButton from "@/components/RefreshButton";
+import PageHeader from "@/components/PageHeader";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
 import { getDriverNumber } from "@/lib/driverOverrides";
@@ -314,17 +315,11 @@ async function TeamsContent() {
 export default function TeamsPage() {
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight">
-            Constructors Championship
-          </h1>
-          <p className="mt-1 text-sm text-f1-text-muted">
-            {CURRENT_YEAR} Season &middot; Full team stats and standings
-          </p>
-        </div>
-        <RefreshButton />
-      </div>
+      <PageHeader
+        title="Constructors Championship"
+        subtitle={`${CURRENT_YEAR} Season · Full team stats and standings`}
+        actions={<RefreshButton />}
+      />
 
       <Suspense
         fallback={

@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRssFeeds } from "@/lib/RssFeedContext";
+import { useFavorites } from "@/lib/FavoritesContext";
+import PageHeader from "@/components/PageHeader";
+import EmptyState from "@/components/EmptyState";
 import { F1_DRIVERS_2026, SPECIAL_LIVERIES_2026 } from "@/lib/rssFeeds";
 import { getTeamColor } from "@/lib/api";
 import type { RssArticle } from "@/lib/types";
@@ -229,12 +232,28 @@ function FeedSourceBar({
 export default function NewsClient() {
   const { feeds, toggleFeed, driverFilter, toggleDriverFilter, clearDriverFilter, mounted } =
     useRssFeeds();
+  const { favoriteDriverIds, mounted: favMounted } = useFavorites();
+  const seededRef = useRef(false);
   const [articles, setArticles] = useState<RssArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"news" | "liveries">("news");
 
   const enabledFeeds = useMemo(() => feeds.filter((f) => f.enabled), [feeds]);
+
+  // One-time: seed the driver filter from the user's favorite drivers when no
+  // filter is already active. Clearing afterwards stays cleared for this mount.
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!mounted || !favMounted) return;
+    seededRef.current = true;
+    if (driverFilter.length > 0 || favoriteDriverIds.length === 0) return;
+    const seedable = favoriteDriverIds.filter((id) =>
+      F1_DRIVERS_2026.some((d) => d.id === id)
+    );
+    seedable.forEach((id) => toggleDriverFilter(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, favMounted]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -290,14 +309,10 @@ export default function NewsClient() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight">
-          <span className="text-f1-red">F1</span> News
-        </h1>
-        <p className="mt-1 text-sm text-f1-text-muted">
-          Latest headlines from top F1 news sources, filterable by driver
-        </p>
-      </div>
+      <PageHeader
+        title={<><span className="text-f1-red">F1</span> News</>}
+        subtitle="Latest headlines from top F1 news sources, filterable by driver"
+      />
 
       {/* Tab bar */}
       <div className="flex items-center gap-1 mb-6 border-b border-f1-border/40">
@@ -364,38 +379,26 @@ export default function NewsClient() {
 
           {/* Error state */}
           {error && !loading && (
-            <div className="rounded-xl border border-f1-red/30 bg-f1-red/10 p-6 text-center">
-              <p className="text-sm font-semibold text-f1-red">{error}</p>
-              <p className="text-xs text-f1-text-muted mt-1">
-                Check your feed configuration in Settings
-              </p>
-            </div>
+            <EmptyState
+              variant="error"
+              title={error}
+              hint="Check your feed configuration in Settings"
+            />
           )}
 
           {/* Empty state */}
           {!loading && !error && enabledFeeds.length === 0 && (
-            <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 p-12 text-center">
-              <svg
-                className="mx-auto h-10 w-10 text-f1-text-muted/40 mb-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"
-                />
-              </svg>
-              <p className="text-sm font-semibold text-f1-text-muted">No feeds enabled</p>
-              <p className="text-xs text-f1-text-muted/60 mt-1">
-                Enable at least one feed source above or in{" "}
-                <Link href="/settings" className="text-f1-accent hover:underline">
-                  Settings
-                </Link>
-              </p>
-            </div>
+            <EmptyState
+              title="No feeds enabled"
+              hint={
+                <>
+                  Enable at least one feed source above or in{" "}
+                  <Link href="/settings" className="text-f1-accent hover:underline">
+                    Settings
+                  </Link>
+                </>
+              }
+            />
           )}
 
           {/* No results for driver filter */}
