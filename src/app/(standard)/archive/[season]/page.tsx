@@ -64,9 +64,6 @@ export default async function ArchiveSeasonPage({
     }
   }
 
-  const champion = driverStandings[0];
-  const constructorChampion = constructorStandings[0];
-
   return (
     <div>
       {/* Breadcrumb */}
@@ -87,43 +84,6 @@ export default async function ArchiveSeasonPage({
         </p>
       </div>
 
-      {/* Champion highlight */}
-      {(champion || constructorChampion) && (
-        <div className="mb-8 rounded-xl border border-f1-border bg-f1-card p-6">
-          <div className="grid sm:grid-cols-2 gap-6">
-            {champion && (
-              <div>
-                <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-2 font-semibold">
-                  Drivers&apos; Champion
-                </p>
-                <p className="text-xl font-black leading-tight">
-                  {getCountryFlag(champion.Driver.nationality)}{" "}
-                  {champion.Driver.givenName} {champion.Driver.familyName}
-                </p>
-                <p className="text-sm text-f1-text-muted mt-1">
-                  {champion.Constructors[0]?.name} &middot;{" "}
-                  {champion.points} pts &middot; {champion.wins} wins
-                </p>
-              </div>
-            )}
-            {constructorChampion && (
-              <div>
-                <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-2 font-semibold">
-                  Constructors&apos; Champion
-                </p>
-                <p className="text-xl font-black leading-tight">
-                  {constructorChampion.Constructor.name}
-                </p>
-                <p className="text-sm text-f1-text-muted mt-1">
-                  {constructorChampion.points} pts &middot;{" "}
-                  {constructorChampion.wins} wins
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Standings grid */}
       <div className="grid gap-6 lg:grid-cols-2 mb-10">
         {/* Driver Standings */}
@@ -140,9 +100,9 @@ export default async function ArchiveSeasonPage({
               {driverStandings.slice(0, 10).map((s) => (
                 <div
                   key={s.Driver.driverId}
-                  className="flex items-center gap-3 px-4 py-3"
+                  className={`flex items-center gap-3 px-4 py-3 ${s.position === "1" ? "border-l-2 border-yellow-400" : ""}`}
                 >
-                  <span className="w-6 shrink-0 text-center text-sm font-bold text-f1-text-muted">
+                  <span className={`w-6 shrink-0 text-center text-sm font-bold ${s.position === "1" ? "text-yellow-400" : "text-f1-text-muted"}`}>
                     {s.position}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -183,9 +143,9 @@ export default async function ArchiveSeasonPage({
               {constructorStandings.map((s) => (
                 <div
                   key={s.Constructor.constructorId}
-                  className="flex items-center gap-3 px-4 py-3"
+                  className={`flex items-center gap-3 px-4 py-3 ${s.position === "1" ? "border-l-2 border-yellow-400" : ""}`}
                 >
-                  <span className="w-6 shrink-0 text-center text-sm font-bold text-f1-text-muted">
+                  <span className={`w-6 shrink-0 text-center text-sm font-bold ${s.position === "1" ? "text-yellow-400" : "text-f1-text-muted"}`}>
                     {s.position}
                   </span>
                   <div className="flex-1 min-w-0">

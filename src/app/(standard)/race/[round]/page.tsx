@@ -102,6 +102,30 @@ async function RaceContent({ round }: { round: string }) {
     }
   }
 
+  const hasPitBox = pitBoxTimes.size > 0;
+  const pitByDriver = new Map<string, typeof pitStops>();
+  for (const p of pitStops) {
+    const arr = pitByDriver.get(p.driverId) ?? [];
+    arr.push(p);
+    pitByDriver.set(p.driverId, arr);
+  }
+  const pitDriverSummaries = [...pitByDriver.entries()]
+    .map(([id, stops]) => {
+      const boxStops = pitBoxTimes.get(id);
+      const fastestBox = boxStops?.reduce((best, s) => s.duration < best.duration ? s : best);
+      const fastestLane = stops.reduce((best, s) => parseFloat(s.duration) < parseFloat(best.duration) ? s : best);
+      return {
+        driverId: id,
+        stops: stops.length,
+        fastestDuration: fastestBox ? fastestBox.duration : parseFloat(fastestLane.duration),
+        fastestLap: fastestBox ? String(fastestBox.lap) : fastestLane.lap,
+        fastestStop: fastestLane.stop,
+        isPitBox: !!fastestBox,
+      };
+    })
+    .sort((a, b) => a.fastestDuration - b.fastestDuration);
+  const fastestPit = pitDriverSummaries[0];
+
   return (
     <>
       {/* Race Header */}
@@ -428,97 +452,51 @@ async function RaceContent({ round }: { round: string }) {
         <div className="mb-6 rounded-xl border border-f1-border bg-f1-card">
           <div className="border-b border-f1-border p-4">
             <h3 className="font-bold text-lg">Pit Stop Analysis</h3>
+            {fastestPit && (
+              <p className="text-xs text-f1-text-muted mt-0.5">
+                Fastest {hasPitBox ? "box" : "lane"}: <span className="font-bold text-f1-accent">{fastestPit.fastestDuration.toFixed(3)}s</span>
+                {" "}— <span className="capitalize">{fastestPit.driverId.replace(/_/g, " ")}</span>
+                {" "}Lap {fastestPit.fastestLap}
+              </p>
+            )}
           </div>
-          <div className="p-4">
-            {(() => {
-              const hasPitBox = pitBoxTimes.size > 0;
-
-              // Build per-driver summaries using pit box times when available
-              const byDriver = new Map<string, typeof pitStops>();
-              for (const p of pitStops) {
-                const arr = byDriver.get(p.driverId) ?? [];
-                arr.push(p);
-                byDriver.set(p.driverId, arr);
-              }
-
-              const driverSummaries = [...byDriver.entries()]
-                .map(([id, stops]) => {
-                  const boxStops = pitBoxTimes.get(id);
-                  const fastestBox = boxStops?.reduce((best, s) => s.duration < best.duration ? s : best);
-                  const fastestLane = stops.reduce((best, s) => parseFloat(s.duration) < parseFloat(best.duration) ? s : best);
-                  return {
-                    driverId: id,
-                    stops: stops.length,
-                    // Prefer pit box time from OpenF1; fall back to pit lane time from Ergast
-                    fastestDuration: fastestBox ? fastestBox.duration : parseFloat(fastestLane.duration),
-                    fastestLap: fastestBox ? String(fastestBox.lap) : fastestLane.lap,
-                    fastestStop: fastestLane.stop,
-                    isPitBox: !!fastestBox,
-                  };
-                })
-                .sort((a, b) => a.fastestDuration - b.fastestDuration);
-
-              const fastest = driverSummaries[0];
-
-              return (
-                <>
-                  {/* Fastest stop highlight */}
-                  {fastest && (
-                    <div className="mb-4 rounded-lg bg-f1-dark p-3 flex items-center gap-4">
-                      <div>
-                        <p className="text-xs text-f1-text-muted uppercase tracking-wider font-bold mb-0.5">
-                          Fastest Pit {hasPitBox ? "Box" : "Lane"} Time
-                        </p>
-                        <p className="font-bold text-f1-accent">{fastest.driverId.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</p>
-                      </div>
-                      <div className="ml-auto text-right">
-                        <p className="text-2xl font-black">{fastest.fastestDuration.toFixed(3)}s</p>
-                        <p className="text-xs text-f1-text-muted">Lap {fastest.fastestLap} &middot; Stop {fastest.fastestStop}</p>
-                      </div>
-                    </div>
-                  )}
-                  {/* Per-driver summary */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
-                          <th className="px-2 py-2">Driver</th>
-                          <th className="px-2 py-2 text-center">Stops</th>
-                          <th className="px-2 py-2 text-right">
-                            {hasPitBox ? "Pit Box Time" : "Pit Lane Time"}
-                          </th>
-                          <th className="px-2 py-2 text-right hidden sm:table-cell">On Lap</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {driverSummaries.map((d) => {
-                          const raceResult = results.find((r) => r.Driver.driverId === d.driverId);
-                          const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)";
-                          const isFastest = d.driverId === fastest?.driverId;
-                          return (
-                            <tr key={d.driverId} className={`border-b border-f1-border/50 ${isFastest ? "bg-f1-accent/5" : ""}`}>
-                              <td className="px-2 py-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="h-5 w-1 rounded-full" style={{ backgroundColor: color }} />
-                                  <span className="capitalize">{d.driverId.replace(/_/g, " ")}</span>
-                                </div>
-                              </td>
-                              <td className="px-2 py-2 text-center">{d.stops}</td>
-                              <td className={`px-2 py-2 text-right font-mono font-bold ${isFastest ? "text-f1-accent" : ""}`}>
-                                {d.fastestDuration.toFixed(3)}s
-                              </td>
-                              <td className="px-2 py-2 text-right hidden sm:table-cell text-f1-text-muted">
-                                {d.fastestLap}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              );
-            })()}
+          <div className="p-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
+                  <th className="px-2 py-2">Driver</th>
+                  <th className="px-2 py-2 text-center">Stops</th>
+                  <th className="px-2 py-2 text-right">
+                    {hasPitBox ? "Pit Box Time" : "Pit Lane Time"}
+                  </th>
+                  <th className="px-2 py-2 text-right hidden sm:table-cell">On Lap</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pitDriverSummaries.map((d) => {
+                  const raceResult = results.find((r) => r.Driver.driverId === d.driverId);
+                  const color = raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)";
+                  const isFastest = d.driverId === fastestPit?.driverId;
+                  return (
+                    <tr key={d.driverId} className={`border-b border-f1-border/50 ${isFastest ? "bg-f1-accent/5" : ""}`}>
+                      <td className="px-2 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="h-5 w-1 rounded-full" style={{ backgroundColor: color }} />
+                          <span className="capitalize">{d.driverId.replace(/_/g, " ")}</span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-center">{d.stops}</td>
+                      <td className={`px-2 py-2 text-right font-mono font-bold ${isFastest ? "text-f1-accent" : ""}`}>
+                        {d.fastestDuration.toFixed(3)}s
+                      </td>
+                      <td className="px-2 py-2 text-right hidden sm:table-cell text-f1-text-muted">
+                        {d.fastestLap}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

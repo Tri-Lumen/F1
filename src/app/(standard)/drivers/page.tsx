@@ -18,7 +18,6 @@ import {
   CURRENT_YEAR,
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
-import StandingsTable from "@/components/StandingsTable";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
 import {
@@ -92,18 +91,6 @@ async function DriversContent() {
   ]);
 
   const completedRaces = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
-
-  const recentFormMap = new Map<string, { pos: number; status: string }[]>();
-  for (const s of standings) {
-    const results: { pos: number; status: string }[] = [];
-    for (let i = completedRaces.length - 1; i >= 0 && results.length < 5; i--) {
-      const result = completedRaces[i].Results?.find(
-        (r) => r.Driver.driverId === s.Driver.driverId
-      );
-      if (result) results.unshift({ pos: parseInt(result.position), status: result.status });
-    }
-    recentFormMap.set(s.Driver.driverId, results);
-  }
 
   const now = new Date();
   const remainingSchedule = schedule.filter((r) => getRaceDate(r) > now);
@@ -286,37 +273,6 @@ async function DriversContent() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Championship Standings Table */}
-      <div style={{ ...cardStyle, overflow: "hidden", marginBottom: 18 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "12px 14px",
-            borderBottom: "1px solid var(--color-f1-border)",
-          }}
-        >
-          <span
-            style={{ fontFamily: BC, fontWeight: 800, fontSize: 14, letterSpacing: "0.04em" }}
-          >
-            Championship Standings
-          </span>
-        </div>
-        <StandingsTable standings={standings} recentForm={recentFormMap} />
-      </div>
-
-      {/* Points Progression Chart */}
-      {completedRaces.length > 0 && (
-        <div style={{ ...cardStyle, padding: 18, marginBottom: 18 }}>
-          <PointsProgressionChart
-            completedRaces={completedRaces}
-            driverStandings={standings}
-            getTeamColor={getTeamColor}
-          />
         </div>
       )}
 
@@ -534,6 +490,17 @@ async function DriversContent() {
           );
         })}
       </div>
+
+      {/* Points Progression Chart */}
+      {completedRaces.length > 0 && (
+        <div style={{ ...cardStyle, padding: 18, marginTop: 18 }}>
+          <PointsProgressionChart
+            completedRaces={completedRaces}
+            driverStandings={standings}
+            getTeamColor={getTeamColor}
+          />
+        </div>
+      )}
     </>
   );
 }
