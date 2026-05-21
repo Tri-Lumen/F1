@@ -8,6 +8,7 @@ import {
   getQualifyingResults,
   getSprintResults,
   getPitStops,
+  getRaceSchedule,
   getTeamColor,
   getCountryFlag,
   getCountryFlagByCountry,
@@ -47,12 +48,17 @@ async function RaceContent({ round }: { round: string }) {
     notFound();
   }
 
-  const [race, qualifying, sprint, pitStops] = await Promise.all([
+  const [race, qualifying, sprint, pitStops, schedule] = await Promise.all([
     getRaceWithResults(round),
     getQualifyingResults(round),
     getSprintResults(round),
     getPitStops(round),
+    getRaceSchedule(),
   ]);
+
+  const totalRounds = schedule.length;
+  const prevRound = roundNum > 1 ? roundNum - 1 : null;
+  const nextRound = roundNum < totalRounds ? roundNum + 1 : null;
 
   if (!race) {
     return (
@@ -128,6 +134,30 @@ async function RaceContent({ round }: { round: string }) {
 
   return (
     <>
+      {/* Prev/Next race navigation */}
+      {(prevRound || nextRound) && (
+        <div className="mb-4 flex items-center justify-between text-sm">
+          {prevRound ? (
+            <Link
+              href={`/race/${prevRound}`}
+              className="flex items-center gap-1.5 text-f1-text-muted hover:text-f1-accent transition-colors"
+            >
+              <span>←</span>
+              <span>Round {prevRound}</span>
+            </Link>
+          ) : <span />}
+          {nextRound ? (
+            <Link
+              href={`/race/${nextRound}`}
+              className="flex items-center gap-1.5 text-f1-text-muted hover:text-f1-accent transition-colors"
+            >
+              <span>Round {nextRound}</span>
+              <span>→</span>
+            </Link>
+          ) : <span />}
+        </div>
+      )}
+
       {/* Race Header */}
       <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

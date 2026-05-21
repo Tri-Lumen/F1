@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import type { DriverStanding } from "@/lib/types";
 import SidebarNav from "@/components/SidebarNav";
+import BottomTabBar from "@/components/BottomTabBar";
 import { OPEN_PALETTE_EVENT } from "@/components/CommandPalette";
 
 /**
@@ -14,9 +15,11 @@ import { OPEN_PALETTE_EVENT } from "@/components/CommandPalette";
  */
 export default function AppShell({
   standings,
+  hasLiveSession,
   children,
 }: {
   standings: DriverStanding[];
+  hasLiveSession?: boolean;
   children: ReactNode;
 }) {
   const [navOpen, setNavOpen] = useState(false);
@@ -66,11 +69,18 @@ export default function AppShell({
         />
       )}
 
-      <SidebarNav standings={standings} mobileOpen={navOpen} onClose={() => setNavOpen(false)} />
+      <SidebarNav
+        standings={standings}
+        mobileOpen={navOpen}
+        onClose={() => setNavOpen(false)}
+        hasLiveSession={hasLiveSession}
+      />
 
-      <main className="min-w-0 px-4 pb-12 pt-4 md:ml-56 md:px-6 md:pt-6">
+      <main className="min-w-0 px-4 pb-20 pt-4 md:ml-56 md:px-6 md:pb-12 md:pt-6">
         {children}
       </main>
+
+      <BottomTabBar hasLiveSession={hasLiveSession} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { CarImage, DriverImage } from "@/components/ProfileImage";
 
 export async function generateMetadata({
@@ -480,13 +481,10 @@ export default async function TeamDetailPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/teams"
-          className="text-sm text-f1-text-muted hover:text-f1-text transition-colors"
-        >
-          &larr; All Teams
-        </Link>
+      <div className="mb-2 flex items-center justify-between">
+        <Breadcrumbs
+          items={[{ label: "Teams", href: "/teams" }, { label: "Team" }]}
+        />
         <RefreshButton />
       </div>
 
