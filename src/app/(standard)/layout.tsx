@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { getDriverStandings } from "@/lib/api";
-import SidebarNav from "@/components/SidebarNav";
+import AppShell from "@/components/AppShell";
+import CommandPaletteLoader from "@/components/CommandPaletteLoader";
 
 export default async function StandardLayout({
   children,
@@ -9,11 +11,11 @@ export default async function StandardLayout({
   const standings = await getDriverStandings();
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <SidebarNav standings={standings} />
-      <main style={{ marginLeft: 224, flex: 1, padding: "24px 26px 48px", minWidth: 0 }}>
-        {children}
-      </main>
-    </div>
+    <>
+      <AppShell standings={standings}>{children}</AppShell>
+      <Suspense fallback={null}>
+        <CommandPaletteLoader />
+      </Suspense>
+    </>
   );
 }

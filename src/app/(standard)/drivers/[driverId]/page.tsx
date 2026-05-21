@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   getDriverStandings,
@@ -13,6 +12,8 @@ import {
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
+import DriverNewsSection from "@/components/DriverNewsSection";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -368,6 +369,12 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
         </div>
       )}
 
+      {/* Driver News */}
+      <DriverNewsSection
+        driverId={driver.driverId}
+        driverName={`${driver.givenName} ${driver.familyName}`}
+      />
+
       {/* Race-by-Race Results */}
       <div className="rounded-xl border border-f1-border bg-f1-card">
         <div className="border-b border-f1-border px-5 py-4">
@@ -496,13 +503,10 @@ export default async function DriverProfilePage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/drivers"
-          className="text-sm text-f1-text-muted hover:text-f1-text transition-colors"
-        >
-          &larr; All Drivers
-        </Link>
+      <div className="mb-2 flex items-center justify-between">
+        <Breadcrumbs
+          items={[{ label: "Drivers", href: "/drivers" }, { label: "Profile" }]}
+        />
         <RefreshButton />
       </div>
 

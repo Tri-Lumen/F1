@@ -21,6 +21,9 @@ import {
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
 import QualifyingGapChart from "@/components/QualifyingGapChart";
+import QualifyingProgression from "@/components/QualifyingProgression";
+import SectionLabel from "@/components/SectionLabel";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export async function generateMetadata({
   params,
@@ -589,9 +592,17 @@ async function RaceContent({ round }: { round: string }) {
       {/* Qualifying Gap Chart */}
       <QualifyingGapChart qualifying={qualifying} />
 
+      {/* Qualifying Progression — elimination zones */}
+      {qualifying.length > 0 && (
+        <div className="mt-6">
+          <SectionLabel>Qualifying Progression</SectionLabel>
+          <QualifyingProgression qualifying={qualifying} />
+        </div>
+      )}
+
       {/* Qualifying Results */}
       {qualifying.length > 0 && (
-        <div className="rounded-xl border border-f1-border bg-f1-card">
+        <div className="mt-6 rounded-xl border border-f1-border bg-f1-card">
           <div className="border-b border-f1-border p-4">
             <h3 className="font-bold text-lg">Qualifying Results</h3>
           </div>
@@ -666,18 +677,14 @@ export default async function RacePage({
 
   return (
     <div>
+      <Breadcrumbs
+        items={[
+          { label: "Races", href: "/races" },
+          { label: `Round ${round}` },
+        ]}
+      />
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <Link
-            href="/races"
-            className="text-sm text-f1-accent hover:underline"
-          >
-            &larr; Back to calendar
-          </Link>
-          <h1 className="mt-1 text-3xl font-black tracking-tight">
-            Race Details
-          </h1>
-        </div>
+        <h1 className="text-3xl font-black tracking-tight">Race Details</h1>
         <RefreshButton />
       </div>
 
