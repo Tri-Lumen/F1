@@ -228,18 +228,40 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
 
 // --- OpenF1 Live API ---
 
-/** Generic OpenF1 fetch: handles timeout, signal cleanup, and error fallback. */
+const OPENF1_MAX_RETRIES = 3;
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Generic OpenF1 fetch with retry + backoff.
+ *
+ * OpenF1 rate-limits and occasionally 5xx's when a page fires several queries
+ * at once (the replay/live screens request 8 endpoints in parallel). A single
+ * attempt means a transient 429/timeout silently yields `[]`, leaving the grid
+ * with positions/intervals/tyres unpopulated even though the session has data.
+ * Retrying the transient failures with exponential backoff lets the burst
+ * settle so every endpoint resolves. Genuinely-empty (200 + `[]`) responses are
+ * returned immediately — those are not failures.
+ */
 async function fetchOpenF1<T>(path: string): Promise<T[]> {
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  } finally {
-    clear();
+  for (let attempt = 0; attempt <= OPENF1_MAX_RETRIES; attempt++) {
+    const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
+    let retryable = false;
+    try {
+      const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
+      if (res.ok) return (await res.json()) as T[];
+      // 429 (rate limit) and 5xx are transient; 4xx (bad request) is not.
+      retryable = res.status === 429 || res.status >= 500;
+    } catch {
+      // Network error / timeout abort — worth another try.
+      retryable = true;
+    } finally {
+      clear();
+    }
+    if (!retryable || attempt === OPENF1_MAX_RETRIES) return [];
+    await sleep(500 * 2 ** attempt); // 500ms, 1s, 2s
   }
+  return [];
 }
 
 export async function getLiveSessions(): Promise<LiveSession[]> {

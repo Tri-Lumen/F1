@@ -56,6 +56,60 @@ function snapshotMap<T extends { driver_number: number; date: string }>(
   return out;
 }
 
+interface DerivedOrder {
+  positions: Map<number, number>;
+  intervals: Map<number, { gap: number | null; interval: number | null }>;
+}
+
+/**
+ * Backup running order when OpenF1's position/interval feeds are missing for a
+ * session. Reconstructs the grid from lap data: the car on the highest lap — and
+ * within a lap, the one that crossed the line earliest — is ahead. Gaps are
+ * approximated from start/finish-line crossing deltas on the lead lap; lapped
+ * cars get a null gap (shown as "—"). `sortedLaps` must be ascending by
+ * `date_start`.
+ */
+function deriveOrderFromLaps(
+  sortedLaps: LiveLap[],
+  cutoffMs: number,
+): DerivedOrder {
+  const current = new Map<number, { lap: number; startMs: number }>();
+  for (const lap of sortedLaps) {
+    const startMs = new Date(lap.date_start).getTime();
+    if (startMs > cutoffMs) break;
+    const prev = current.get(lap.driver_number);
+    if (!prev || lap.lap_number > prev.lap) {
+      current.set(lap.driver_number, { lap: lap.lap_number, startMs });
+    }
+  }
+
+  const order = [...current.entries()].sort((a, b) => {
+    if (b[1].lap !== a[1].lap) return b[1].lap - a[1].lap;
+    return a[1].startMs - b[1].startMs;
+  });
+
+  const positions = new Map<number, number>();
+  const intervals = new Map<number, { gap: number | null; interval: number | null }>();
+  const leader = order[0]?.[1];
+  let prev: { lap: number; startMs: number } | null = null;
+  order.forEach(([num, entry], i) => {
+    positions.set(num, i + 1);
+    if (i === 0 || !leader) {
+      intervals.set(num, { gap: null, interval: null });
+    } else if (entry.lap === leader.lap) {
+      const gap = (entry.startMs - leader.startMs) / 1000;
+      const interval =
+        prev && entry.lap === prev.lap ? (entry.startMs - prev.startMs) / 1000 : null;
+      intervals.set(num, { gap, interval });
+    } else {
+      intervals.set(num, { gap: null, interval: null });
+    }
+    prev = entry;
+  });
+
+  return { positions, intervals };
+}
+
 export default function ReplayClient({
   session,
   drivers,
@@ -128,10 +182,19 @@ export default function ReplayClient({
     };
   }, [playing, speed, sessionEndMs]);
 
+  // When OpenF1 ships position/interval rows we use them; otherwise fall back
+  // to a lap-derived order so the grid still populates.
+  const hasRealPositions = sortedPositions.length > 0;
+  const hasRealIntervals = sortedIntervals.length > 0;
+
   // Derived snapshot at currentMs — recomputed on every scrub or tick.
   const snapshot = useMemo(() => {
     const latestPos = snapshotMap(sortedPositions, currentMs);
     const latestIv = snapshotMap(sortedIntervals, currentMs);
+    const derived =
+      !hasRealPositions || !hasRealIntervals
+        ? deriveOrderFromLaps(sortedLaps, currentMs)
+        : null;
 
     const visibleRadio: TeamRadio[] = [];
     for (const r of sortedRadio) {
@@ -169,16 +232,24 @@ export default function ReplayClient({
       }
     }
 
+    const latestPositions = hasRealPositions
+      ? new Map<number, number>(
+          [...latestPos.entries()].map(([num, p]) => [num, p.position]),
+        )
+      : derived?.positions ?? new Map<number, number>();
+
+    const latestIntervals = hasRealIntervals
+      ? new Map<number, { gap: number | null; interval: number | null }>(
+          [...latestIv.entries()].map(([num, iv]) => [
+            num,
+            { gap: iv.gap_to_leader, interval: iv.interval },
+          ]),
+        )
+      : derived?.intervals ?? new Map<number, { gap: number | null; interval: number | null }>();
+
     return {
-      latestPositions: new Map<number, number>(
-        [...latestPos.entries()].map(([num, p]) => [num, p.position]),
-      ),
-      latestIntervals: new Map<number, { gap: number | null; interval: number | null }>(
-        [...latestIv.entries()].map(([num, iv]) => [
-          num,
-          { gap: iv.gap_to_leader, interval: iv.interval },
-        ]),
-      ),
+      latestPositions,
+      latestIntervals,
       visibleRadio,
       visibleRaceControl,
       currentWeather,
@@ -194,6 +265,8 @@ export default function ReplayClient({
     sortedLaps,
     stints,
     currentMs,
+    hasRealPositions,
+    hasRealIntervals,
   ]);
 
   // Current tire compound per driver (latest stint at lap T)
@@ -226,6 +299,18 @@ export default function ReplayClient({
   const elapsedSec = Math.max(0, Math.floor((currentMs - sessionStartMs) / 1000));
   const totalSec = Math.floor(sessionDurationMs / 1000);
   const isRace = session.session_type === "Race";
+
+  // Data-availability notice. OpenF1 sometimes ships only a subset of feeds for
+  // a session; surface that instead of silently rendering a grid of "—".
+  const noTimingData = drivers.length === 0 && laps.length === 0;
+  const positionsReconstructed = !hasRealPositions && laps.length > 0;
+  const unavailableFeeds = [
+    !hasRealPositions && laps.length === 0 && "positions",
+    !hasRealIntervals && laps.length === 0 && "intervals",
+    stints.length === 0 && "tyre data",
+    radio.length === 0 && "team radio",
+    raceControl.length === 0 && "race control",
+  ].filter((x): x is string => Boolean(x));
 
   function formatClock(s: number): string {
     const h = Math.floor(s / 3600);
@@ -435,6 +520,43 @@ export default function ReplayClient({
           <span>{formatClock(totalSec)}</span>
         </div>
       </div>
+
+      {/* Data-availability notice */}
+      {noTimingData ? (
+        <div
+          style={{
+            ...cardStyle,
+            border: "1px solid rgba(202,138,4,0.3)",
+            background: "rgba(202,138,4,0.05)",
+            padding: "12px 16px",
+            marginBottom: 16,
+          }}
+        >
+          <p style={{ fontFamily: DM, fontSize: 13, color: "#ca8a04", fontWeight: 600 }}>
+            No timing data is available for this session from OpenF1 yet. The
+            provider may not have published this session&apos;s data.
+          </p>
+        </div>
+      ) : (
+        (positionsReconstructed || unavailableFeeds.length > 0) && (
+          <div
+            style={{
+              ...cardStyle,
+              border: "1px solid rgba(202,138,4,0.2)",
+              background: "rgba(202,138,4,0.04)",
+              padding: "10px 14px",
+              marginBottom: 16,
+            }}
+          >
+            <p style={{ fontFamily: DM, fontSize: 11, color: "rgba(202,138,4,0.85)" }}>
+              {positionsReconstructed &&
+                "OpenF1 has no live position feed for this session — running order and gaps are reconstructed from lap data (approximate). "}
+              {unavailableFeeds.length > 0 &&
+                `Unavailable from OpenF1: ${unavailableFeeds.join(", ")}.`}
+            </p>
+          </div>
+        )
+      )}
 
       {/* Timing Table */}
       <div style={{ ...cardStyle, overflow: "hidden", marginBottom: 16 }}>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DriverStanding } from "@/lib/types";
 import { getTeamColor } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
@@ -109,6 +109,12 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
   const pathname = usePathname();
   const isMoreActive = MORE_LINKS.some((l) => pathname.startsWith(l.href));
   const [moreOpen, setMoreOpen] = useState(isMoreActive);
+  // Show the platform-correct search shortcut. Defaults to the Mac glyph on the
+  // server render, then corrects after mount to avoid a hydration mismatch.
+  const [isMac, setIsMac] = useState(true);
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent));
+  }, []);
 
   return (
     <aside
@@ -195,8 +201,9 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
               borderRadius: 4,
               padding: "1px 5px",
             }}
+            suppressHydrationWarning
           >
-            ⌘K
+            {isMac ? "⌘K" : "Ctrl K"}
           </kbd>
         </button>
       </div>
