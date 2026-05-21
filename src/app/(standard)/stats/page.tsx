@@ -304,7 +304,7 @@ async function StatsContent() {
   return (
     <div className="space-y-8">
       {/* Season summary KPIs */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div id="summary" className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Races Complete</p>
           <p className="text-4xl font-black">{completedRaces.length}</p>
@@ -356,7 +356,7 @@ async function StatsContent() {
 
       {/* Positions gained season total */}
       {posGainSorted.length > 0 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+        <div id="positions" className="rounded-xl border border-[#1c1c1c] bg-[#131313] scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Season Positions Gained</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Total grid positions gained from start to finish across all races (positive = moved forward)</p>
@@ -394,7 +394,7 @@ async function StatsContent() {
 
       {/* Points per race */}
       {pprSorted.length > 0 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+        <div id="points" className="rounded-xl border border-[#1c1c1c] bg-[#131313] scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Points Per Race</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Average championship points scored per race entry</p>
@@ -436,7 +436,7 @@ async function StatsContent() {
         </div>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div id="reliability" className="grid gap-6 sm:grid-cols-2 scroll-mt-16">
         {/* Team DNF breakdown */}
         {teamDNFSorted.length > 0 && (
           <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
@@ -508,7 +508,7 @@ async function StatsContent() {
 
       {/* Overtakes by race */}
       {overtakesByRaceSorted.length > 0 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+        <div id="overtakes" className="rounded-xl border border-[#1c1c1c] bg-[#131313] scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Overtakes by Grand Prix</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Total positions gained from grid to finish across all drivers (proxy for racing action)</p>
@@ -539,7 +539,7 @@ async function StatsContent() {
 
       {/* Pit Stop Statistics */}
       {teamPitSorted.length > 0 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+        <div id="pitstops" className="rounded-xl border border-[#1c1c1c] bg-[#131313] scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Pit Stop Performance by Team</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">
@@ -591,7 +591,7 @@ async function StatsContent() {
 
       {/* Driver Consistency */}
       {consistencySorted.length > 0 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313]">
+        <div id="consistency" className="rounded-xl border border-[#1c1c1c] bg-[#131313] scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Driver Consistency</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">Lowest standard deviation in finishing position (excluding DNFs) — most consistent performers</p>
@@ -630,7 +630,7 @@ async function StatsContent() {
 
       {/* Championship Points Evolution */}
       {top8Evolution.length > 0 && numRounds > 1 && (
-        <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] overflow-hidden">
+        <div id="evolution" className="rounded-xl border border-[#1c1c1c] bg-[#131313] overflow-hidden scroll-mt-16">
           <div className="border-b border-[#1c1c1c] p-4">
             <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Championship Evolution</h2>
             <p className="text-xs text-f1-text-muted mt-0.5">
@@ -794,6 +794,27 @@ export default function StatsPage() {
         </div>
         <RefreshButton />
       </div>
+
+      <nav className="sticky top-0 z-10 -mx-4 mb-6 overflow-x-auto bg-f1-black/90 px-4 py-2 backdrop-blur flex gap-2 border-b border-f1-border/40">
+        {[
+          { href: "#summary",     label: "Overview" },
+          { href: "#positions",   label: "Positions" },
+          { href: "#points",      label: "Points" },
+          { href: "#reliability", label: "Reliability" },
+          { href: "#overtakes",   label: "Overtakes" },
+          { href: "#pitstops",    label: "Pit Stops" },
+          { href: "#consistency", label: "Consistency" },
+          { href: "#evolution",   label: "Evolution" },
+        ].map(({ href, label }) => (
+          <a
+            key={href}
+            href={href}
+            className="flex-shrink-0 rounded-full border border-f1-border bg-f1-dark px-3 py-1 text-xs font-semibold text-f1-text-muted hover:border-f1-accent hover:text-f1-text transition-colors"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
 
       <Suspense
         fallback={

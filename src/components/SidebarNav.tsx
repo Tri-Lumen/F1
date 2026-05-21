@@ -36,6 +36,7 @@ interface Props {
   /** Mobile drawer open state (controlled by AppShell); ignored on desktop */
   mobileOpen?: boolean;
   onClose?: () => void;
+  hasLiveSession?: boolean;
 }
 
 const ACCENT = "var(--color-f1-accent)";
@@ -57,7 +58,6 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
         alignItems: "center",
         gap: 7,
         padding: "5px 14px",
-        cursor: "pointer",
         background: hovered ? "var(--color-f1-card-hover)" : "transparent",
         transition: "background 0.12s",
       }}
@@ -105,7 +105,7 @@ function SidebarRow({ standing, rank }: { standing: DriverStanding; rank: number
   );
 }
 
-export default function SidebarNav({ standings, mobileOpen = false, onClose }: Props) {
+export default function SidebarNav({ standings, mobileOpen = false, onClose, hasLiveSession }: Props) {
   const pathname = usePathname();
   const isMoreActive = MORE_LINKS.some((l) => pathname.startsWith(l.href));
   const [moreOpen, setMoreOpen] = useState(isMoreActive);
@@ -206,6 +206,7 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose }: P
         {NAV_LINKS.map((link) => {
           const isActive =
             link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+          const isLiveLink = link.href === "/live";
           return (
             <Link
               key={link.href}
@@ -227,6 +228,19 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose }: P
               }}
             >
               {link.label}
+              {isLiveLink && hasLiveSession && (
+                <span
+                  className="animate-pulse-live"
+                  style={{
+                    marginLeft: "auto",
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "var(--color-f1-accent)",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
             </Link>
           );
         })}
@@ -321,7 +335,13 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose }: P
           Driver Standings
         </div>
         {standings.slice(0, 10).map((s, i) => (
-          <SidebarRow key={s.Driver.driverId} standing={s} rank={i + 1} />
+          <Link
+            key={s.Driver.driverId}
+            href={`/drivers/${s.Driver.driverId}`}
+            style={{ display: "block", textDecoration: "none" }}
+          >
+            <SidebarRow standing={s} rank={i + 1} />
+          </Link>
         ))}
       </div>
     </aside>

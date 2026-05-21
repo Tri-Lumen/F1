@@ -16,8 +16,7 @@ import {
   getCountryFlag,
   CURRENT_YEAR,
 } from "@/lib/api";
-import type { Race, RaceResult } from "@/lib/types";
-import ConstructorStandingsTable from "@/components/ConstructorStandingsTable";
+import type { Race } from "@/lib/types";
 import RefreshButton from "@/components/RefreshButton";
 import PageHeader from "@/components/PageHeader";
 import TeammateH2H from "@/components/TeammateH2H";
@@ -116,33 +115,8 @@ async function TeamsContent() {
 
   return (
     <>
-      {/* Full Standings Table */}
-      <div className="mb-10 rounded-xl border border-f1-border bg-f1-card">
-        <div className="border-b border-f1-border p-4">
-          <h2 className="font-bold text-lg">Championship Standings</h2>
-        </div>
-        <ConstructorStandingsTable standings={constructorStandings} />
-      </div>
-
-      {/* Constructor Points Progression */}
-      {allRaces.filter((r) => (r.Results?.length ?? 0) > 0).length > 0 && (
-        <div className="mb-10">
-          <ConstructorPointsChart
-            completedRaces={allRaces.filter((r) => (r.Results?.length ?? 0) > 0)}
-            constructorStandings={constructorStandings}
-            getTeamColor={getTeamColor}
-          />
-        </div>
-      )}
-
-      {/* Teammate H2H */}
-      <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
-
       {/* Team Cards */}
-      <h2 className="mb-4 text-lg font-bold text-f1-text-muted">
-        Team Profiles &amp; Stats
-      </h2>
-      <div className="grid gap-6">
+      <div className="grid gap-6 mb-10">
         {constructorStandings.map((s) => {
           const teamColor = getTeamColor(s.Constructor.constructorId);
           const stats = computeTeamStats(
@@ -308,6 +282,20 @@ async function TeamsContent() {
           );
         })}
       </div>
+
+      {/* Constructor Points Progression */}
+      {allRaces.filter((r) => (r.Results?.length ?? 0) > 0).length > 0 && (
+        <div className="mb-10">
+          <ConstructorPointsChart
+            completedRaces={allRaces.filter((r) => (r.Results?.length ?? 0) > 0)}
+            constructorStandings={constructorStandings}
+            getTeamColor={getTeamColor}
+          />
+        </div>
+      )}
+
+      {/* Teammate H2H */}
+      <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
     </>
   );
 }

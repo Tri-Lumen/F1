@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getDriverStandings } from "@/lib/api";
+import { getDriverStandings, getLatestSession, isSessionLive } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 import CommandPaletteLoader from "@/components/CommandPaletteLoader";
 
@@ -8,11 +8,15 @@ export default async function StandardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const standings = await getDriverStandings();
+  const [standings, latestSession] = await Promise.all([
+    getDriverStandings(),
+    getLatestSession().catch(() => null),
+  ]);
+  const hasLiveSession = latestSession ? isSessionLive(latestSession) : false;
 
   return (
     <>
-      <AppShell standings={standings}>{children}</AppShell>
+      <AppShell standings={standings} hasLiveSession={hasLiveSession}>{children}</AppShell>
       <Suspense fallback={null}>
         <CommandPaletteLoader />
       </Suspense>
