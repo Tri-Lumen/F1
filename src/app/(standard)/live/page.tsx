@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 import {
   getLatestSession,
+  getOngoingScheduledSession,
   getLiveDrivers,
   getLivePositions,
   getLiveIntervals,
@@ -57,9 +58,48 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 async function LiveContent() {
-  const session = await getLatestSession();
+  // Fetch OpenF1 session and Ergast schedule fallback in parallel
+  const [session, ongoingScheduled] = await Promise.all([
+    getLatestSession(),
+    getOngoingScheduledSession(),
+  ]);
 
   if (!session) {
+    // If Ergast says a session should be underway but OpenF1 hasn't responded,
+    // show a "connecting" state instead of the misleading next-session countdown
+    if (ongoingScheduled) {
+      return (
+        <div style={{ ...cardStyle, padding: "32px 24px", textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>📡</div>
+          <p
+            style={{
+              fontFamily: BC,
+              fontWeight: 800,
+              fontSize: 20,
+              letterSpacing: "0.04em",
+              marginBottom: 8,
+            }}
+          >
+            {ongoingScheduled.raceName} — {ongoingScheduled.type}
+          </p>
+          <p
+            style={{
+              fontFamily: DM,
+              fontSize: 13,
+              color: "var(--color-f1-text-muted)",
+              maxWidth: 400,
+              margin: "0 auto 8px",
+            }}
+          >
+            Session is in progress. Connecting to live timing data&hellip;
+          </p>
+          <p style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)" }}>
+            This page refreshes automatically every 15&nbsp;seconds.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div>
         <div style={{ ...cardStyle, padding: "24px", textAlign: "center", marginBottom: 16 }}>
