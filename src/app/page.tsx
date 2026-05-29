@@ -8,8 +8,12 @@ import {
   getRaceSchedule,
   getAllSeasonResults,
   getNextScheduledSession,
+  getTodaySessions,
   getRaceDate,
+  getTeamColor,
+  getCountryFlagByCountry,
 } from "@/lib/api";
+import { getDriverConstructorId } from "@/lib/driverOverrides";
 import { buildStudioRaceCardData } from "@/lib/raceCards";
 import SidebarNav from "@/components/SidebarNav";
 import LeaderHero from "@/components/LeaderHero";
@@ -31,13 +35,14 @@ export const metadata: Metadata = {
 };
 
 async function DashboardContent() {
-  const [driverStandings, constructorStandings, races, allResults, nextSession] =
+  const [driverStandings, constructorStandings, races, allResults, nextSession, todaySessions] =
     await Promise.all([
       getDriverStandings(),
       getConstructorStandings(),
       getRaceSchedule(),
       getAllSeasonResults(),
       getNextScheduledSession(),
+      getTodaySessions(),
     ]);
 
   // Single pass over the schedule: classify completed vs upcoming and find
@@ -91,6 +96,47 @@ async function DashboardContent() {
       <Suspense fallback={null}>
         <LiveSessionBanner />
       </Suspense>
+
+      {/* Today's Sessions Widget */}
+      {todaySessions.length > 0 && (
+        <div
+          style={{
+            borderRadius: 12,
+            border: "1px solid color-mix(in srgb, var(--color-f1-accent) 30%, var(--color-f1-border))",
+            background: "color-mix(in srgb, var(--color-f1-accent) 6%, var(--color-f1-dark))",
+            padding: "12px 18px",
+            marginBottom: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 12, letterSpacing: "0.08em", color: "var(--color-f1-accent)", textTransform: "uppercase" }}>
+            📅 Today
+          </span>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {todaySessions.map((s) => (
+              <div
+                key={s.type + s.round}
+                style={{
+                  background: "color-mix(in srgb, var(--color-f1-accent) 12%, transparent)",
+                  border: "1px solid color-mix(in srgb, var(--color-f1-accent) 25%, transparent)",
+                  borderRadius: 8,
+                  padding: "4px 10px",
+                  fontFamily: DM,
+                  fontSize: 12,
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{s.type}</span>
+                <span style={{ color: "var(--color-f1-text-muted)", marginLeft: 6 }}>
+                  {getCountryFlagByCountry(s.country)} {s.raceName.replace(" Grand Prix", " GP")} · {s.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <LeaderHero
         leader={leader}
@@ -195,6 +241,68 @@ async function DashboardContent() {
           </div>
         )}
       </div>
+
+      {/* Championship Battle Card */}
+      {driverStandings.length >= 2 && (() => {
+        const p1 = driverStandings[0];
+        const p2 = driverStandings[1];
+        const p1Pts = parseFloat(p1.points);
+        const p2Pts = parseFloat(p2.points);
+        const gap = p1Pts - p2Pts;
+        const totalRemaining = (races.length - completedCount) * 26;
+        const p1Cid = getDriverConstructorId(p1.Driver.driverId, p1.Constructors[0]?.constructorId) ?? "";
+        const p2Cid = getDriverConstructorId(p2.Driver.driverId, p2.Constructors[0]?.constructorId) ?? "";
+        const p1Color = getTeamColor(p1Cid);
+        const p2Color = getTeamColor(p2Cid);
+        const totalPts = p1Pts + p2Pts || 1;
+        const p1Pct = Math.round((p1Pts / totalPts) * 100);
+        return (
+          <div
+            style={{
+              borderRadius: 12,
+              border: "1px solid #1c1c1c",
+              background: "#131313",
+              padding: "14px 18px",
+              marginBottom: 18,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 13, letterSpacing: "0.04em" }}>Championship Battle</span>
+              <span style={{ fontFamily: DM, fontSize: 10, color: "#3a3a3a" }}>
+                {races.length - completedCount} races left · {totalRemaining} pts available
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <div>
+                <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 16, color: p1Color }}>{p1.Driver.familyName.toUpperCase()}</span>
+                <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 22, color: p1Color, marginLeft: 8 }}>{p1.points}</span>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 11, color: "#555" }}>GAP</span>
+                <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 20, color: p1Color }}>–{gap.toFixed(0)}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 22, color: p2Color }}>{p2.points}</span>
+                <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 16, color: p2Color, marginLeft: 8 }}>{p2.Driver.familyName.toUpperCase()}</span>
+              </div>
+            </div>
+            {/* Battle bar */}
+            <div style={{ height: 6, borderRadius: 3, background: "#0e0e0e", overflow: "hidden", display: "flex" }}>
+              <div style={{ width: `${p1Pct}%`, background: p1Color, transition: "width 0.6s" }} />
+              <div style={{ flex: 1, background: p2Color, opacity: 0.7 }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+              <span style={{ fontFamily: DM, fontSize: 9, color: "#444" }}>P1 · {p1Pct}%</span>
+              {gap <= totalRemaining && (
+                <span style={{ fontFamily: DM, fontSize: 9, color: "#444" }}>P2 can still catch</span>
+              )}
+              {gap > totalRemaining && (
+                <span style={{ fontFamily: DM, fontSize: 9, color: p1Color }}>Title mathematically close</span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 2-column: constructors + recent results */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>

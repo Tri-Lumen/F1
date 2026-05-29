@@ -590,3 +590,94 @@ export function isSessionLive(session: LiveSession): boolean {
 }
 
 export const CURRENT_YEAR = CURRENT_SEASON;
+
+/** All sessions from the race schedule that start today (UTC date match). */
+export async function getTodaySessions(): Promise<ScheduledSession[]> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return [];
+  }
+
+  const todayUTC = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const sessions: ScheduledSession[] = [];
+
+  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
+    if (!s) return;
+    if (s.date !== todayUTC) return;
+    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+    const d = new Date(`${s.date}T${timeStr}`);
+    sessions.push({
+      type,
+      raceName: race.raceName,
+      circuitId: race.Circuit.circuitId,
+      circuitName: race.Circuit.circuitName,
+      country: race.Circuit.Location.country,
+      locality: race.Circuit.Location.locality,
+      date: d,
+      round: race.round,
+    });
+  }
+
+  for (const race of races) {
+    push("Practice 1", race, race.FirstPractice);
+    push("Practice 2", race, race.SecondPractice);
+    push("Practice 3", race, race.ThirdPractice);
+    push("Sprint Qualifying", race, race.SprintQualifying);
+    push("Sprint", race, race.Sprint);
+    push("Qualifying", race, race.Qualifying);
+    if (race.time && race.date === todayUTC) {
+      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
+      const d = new Date(`${race.date}T${timeStr}`);
+      sessions.push({
+        type: "Race",
+        raceName: race.raceName,
+        circuitId: race.Circuit.circuitId,
+        circuitName: race.Circuit.circuitName,
+        country: race.Circuit.Location.country,
+        locality: race.Circuit.Location.locality,
+        date: d,
+        round: race.round,
+      });
+    }
+  }
+
+  sessions.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return sessions;
+}
+
+/** Fetch career stats for a driver across all seasons available in the Jolpica API. */
+export async function getDriverCareerWins(driverId: string): Promise<{
+  wins: number;
+  podiums: number;
+  poles: number;
+  fastestLaps: number;
+  races: number;
+  championships: number;
+}> {
+  const [winsData, polesData, racesData, podiumsData, flData, champsData] = await Promise.all([
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1&status=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=500`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/?limit=1`),
+    fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/drivers/${driverId}/driverstandings/1/?limit=100`),
+  ]);
+
+  const wins = parseInt(winsData?.MRData?.RaceTable ? String((winsData.MRData as { total?: string; RaceTable: unknown }).total ?? "0") : "0", 10);
+  const races = parseInt(racesData?.MRData ? String((racesData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const poles = parseInt(polesData?.MRData ? String((polesData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const fl = parseInt(flData?.MRData ? String((flData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
+
+  // Count podiums from the results
+  let podiums = 0;
+  for (const race of podiumsData?.MRData?.RaceTable?.Races ?? []) {
+    for (const r of race.Results ?? []) {
+      if (parseInt(r.position) <= 3) podiums++;
+    }
+  }
+
+  return { wins, podiums, poles, fastestLaps: fl, races, championships };
+}

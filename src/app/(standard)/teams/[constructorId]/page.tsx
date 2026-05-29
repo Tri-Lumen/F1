@@ -151,6 +151,20 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
     return { race, results };
   });
 
+  // Build per-race points breakdown
+  const pointsBreakdown = raceRows.map(({ race, results }) => ({
+    round: race.round,
+    raceName: race.raceName.replace(" Grand Prix", " GP"),
+    drivers: drivers.map((d) => {
+      const r = results.find((res) => res.Driver.driverId === d.Driver.driverId);
+      return {
+        driverId: d.Driver.driverId,
+        name: d.Driver.familyName,
+        points: r ? parseFloat(r.points) : 0,
+      };
+    }),
+  }));
+
   return (
     <>
       {/* Team Header */}
@@ -457,6 +471,50 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
           </div>
         )}
       </div>
+
+      {/* Per-Driver Points Breakdown */}
+      {pointsBreakdown.length > 0 && drivers.length >= 2 && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-5">
+          <h3 className="font-bold mb-1">Points Breakdown by Race</h3>
+          <p className="text-xs text-f1-text-muted mb-4">Points scored per driver each round</p>
+          <div className="flex gap-3 mb-3">
+            {drivers.map((d, i) => (
+              <div key={d.Driver.driverId} className="flex items-center gap-1.5 text-xs">
+                <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: i === 0 ? teamColor : `${teamColor}88` }} />
+                <span className="font-medium">{d.Driver.familyName}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-end gap-1 overflow-x-auto pb-2" style={{ minHeight: 80 }}>
+            {pointsBreakdown.map((race) => {
+              const totalPts = race.drivers.reduce((s, d) => s + d.points, 0);
+              const maxBar = 26;
+              return (
+                <div key={race.round} className="flex flex-col items-center gap-0.5 flex-shrink-0" style={{ minWidth: 28 }}>
+                  <div className="flex flex-col-reverse items-center gap-px" style={{ height: 60 }}>
+                    {race.drivers.map((d, i) => {
+                      const h = d.points > 0 ? Math.max(4, (d.points / maxBar) * 60) : 0;
+                      return (
+                        <div
+                          key={d.driverId}
+                          title={`${d.name}: ${d.points} pts`}
+                          className="w-5 rounded-sm transition-all"
+                          style={{
+                            height: h,
+                            backgroundColor: i === 0 ? teamColor : `${teamColor}88`,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-[9px] text-f1-text-muted font-mono">{totalPts > 0 ? totalPts : ""}</span>
+                  <span className="text-[8px] text-f1-text-muted/60">R{race.round}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex justify-end">
         <a

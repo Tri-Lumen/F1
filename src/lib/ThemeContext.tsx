@@ -58,12 +58,14 @@ interface ThemeContextValue {
   borderRadius: BorderRadius;
   glowIntensity: number;       // 0–100
   reduceMotion: boolean;
+  compactMode: boolean;
 
   setMode: (m: ColorMode) => void;
   setAccentTheme: (t: AccentTheme) => void;
   setBorderRadius: (r: BorderRadius) => void;
   setGlowIntensity: (v: number) => void;
   setReduceMotion: (v: boolean) => void;
+  setCompactMode: (v: boolean) => void;
 
   saveCustomTheme: (name: string, colors: TeamThemeColors) => CustomTheme;
   updateCustomTheme: (id: string, name: string, colors: TeamThemeColors) => void;
@@ -82,11 +84,13 @@ const ThemeContext = createContext<ThemeContextValue>({
   borderRadius: "default",
   glowIntensity: 50,
   reduceMotion: false,
+  compactMode: false,
   setMode: () => {},
   setAccentTheme: () => {},
   setBorderRadius: () => {},
   setGlowIntensity: () => {},
   setReduceMotion: () => {},
+  setCompactMode: () => {},
   saveCustomTheme: () => ({ id: "", name: "", colors: {} as TeamThemeColors }),
   updateCustomTheme: () => {},
   deleteCustomTheme: () => {},
@@ -135,6 +139,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [borderRadius, setBorderRadiusState] = useState<BorderRadius>("default");
   const [glowIntensity, setGlowIntensityState] = useState(50);
   const [reduceMotion, setReduceMotionState] = useState(false);
+  const [compactMode, setCompactModeState] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Load all prefs on first render
@@ -167,6 +172,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setGlowIntensityState(Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 50);
     }
     if (storedMotion) setReduceMotionState(storedMotion === "true");
+
+    const storedCompact = ls("f1-compact-mode");
+    if (storedCompact) setCompactModeState(storedCompact === "true");
 
     setCustomThemes(parsedCustom);
     setTeamColorOverrides(parsedOverrides);
@@ -242,6 +250,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     lsSet("f1-reduce-motion", String(reduceMotion));
   }, [reduceMotion, mounted]);
 
+  // Apply compact mode
+  useEffect(() => {
+    if (!mounted) return;
+    if (compactMode) document.documentElement.setAttribute("data-compact", "true");
+    else document.documentElement.removeAttribute("data-compact");
+    lsSet("f1-compact-mode", String(compactMode));
+  }, [compactMode, mounted]);
+
   // ── CRUD for custom themes ──────────────────────────────────────────────
 
   const saveCustomTheme = useCallback((name: string, colors: TeamThemeColors): CustomTheme => {
@@ -299,11 +315,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         borderRadius,
         glowIntensity,
         reduceMotion,
+        compactMode,
         setMode: setModeState,
         setAccentTheme: setAccentState,
         setBorderRadius: setBorderRadiusState,
         setGlowIntensity: setGlowIntensityState,
         setReduceMotion: setReduceMotionState,
+        setCompactMode: setCompactModeState,
         saveCustomTheme,
         updateCustomTheme,
         deleteCustomTheme,

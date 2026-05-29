@@ -40,11 +40,33 @@ function score(item: SearchItem, q: string): number {
   return 10;
 }
 
+const RECENT_SEARCHES_KEY = "f1-cmd-recent";
+const MAX_RECENT = 5;
+
+function loadRecent(): SearchItem[] {
+  try {
+    const raw = sessionStorage.getItem(RECENT_SEARCHES_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as SearchItem[];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(item: SearchItem) {
+  try {
+    const prev = loadRecent().filter((r) => r.href !== item.href);
+    const next = [item, ...prev].slice(0, MAX_RECENT);
+    sessionStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  } catch {}
+}
+
 export default function CommandPalette({ items }: { items: SearchItem[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [recentSearches, setRecentSearches] = useState<SearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -73,9 +95,10 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
     };
   }, []);
 
-  // Focus the input when opened
+  // Focus the input when opened and load recent searches
   useEffect(() => {
     if (open) {
+      setRecentSearches(loadRecent());
       const t = setTimeout(() => inputRef.current?.focus(), 20);
       return () => clearTimeout(t);
     }
@@ -99,6 +122,7 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
   const go = useCallback(
     (item: SearchItem | undefined) => {
       if (!item) return;
+      saveRecent(item);
       close();
       router.push(item.href);
     },
@@ -171,43 +195,84 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
         </div>
 
         <div ref={listRef} className="max-h-[55vh] overflow-y-auto py-1.5">
-          {results.length === 0 ? (
+          {/* Recent searches shown when query is empty */}
+          {!query && recentSearches.length > 0 && (
+            <div>
+              <p className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-f1-text-muted/50 font-semibold">
+                Recent
+              </p>
+              {recentSearches.map((item, i) => (
+                <button
+                  key={`recent-${item.href}`}
+                  data-idx={i}
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => go(item)}
+                  className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
+                    i === active ? "bg-f1-accent/10" : "hover:bg-f1-card-hover"
+                  }`}
+                >
+                  <span className="h-5 w-5 shrink-0 flex items-center justify-center text-f1-text-muted/40">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-f1-text" style={{ fontFamily: BC, letterSpacing: "0.01em" }}>
+                      {item.label}
+                    </span>
+                    {item.sublabel && (
+                      <span className="block truncate text-xs text-f1-text-muted">{item.sublabel}</span>
+                    )}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-f1-dark px-2 py-0.5 text-[10px] uppercase tracking-wider text-f1-text-muted">
+                    {KIND_LABEL[item.kind]}
+                  </span>
+                </button>
+              ))}
+              <div className="mx-4 my-1.5 border-t border-f1-border/40" />
+            </div>
+          )}
+
+          {results.length === 0 && query ? (
             <p className="px-4 py-8 text-center text-sm text-f1-text-muted">
-              No matches for “{query}”
+              No matches for &ldquo;{query}&rdquo;
             </p>
           ) : (
-            results.map((item, i) => (
-              <button
-                key={`${item.kind}-${item.href}`}
-                data-idx={i}
-                onMouseEnter={() => setActive(i)}
-                onClick={() => go(item)}
-                className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
-                  i === active ? "bg-f1-accent/10" : "hover:bg-f1-card-hover"
-                }`}
-              >
-                <span
-                  className="h-5 w-1 shrink-0 rounded-full"
-                  style={{ background: item.color ?? "var(--color-f1-text-muted)" }}
-                />
-                <span className="min-w-0 flex-1">
+            results.map((item, i) => {
+              const idx = (!query && recentSearches.length > 0) ? i + recentSearches.length + 1 : i;
+              return (
+                <button
+                  key={`${item.kind}-${item.href}`}
+                  data-idx={idx}
+                  onMouseEnter={() => setActive(idx)}
+                  onClick={() => go(item)}
+                  className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
+                    idx === active ? "bg-f1-accent/10" : "hover:bg-f1-card-hover"
+                  }`}
+                >
                   <span
-                    className="block truncate text-sm font-semibold text-f1-text"
-                    style={{ fontFamily: BC, letterSpacing: "0.01em" }}
-                  >
-                    {item.label}
-                  </span>
-                  {item.sublabel && (
-                    <span className="block truncate text-xs text-f1-text-muted">
-                      {item.sublabel}
+                    className="h-5 w-1 shrink-0 rounded-full"
+                    style={{ background: item.color ?? "var(--color-f1-text-muted)" }}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className="block truncate text-sm font-semibold text-f1-text"
+                      style={{ fontFamily: BC, letterSpacing: "0.01em" }}
+                    >
+                      {item.label}
                     </span>
-                  )}
-                </span>
-                <span className="shrink-0 rounded-full bg-f1-dark px-2 py-0.5 text-[10px] uppercase tracking-wider text-f1-text-muted">
-                  {KIND_LABEL[item.kind]}
-                </span>
-              </button>
-            ))
+                    {item.sublabel && (
+                      <span className="block truncate text-xs text-f1-text-muted">
+                        {item.sublabel}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-f1-dark px-2 py-0.5 text-[10px] uppercase tracking-wider text-f1-text-muted">
+                    {KIND_LABEL[item.kind]}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
       </div>

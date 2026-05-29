@@ -122,9 +122,19 @@ export default function RaceCard({ race, resultSummary, showSchedule }: { race: 
         >
           Watch on F1TV &rarr;
         </a>
-        {race.Sprint && (
-          <span className="rounded-lg bg-f1-accent-secondary/15 px-3 py-1.5 text-xs font-medium text-f1-accent-secondary border border-f1-accent-secondary/25">
-            Sprint Weekend
+        {race.Sprint && !race.ThirdPractice && (
+          <span className="rounded-lg bg-purple-900/30 px-3 py-1.5 text-xs font-medium text-purple-300 border border-purple-700/25">
+            Sprint Format
+          </span>
+        )}
+        {race.ThirdPractice && (
+          <span className="rounded-lg bg-blue-900/20 px-3 py-1.5 text-xs font-medium text-blue-300 border border-blue-700/20">
+            FP1·FP2·FP3
+          </span>
+        )}
+        {race.SprintQualifying && (
+          <span className="rounded-lg bg-orange-900/20 px-3 py-1.5 text-xs font-medium text-orange-300 border border-orange-700/20">
+            Sprint Shootout
           </span>
         )}
       </div>

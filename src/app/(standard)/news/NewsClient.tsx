@@ -25,44 +25,86 @@ function timeAgo(dateStr: string): string {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-function ArticleCard({ article }: { article: RssArticle }) {
+const BOOKMARKS_KEY = "f1-news-bookmarks";
+
+function loadBookmarks(): Set<string> {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw) as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveBookmarks(ids: Set<string>) {
+  try {
+    localStorage.setItem(BOOKMARKS_KEY, JSON.stringify([...ids]));
+  } catch {}
+}
+
+function ArticleCard({
+  article,
+  isBookmarked,
+  onToggleBookmark,
+}: {
+  article: RssArticle;
+  isBookmarked: boolean;
+  onToggleBookmark: (link: string) => void;
+}) {
   return (
-    <a
-      href={article.link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic overflow-hidden hover:border-f1-accent/40 transition-all"
-    >
-      {article.imageUrl && (
-        <div className="relative h-40 w-full overflow-hidden bg-f1-dark">
-          <img
-            src={article.imageUrl}
-            alt={article.title}
-            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        </div>
-      )}
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-f1-accent bg-f1-accent/10 px-2 py-0.5 rounded-full">
-            {article.source}
-          </span>
-          <span className="text-[10px] text-f1-text-muted">{timeAgo(article.pubDate)}</span>
-        </div>
-        <h3 className="font-bold text-sm leading-tight group-hover:text-f1-accent transition-colors line-clamp-2">
-          {article.title}
-        </h3>
-        {article.description && (
-          <p className="mt-2 text-xs text-f1-text-muted line-clamp-2">
-            {article.description}
-          </p>
+    <div className="group relative rounded-xl border border-f1-border/50 bg-f1-card/60 acrylic overflow-hidden hover:border-f1-accent/40 transition-all">
+      {/* Bookmark button */}
+      <button
+        onClick={(e) => { e.preventDefault(); onToggleBookmark(article.link); }}
+        className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all ${
+          isBookmarked
+            ? "bg-f1-accent text-white shadow-md"
+            : "bg-f1-dark/70 text-f1-text-muted hover:text-f1-accent hover:bg-f1-dark"
+        }`}
+        aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill={isBookmarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+      </button>
+      <a
+        href={article.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        {article.imageUrl && (
+          <div className="relative h-40 w-full overflow-hidden bg-f1-dark">
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
         )}
-      </div>
-    </a>
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-f1-accent bg-f1-accent/10 px-2 py-0.5 rounded-full">
+              {article.source}
+            </span>
+            <span className="text-[10px] text-f1-text-muted">{timeAgo(article.pubDate)}</span>
+          </div>
+          <h3 className="font-bold text-sm leading-tight group-hover:text-f1-accent transition-colors line-clamp-2">
+            {article.title}
+          </h3>
+          {article.description && (
+            <p className="mt-2 text-xs text-f1-text-muted line-clamp-2">
+              {article.description}
+            </p>
+          )}
+        </div>
+      </a>
+    </div>
   );
 }
 
@@ -237,7 +279,22 @@ export default function NewsClient() {
   const [articles, setArticles] = useState<RssArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"news" | "liveries">("news");
+  const [activeTab, setActiveTab] = useState<"news" | "liveries" | "saved">("news");
+  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setBookmarks(loadBookmarks());
+  }, []);
+
+  function toggleBookmark(link: string) {
+    setBookmarks((prev) => {
+      const next = new Set<string>(prev);
+      if (next.has(link)) next.delete(link);
+      else next.add(link);
+      saveBookmarks(next);
+      return next;
+    });
+  }
 
   const enabledFeeds = useMemo(() => feeds.filter((f) => f.enabled), [feeds]);
 
@@ -342,10 +399,43 @@ export default function NewsClient() {
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-f1-accent rounded-full" />
           )}
         </button>
+        <button
+          onClick={() => setActiveTab("saved")}
+          className={`relative px-4 py-2.5 text-sm font-semibold transition-colors ${
+            activeTab === "saved"
+              ? "text-f1-accent"
+              : "text-f1-text-muted hover:text-f1-text"
+          }`}
+        >
+          Saved{bookmarks.size > 0 && <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-[16px] rounded-full bg-f1-accent/20 text-f1-accent text-[9px] font-bold px-1">{bookmarks.size}</span>}
+          {activeTab === "saved" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-f1-accent rounded-full" />
+          )}
+        </button>
       </div>
 
       {activeTab === "liveries" ? (
         <SpecialLiveriesSection />
+      ) : activeTab === "saved" ? (
+        <div>
+          {bookmarks.size === 0 ? (
+            <div className="rounded-xl border border-f1-border/50 bg-f1-card/60 p-8 text-center">
+              <p className="text-sm font-semibold text-f1-text-muted">No saved articles yet.</p>
+              <p className="text-xs text-f1-text-muted/60 mt-1">Click the bookmark icon on any article to save it here.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {articles.filter((a) => bookmarks.has(a.link)).map((article, i) => (
+                <ArticleCard
+                  key={`saved-${article.link}-${i}`}
+                  article={article}
+                  isBookmarked={true}
+                  onToggleBookmark={toggleBookmark}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* Feed source toggles */}
@@ -427,7 +517,12 @@ export default function NewsClient() {
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredArticles.map((article, i) => (
-                  <ArticleCard key={`${article.sourceId}-${i}`} article={article} />
+                  <ArticleCard
+                    key={`${article.sourceId}-${i}`}
+                    article={article}
+                    isBookmarked={bookmarks.has(article.link)}
+                    onToggleBookmark={toggleBookmark}
+                  />
                 ))}
               </div>
             </>

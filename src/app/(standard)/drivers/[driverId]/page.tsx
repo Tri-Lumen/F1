@@ -8,6 +8,8 @@ import {
   getTeamColor,
   getCountryFlag,
   CURRENT_YEAR,
+  getDriverCareerWins,
+  getAllSeasonResults,
 } from "@/lib/api";
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
@@ -86,9 +88,11 @@ function formatDate(dateStr: string) {
 }
 
 async function DriverProfileContent({ driverId }: { driverId: string }) {
-  const [standings, races] = await Promise.all([
+  const [standings, races, careerStats, allRaces] = await Promise.all([
     getDriverStandings(),
     getDriverResults(driverId),
+    getDriverCareerWins(driverId),
+    getAllSeasonResults(),
   ]);
 
   const standing = standings.find((s) => s.Driver.driverId === driverId);
@@ -169,6 +173,42 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
           (365.25 * 24 * 60 * 60 * 1000)
       )
     : null;
+
+  // Teammate H2H
+  const teammateH2H = (() => {
+    const teammates = standings.filter(
+      (s) =>
+        s.Constructors[0]?.constructorId === constructor?.constructorId &&
+        s.Driver.driverId !== driverId
+    );
+    if (teammates.length === 0) return null;
+    const tm = teammates[0];
+
+    let raceWins = 0, tmRaceWins = 0;
+    let qualWins = 0, tmQualWins = 0;
+
+    for (const race of allRaces) {
+      const myResult = (race.Results ?? []).find((r) => r.Driver.driverId === driverId);
+      const tmResult = (race.Results ?? []).find((r) => r.Driver.driverId === tm.Driver.driverId);
+      if (myResult && tmResult) {
+        const myPos = parseInt(myResult.position);
+        const tmPos = parseInt(tmResult.position);
+        const myFin = myResult.status === "Finished" || myResult.status.startsWith("+");
+        const tmFin = tmResult.status === "Finished" || tmResult.status.startsWith("+");
+        if (myFin && tmFin) {
+          if (myPos < tmPos) raceWins++; else if (tmPos < myPos) tmRaceWins++;
+        } else if (myFin) { raceWins++; } else if (tmFin) { tmRaceWins++; }
+
+        const myGrid = parseInt(myResult.grid);
+        const tmGrid = parseInt(tmResult.grid);
+        if (myGrid > 0 && tmGrid > 0) {
+          if (myGrid < tmGrid) qualWins++; else if (tmGrid < myGrid) tmQualWins++;
+        }
+      }
+    }
+
+    return { teammate: tm, raceWins, tmRaceWins, qualWins, tmQualWins };
+  })();
 
   return (
     <>
@@ -374,6 +414,59 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
         driverId={driver.driverId}
         driverName={`${driver.givenName} ${driver.familyName}`}
       />
+
+      {/* Career Summary */}
+      <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-5">
+        <h3 className="font-bold mb-4">Career Summary</h3>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Races", value: careerStats.races },
+            { label: "Wins", value: careerStats.wins },
+            { label: "Podiums", value: careerStats.podiums },
+            { label: "Poles", value: careerStats.poles },
+            { label: "Fastest Laps", value: careerStats.fastestLaps },
+          ].map(({ label, value }) => (
+            <div key={label} className="rounded-lg bg-f1-dark p-3 text-center">
+              <p className="text-xs text-f1-text-muted mb-0.5">{label}</p>
+              <p className="text-2xl font-black" style={{ color: teamColor }}>{value}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-f1-text-muted">Based on available seasons (2003–{CURRENT_YEAR})</p>
+      </div>
+
+      {/* Teammate H2H */}
+      {teammateH2H && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-5">
+          <h3 className="font-bold mb-1">vs Teammate</h3>
+          <p className="text-xs text-f1-text-muted mb-4">
+            Head-to-head this season vs{" "}
+            <span className="font-semibold text-f1-text">
+              {teammateH2H.teammate.Driver.givenName} {teammateH2H.teammate.Driver.familyName}
+            </span>
+          </p>
+          {[
+            { label: "Race", myWins: teammateH2H.raceWins, tmWins: teammateH2H.tmRaceWins },
+            { label: "Qualifying", myWins: teammateH2H.qualWins, tmWins: teammateH2H.tmQualWins },
+          ].map(({ label, myWins, tmWins }) => {
+            const total = myWins + tmWins;
+            const myPct = total > 0 ? (myWins / total) * 100 : 50;
+            return (
+              <div key={label} className="mb-3">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-bold" style={{ color: teamColor }}>{myWins}</span>
+                  <span className="text-f1-text-muted">{label}</span>
+                  <span className="font-bold text-f1-text-muted">{tmWins}</span>
+                </div>
+                <div className="flex h-2 rounded-full overflow-hidden gap-px">
+                  <div className="rounded-l-full transition-all" style={{ width: `${myPct}%`, backgroundColor: teamColor }} />
+                  <div className="flex-1 rounded-r-full bg-f1-border" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Race-by-Race Results */}
       <div className="rounded-xl border border-f1-border bg-f1-card">

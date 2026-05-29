@@ -317,7 +317,7 @@ async function LiveContent() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-f1-border)" }}>
-                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Interval", "Gap", "Onboard"].map(
+                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Pit Window", "Interval", "Gap", "Onboard"].map(
                   (h) => (
                     <th
                       key={h}
@@ -451,6 +451,31 @@ async function LiveContent() {
                         </span>
                       ) : (
                         <span style={{ color: "var(--color-f1-text-muted)", fontSize: 11 }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      {tire?.age != null && (
+                        <span
+                          style={{
+                            fontFamily: BC,
+                            fontWeight: 700,
+                            fontSize: 9,
+                            letterSpacing: "0.06em",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            ...(tire.age >= 15 && tire.age <= 30
+                              ? { background: "rgba(34,197,94,0.15)", color: "#22c55e" }
+                              : tire.age > 30
+                              ? { background: "rgba(251,146,60,0.15)", color: "#fb923c" }
+                              : { color: "var(--color-f1-text-muted)", background: "transparent" })
+                          }}
+                        >
+                          {tire.age >= 15 && tire.age <= 30
+                            ? "IN WINDOW"
+                            : tire.age > 30
+                            ? "OVERDUE"
+                            : `~${15 - tire.age}L`}
+                        </span>
                       )}
                     </td>
                     <td style={{ padding: "10px 12px", textAlign: "right" }}>

@@ -26,6 +26,7 @@ export default function InterfaceSection() {
   const {
     glowIntensity, setGlowIntensity,
     reduceMotion, setReduceMotion,
+    compactMode, setCompactMode,
     borderRadius, setBorderRadius,
   } = useTheme();
 
@@ -127,6 +128,32 @@ export default function InterfaceSection() {
             <span
               className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
                 reduceMotion ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Compact Mode */}
+      <div className="mt-4 rounded-xl border border-f1-border bg-f1-card p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold">Compact Mode</p>
+            <p className="text-xs text-f1-text-muted mt-0.5">
+              Reduces padding and font sizes for a data-dense layout. Ideal for smaller screens or power users.
+            </p>
+          </div>
+          <button
+            onClick={() => setCompactMode(!compactMode)}
+            className={`relative flex-shrink-0 ml-4 h-6 w-11 rounded-full transition-colors ${
+              compactMode ? "bg-f1-accent" : "bg-f1-border"
+            }`}
+            role="switch"
+            aria-checked={compactMode}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                compactMode ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>

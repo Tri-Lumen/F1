@@ -84,6 +84,49 @@ export default async function ArchiveSeasonPage({
         </p>
       </div>
 
+      {/* Season Champion highlight */}
+      {driverStandings[0] && (() => {
+        const champ = driverStandings[0];
+        const teamColor = getTeamColor(champ.Constructors[0]?.constructorId ?? "");
+        const teamName = champ.Constructors[0]?.name ?? "";
+        return (
+          <div
+            className="mb-8 rounded-xl border overflow-hidden"
+            style={{ borderColor: `${teamColor}50`, background: `linear-gradient(135deg, ${teamColor}12, ${teamColor}06, transparent)` }}
+          >
+            <div className="px-6 py-5 flex items-center gap-5">
+              <div
+                className="flex-shrink-0 flex items-center justify-center w-16 h-16 rounded-full text-3xl"
+                style={{ background: `${teamColor}20`, border: `2px solid ${teamColor}50` }}
+              >
+                🏆
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+                    style={{ background: `${teamColor}30`, color: teamColor }}
+                  >
+                    {season} World Champion
+                  </span>
+                </div>
+                <h2 className="text-2xl font-black tracking-tight" style={{ color: teamColor }}>
+                  {getCountryFlag(champ.Driver.nationality)}{" "}
+                  {champ.Driver.givenName} {champ.Driver.familyName}
+                </h2>
+                <p className="text-sm text-f1-text-muted mt-0.5">{teamName}</p>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <div className="text-3xl font-black" style={{ color: teamColor }}>{champ.points}</div>
+                <div className="text-xs text-f1-text-muted">points</div>
+                <div className="text-lg font-black mt-1">{champ.wins}</div>
+                <div className="text-xs text-f1-text-muted">wins</div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Standings grid */}
       <div className="grid gap-6 lg:grid-cols-2 mb-10">
         {/* Driver Standings */}
