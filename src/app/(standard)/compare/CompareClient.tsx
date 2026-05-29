@@ -378,6 +378,34 @@ export default function CompareClient({
       </div>
 
       {statsA && statsB && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card px-5 py-4">
+          <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">Season Head-to-Head</p>
+          <div className="grid grid-cols-5 gap-2 text-center">
+            {[
+              { label: "Wins", a: statsA.wins, b: statsB.wins },
+              { label: "Podiums", a: statsA.podiums, b: statsB.podiums },
+              { label: "Poles", a: statsA.poles, b: statsB.poles },
+              { label: "DNFs", a: statsA.dnfs, b: statsB.dnfs, lowerBetter: true },
+              { label: "Points", a: statsA.points, b: statsB.points },
+            ].map(({ label, a, b, lowerBetter }) => {
+              const aWins = lowerBetter ? a < b : a > b;
+              const bWins = lowerBetter ? b < a : b > a;
+              return (
+                <div key={label} className="rounded-lg bg-f1-dark p-2.5">
+                  <p className="text-[10px] text-f1-text-muted uppercase tracking-wider mb-1.5">{label}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className={`text-sm font-black ${aWins ? "" : "text-f1-text-muted"}`} style={aWins ? { color: teamColorA } : undefined}>{a}</span>
+                    <span className="text-xs text-f1-text-muted">vs</span>
+                    <span className={`text-sm font-black ${bWins ? "" : "text-f1-text-muted"}`} style={bWins ? { color: teamColorB } : undefined}>{b}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {statsA && statsB && (
         <>
           {/* Stats Comparison */}
           <div className="mb-6 rounded-xl border border-f1-border bg-f1-card p-6">

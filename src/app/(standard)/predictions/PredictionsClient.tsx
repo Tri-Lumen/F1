@@ -88,53 +88,56 @@ export default function PredictionsClient({
 
   return (
     <>
-      {/* Season total */}
+      {/* Season total + Accuracy stats */}
       <div style={{ ...cardStyle, padding: "18px 20px", marginBottom: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
           <div>
             <div style={labelStyle}>Season total</div>
-            <div
-              style={{
-                fontFamily: BC,
-                fontWeight: 900,
-                fontSize: 32,
-                lineHeight: 1,
-                color: "var(--color-f1-accent)",
-              }}
-            >
+            <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 32, lineHeight: 1, color: "var(--color-f1-accent)" }}>
               {seasonScores?.total ?? 0}
-              <span
-                style={{
-                  fontSize: 14,
-                  marginLeft: 6,
-                  color: "var(--color-f1-text-muted)",
-                  fontWeight: 700,
-                }}
-              >
-                pts
-              </span>
+              <span style={{ fontSize: 14, marginLeft: 6, color: "var(--color-f1-text-muted)", fontWeight: 700 }}>pts</span>
             </div>
           </div>
-          <div
-            style={{
-              fontFamily: DM,
-              fontSize: 11,
-              color: "var(--color-f1-text-muted)",
-              textAlign: "right",
-            }}
-          >
-            {seasonScores?.items.length ?? 0} round
-            {seasonScores?.items.length === 1 ? "" : "s"} scored ·{" "}
+          <div style={{ fontFamily: DM, fontSize: 11, color: "var(--color-f1-text-muted)", textAlign: "right" }}>
+            {seasonScores?.items.length ?? 0} round{seasonScores?.items.length === 1 ? "" : "s"} scored ·{" "}
             {rounds.length} on calendar
           </div>
         </div>
+
+        {/* Accuracy breakdown */}
+        {(seasonScores?.items.length ?? 0) > 0 && (() => {
+          const items = seasonScores!.items;
+          const totalPredictions = items.reduce((sum, item) => {
+            const s = item.score;
+            return sum + (s.pole > 0 ? 1 : 0) + (s.p1 > 0 || s.p2 > 0 || s.p3 > 0 || s.podiumOffSlot > 0 ? 1 : 0) + (s.fastestLap > 0 ? 1 : 0);
+          }, 0);
+          const maxPossible = items.length * (5 + 25 + 15 + 10 + 1);
+          const accuracy = maxPossible > 0 ? Math.round((seasonScores!.total / maxPossible) * 100) : 0;
+          const avgPerRound = items.length > 0 ? (seasonScores!.total / items.length).toFixed(1) : "0.0";
+
+          return (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--color-f1-border)", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={labelStyle}>Accuracy</div>
+                <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 24, color: accuracy >= 50 ? "#22c55e" : accuracy >= 25 ? "#eab308" : "var(--color-f1-text-muted)" }}>
+                  {accuracy}%
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={labelStyle}>Avg / Race</div>
+                <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 24, color: "var(--color-f1-accent)" }}>
+                  {avgPerRound}
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={labelStyle}>Predictions hit</div>
+                <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 24 }}>
+                  {totalPredictions}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Per-round cards */}

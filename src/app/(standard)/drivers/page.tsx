@@ -175,6 +175,31 @@ async function DriversContent() {
     background: "var(--color-f1-dark)",
   };
 
+  // Championship Calculator: for each of P2, P3 drivers, show if they can still win
+  const calcData = standings.slice(1, 3).map((s) => {
+    const pts = parseFloat(s.points);
+    const leaderPts = standings[0] ? parseFloat(standings[0].points) : 0;
+    const gap = leaderPts - pts;
+    const maxCanScore = pts + maxAvailable;
+    const canCatch = maxCanScore > leaderPts;
+    const ptsNeededInRemaining = Math.max(0, leaderPts - pts + 1);
+    const pctOfMax = maxAvailable > 0 ? Math.min(100, (maxCanScore - leaderPts) / maxAvailable * 100) : 0;
+    const name = `${s.Driver.givenName} ${s.Driver.familyName}`;
+    const constructorId = getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? "";
+    return {
+      position: parseInt(s.position),
+      name,
+      pts,
+      gap,
+      canCatch,
+      ptsNeededInRemaining,
+      pctOfMax: Math.max(0, pctOfMax),
+      constructorId,
+      remaining: remainingRaces,
+      maxAvailable,
+    };
+  }).filter((d) => d.gap > 0);
+
   return (
     <>
       {/* Championship Status */}
@@ -212,6 +237,42 @@ async function DriversContent() {
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Championship Calculator */}
+      {calcData.length > 0 && completedRaces.length > 0 && !clinchInfo?.clinched && (
+        <div style={{ ...cardStyle, padding: "14px 18px", marginBottom: 18 }}>
+          <div style={{ fontFamily: BC, fontWeight: 800, fontSize: 10, letterSpacing: "0.1em", color: "var(--color-f1-text-muted)", textTransform: "uppercase", marginBottom: 10 }}>
+            Championship Calculator
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {calcData.map((d) => {
+              const color = getTeamColor(d.constructorId);
+              return (
+                <div key={d.position}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ fontFamily: DM, fontSize: 12 }}>
+                      <span style={{ color, fontWeight: 700 }}>P{d.position} {d.name.split(" ").at(-1)}</span>
+                      {d.canCatch
+                        ? <span style={{ color: "var(--color-f1-text-muted)" }}> needs <strong style={{ color: "var(--color-f1-text)" }}>{d.ptsNeededInRemaining} pts</strong> to catch leader</span>
+                        : <span style={{ color: "#ef4444" }}> mathematically eliminated</span>
+                      }
+                    </span>
+                    <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 11, color: "var(--color-f1-text-muted)" }}>
+                      {d.canCatch ? `-${d.gap} pts` : "OUT"}
+                    </span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 2, background: "var(--color-f1-black)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", borderRadius: 2, background: d.canCatch ? color : "#6b7280", width: `${d.pctOfMax}%`, transition: "width 0.4s ease" }} />
+                  </div>
+                  <div style={{ fontFamily: DM, fontSize: 9, color: "var(--color-f1-text-muted)", marginTop: 3 }}>
+                    {d.remaining} races remaining · {d.maxAvailable} pts available
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

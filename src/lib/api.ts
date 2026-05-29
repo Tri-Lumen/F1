@@ -289,34 +289,17 @@ export async function getSessionByKey(sessionKey: number): Promise<LiveSession |
 }
 
 export async function getLatestSession(): Promise<LiveSession | null> {
-  // Try the direct "latest" query first — most reliable for live/recent sessions
-  const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${OPENF1_BASE}/sessions?session_key=latest`, {
-      cache: "no-store",
-      signal,
-    });
-    if (res.ok) {
-      const data: LiveSession[] = await res.json();
-      if (data.length > 0) {
-        // Verify the session is from the current season — OpenF1 "latest" may
-        // return a session from a prior year if the new season hasn't started yet
-        const session = data[0];
-        if (String(session.year) === CURRENT_SEASON) return session;
-        // Still return it; the live page checks isLive status anyway
-        return session;
-      }
-    }
-  } catch {
-    // Fall through to year-based query
-  } finally {
-    clear();
+  // Use retry-backed fetch (the previous one-shot approach silently returned null
+  // on any transient 5xx / timeout during race-day load, hiding the live session)
+  const data = await fetchOpenF1<LiveSession>(`/sessions?session_key=latest`);
+  if (data.length > 0) {
+    return data[0];
   }
 
-  // Fallback: fetch all sessions for the current season
+  // Fallback: fetch all sessions for the current season and find the most recent
+  // one that has already started (covers seasons OpenF1 hasn't fully indexed yet)
   const sessions = await getLiveSessions();
   if (!sessions.length) return null;
-  // Find most recent session that has already started
   const now = new Date();
   const sorted = sessions
     .filter((s) => new Date(s.date_start) <= now)
@@ -492,6 +475,70 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
   return upcoming[0];
 }
 
+/**
+ * Returns a session from the Ergast calendar that is estimated to be in progress
+ * right now, based on scheduled start time + typical session duration.  Used as a
+ * fallback when OpenF1 returns null so the live page can show "connecting…" rather
+ * than a misleading next-session countdown.
+ */
+export async function getOngoingScheduledSession(): Promise<ScheduledSession | null> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return null;
+  }
+
+  const now = new Date();
+  // Estimated duration + grace window per session type
+  const windowMs: Record<string, number> = {
+    "Practice 1":        90 * 60 * 1000,
+    "Practice 2":        90 * 60 * 1000,
+    "Practice 3":        90 * 60 * 1000,
+    "Sprint Qualifying": 90 * 60 * 1000,
+    "Sprint":            60 * 60 * 1000,
+    "Qualifying":        90 * 60 * 1000,
+    "Race":             4 * 60 * 60 * 1000,
+  };
+
+  const ongoing: ScheduledSession[] = [];
+
+  function check(type: string, race: Race, s: { date: string; time: string } | undefined) {
+    if (!s) return;
+    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+    const d = new Date(`${s.date}T${timeStr}`);
+    const window = windowMs[type] ?? 2 * 60 * 60 * 1000;
+    if (d <= now && now <= new Date(d.getTime() + window)) {
+      ongoing.push({
+        type,
+        raceName: race.raceName,
+        circuitId: race.Circuit.circuitId,
+        circuitName: race.Circuit.circuitName,
+        country: race.Circuit.Location.country,
+        locality: race.Circuit.Location.locality,
+        date: d,
+        round: race.round,
+      });
+    }
+  }
+
+  for (const race of races) {
+    check("Practice 1", race, race.FirstPractice);
+    check("Practice 2", race, race.SecondPractice);
+    check("Practice 3", race, race.ThirdPractice);
+    check("Sprint Qualifying", race, race.SprintQualifying);
+    check("Sprint", race, race.Sprint);
+    check("Qualifying", race, race.Qualifying);
+    if (race.time) {
+      check("Race", race, { date: race.date, time: race.time });
+    }
+  }
+
+  if (!ongoing.length) return null;
+  // Return the most recently-started ongoing session
+  return ongoing.sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+}
+
 // --- Utility ---
 
 export function getTeamColor(constructorId: string): string {
@@ -580,13 +627,112 @@ export function getCountryFlagByCountry(country: string): string {
 export function isSessionLive(session: LiveSession): boolean {
   const now = new Date();
   const start = new Date(session.date_start);
-  const end = new Date(session.date_end);
   // Race sessions get a 2 h grace; other sessions get 1 h
   const graceMs =
     session.session_type === "Race"
       ? 2 * 60 * 60 * 1000
       : 60 * 60 * 1000;
-  return now >= start && now <= new Date(end.getTime() + graceMs);
+
+  // date_end is absent or null for in-progress sessions; new Date(null/undefined)
+  // yields epoch (Jan 1 1970), making the window check always false. Fall back to
+  // treating the session as live for up to 4 hours after start.
+  const endRaw = new Date(session.date_end);
+  if (!session.date_end || isNaN(endRaw.getTime())) {
+    return now >= start && now <= new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  }
+
+  return now >= start && now <= new Date(endRaw.getTime() + graceMs);
 }
 
 export const CURRENT_YEAR = CURRENT_SEASON;
+
+/** All sessions from the race schedule that start today (UTC date match). */
+export async function getTodaySessions(): Promise<ScheduledSession[]> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return [];
+  }
+
+  const todayUTC = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const sessions: ScheduledSession[] = [];
+
+  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
+    if (!s) return;
+    if (s.date !== todayUTC) return;
+    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+    const d = new Date(`${s.date}T${timeStr}`);
+    sessions.push({
+      type,
+      raceName: race.raceName,
+      circuitId: race.Circuit.circuitId,
+      circuitName: race.Circuit.circuitName,
+      country: race.Circuit.Location.country,
+      locality: race.Circuit.Location.locality,
+      date: d,
+      round: race.round,
+    });
+  }
+
+  for (const race of races) {
+    push("Practice 1", race, race.FirstPractice);
+    push("Practice 2", race, race.SecondPractice);
+    push("Practice 3", race, race.ThirdPractice);
+    push("Sprint Qualifying", race, race.SprintQualifying);
+    push("Sprint", race, race.Sprint);
+    push("Qualifying", race, race.Qualifying);
+    if (race.time && race.date === todayUTC) {
+      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
+      const d = new Date(`${race.date}T${timeStr}`);
+      sessions.push({
+        type: "Race",
+        raceName: race.raceName,
+        circuitId: race.Circuit.circuitId,
+        circuitName: race.Circuit.circuitName,
+        country: race.Circuit.Location.country,
+        locality: race.Circuit.Location.locality,
+        date: d,
+        round: race.round,
+      });
+    }
+  }
+
+  sessions.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return sessions;
+}
+
+/** Fetch career stats for a driver across all seasons available in the Jolpica API. */
+export async function getDriverCareerWins(driverId: string): Promise<{
+  wins: number;
+  podiums: number;
+  poles: number;
+  fastestLaps: number;
+  races: number;
+  championships: number;
+}> {
+  const [winsData, polesData, racesData, podiumsData, flData, champsData] = await Promise.all([
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1&status=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=500`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/?limit=1`),
+    fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/drivers/${driverId}/driverstandings/1/?limit=100`),
+  ]);
+
+  const wins = parseInt(winsData?.MRData?.RaceTable ? String((winsData.MRData as { total?: string; RaceTable: unknown }).total ?? "0") : "0", 10);
+  const races = parseInt(racesData?.MRData ? String((racesData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const poles = parseInt(polesData?.MRData ? String((polesData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const fl = parseInt(flData?.MRData ? String((flData.MRData as { total?: string }).total ?? "0") : "0", 10);
+  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
+
+  // Count podiums from the results
+  let podiums = 0;
+  for (const race of podiumsData?.MRData?.RaceTable?.Races ?? []) {
+    for (const r of race.Results ?? []) {
+      if (parseInt(r.position) <= 3) podiums++;
+    }
+  }
+
+  return { wins, podiums, poles, fastestLaps: fl, races, championships };
+}

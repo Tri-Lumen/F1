@@ -24,6 +24,9 @@ const NAV_LINKS = [
 const MORE_LINKS = [
   { href: "/fastest-laps", label: "Fastest Laps" },
   { href: "/compare", label: "Compare" },
+  { href: "/gap", label: "Champ. Gap" },
+  { href: "/highlights", label: "Highlights" },
+  { href: "/penalties", label: "Incidents" },
   { href: "/replay", label: "Replay" },
   { href: "/predictions", label: "Pick'em" },
   { href: "/archive", label: "Archive" },

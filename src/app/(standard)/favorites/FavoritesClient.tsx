@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useFavorites } from "@/lib/FavoritesContext";
 import { getTeamColor } from "@/lib/api";
 import type { DriverStanding, ConstructorStanding, Race } from "@/lib/types";
@@ -131,6 +132,25 @@ export default function FavoritesClient({
 }: Props) {
   const { favoriteDriverIds, favoriteTeamIds, hasAnyFavorites, mounted } =
     useFavorites();
+
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [notesLoaded, setNotesLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("f1-fav-notes");
+      if (raw) setNotes(JSON.parse(raw) as Record<string, string>);
+    } catch {}
+    setNotesLoaded(true);
+  }, []);
+
+  function handleNote(id: string, value: string) {
+    setNotes((prev) => {
+      const next = { ...prev, [id]: value };
+      try { localStorage.setItem("f1-fav-notes", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
 
   // Show skeleton until localStorage read completes to avoid empty-state flash
   if (!mounted) return <LoadingSkeleton />;
@@ -350,6 +370,18 @@ export default function FavoritesClient({
                         </div>
                       </div>
                     )}
+
+                    {notesLoaded && (
+                      <div className="mt-3 pt-3 border-t border-f1-border/30">
+                        <textarea
+                          value={notes[Driver.driverId] ?? ""}
+                          onChange={(e) => handleNote(Driver.driverId, e.target.value)}
+                          placeholder="Add a personal note…"
+                          rows={2}
+                          className="w-full rounded-lg bg-f1-dark border border-f1-border/50 px-3 py-2 text-xs text-f1-text placeholder:text-f1-text-muted/50 resize-none focus:outline-none focus:border-f1-accent transition-colors"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -439,6 +471,18 @@ export default function FavoritesClient({
                             />
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {notesLoaded && (
+                      <div className="mt-3 pt-3 border-t border-f1-border/30">
+                        <textarea
+                          value={notes[Constructor.constructorId] ?? ""}
+                          onChange={(e) => handleNote(Constructor.constructorId, e.target.value)}
+                          placeholder="Add a personal note…"
+                          rows={2}
+                          className="w-full rounded-lg bg-f1-dark border border-f1-border/50 px-3 py-2 text-xs text-f1-text placeholder:text-f1-text-muted/50 resize-none focus:outline-none focus:border-f1-accent transition-colors"
+                        />
                       </div>
                     )}
                   </div>

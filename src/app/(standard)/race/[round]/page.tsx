@@ -132,6 +132,26 @@ async function RaceContent({ round }: { round: string }) {
     .sort((a, b) => a.fastestDuration - b.fastestDuration);
   const fastestPit = pitDriverSummaries[0];
 
+  // Race pace analysis: sort finishers by fastest lap time
+  const paceData = results
+    .filter((r) => r.FastestLap?.Time?.time)
+    .map((r) => {
+      const [min, secMs] = r.FastestLap!.Time!.time.split(":");
+      const [sec, ms] = secMs.split(".");
+      const totalMs = parseInt(min) * 60000 + parseInt(sec) * 1000 + parseInt(ms.padEnd(3, "0").slice(0, 3));
+      return {
+        driverId: r.Driver.driverId,
+        name: `${r.Driver.givenName} ${r.Driver.familyName}`,
+        code: r.Driver.code,
+        constructorId: r.Constructor.constructorId,
+        lapTime: r.FastestLap!.Time!.time,
+        lapMs: totalMs,
+        position: parseInt(r.position),
+        avgSpeed: r.FastestLap!.AverageSpeed?.speed ?? "",
+      };
+    })
+    .sort((a, b) => a.lapMs - b.lapMs);
+
   return (
     <>
       {/* Prev/Next race navigation */}
@@ -272,71 +292,75 @@ async function RaceContent({ round }: { round: string }) {
                 </tr>
               </thead>
               <tbody>
-                {results.map((r) => {
-                  const teamColor = getTeamColor(r.Constructor.constructorId);
-                  const gridPos = parseInt(r.grid);
-                  const gridDiff = gridPos > 0 ? gridPos - parseInt(r.position) : 0;
-                  const isFastestLap = r.FastestLap?.rank === "1";
-
-                  return (
-                    <tr
-                      key={r.Driver.driverId}
-                      className={`border-b border-f1-border/50 transition-colors hover:bg-f1-card/50 ${
-                        isFastestLap ? "bg-purple-500/5" : ""
-                      }`}
-                    >
-                      <td className="px-3 py-3 font-bold">{r.position}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="h-6 w-1 rounded-full"
-                            style={{ backgroundColor: teamColor }}
-                          />
-                          <span>
-                            {getCountryFlag(r.Driver.nationality)}{" "}
-                            {r.Driver.givenName}{" "}
-                            <span className="font-bold uppercase">
-                              {r.Driver.familyName}
+                {(() => {
+                  const finishers = results.filter((r) => r.status === "Finished" || r.status.startsWith("+"));
+                  const dnfs = results.filter((r) => r.status !== "Finished" && !r.status.startsWith("+"));
+                  const renderRow = (r: typeof results[0]) => {
+                    const teamColor = getTeamColor(r.Constructor.constructorId);
+                    const gridPos = parseInt(r.grid);
+                    const gridDiff = gridPos > 0 ? gridPos - parseInt(r.position) : 0;
+                    const isFastestLap = r.FastestLap?.rank === "1";
+                    const isDnf = r.status !== "Finished" && !r.status.startsWith("+");
+                    return (
+                      <tr
+                        key={r.Driver.driverId}
+                        className={`border-b border-f1-border/50 transition-colors hover:bg-f1-card/50 ${
+                          isFastestLap ? "bg-purple-500/5" : isDnf ? "opacity-60" : ""
+                        }`}
+                      >
+                        <td className="px-3 py-3 font-bold">{isDnf ? <span className="text-red-400 text-xs">DNF</span> : r.position}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="h-6 w-1 rounded-full" style={{ backgroundColor: teamColor }} />
+                            <span>
+                              {getCountryFlag(r.Driver.nationality)}{" "}
+                              {r.Driver.givenName}{" "}
+                              <span className="font-bold uppercase">{r.Driver.familyName}</span>
                             </span>
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">
-                        {r.Constructor.name}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span>{r.grid}</span>
-                        {gridDiff !== 0 && (
-                          <span
-                            className={`ml-1 text-xs ${
-                              gridDiff > 0
-                                ? "text-green-400"
-                                : "text-red-400"
-                            }`}
-                          >
-                            {gridDiff > 0 ? `+${gridDiff}` : gridDiff}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-center hidden md:table-cell text-f1-text-muted">
-                        {r.laps}
-                      </td>
-                      <td className="px-3 py-3 text-f1-text-muted">
-                        {r.Time?.time ?? r.status}
-                      </td>
-                      <td className="px-3 py-3 text-right font-bold">
-                        {r.points !== "0" ? r.points : ""}
-                      </td>
-                      <td className="px-3 py-3 text-center hidden lg:table-cell">
-                        {isFastestLap && (
-                          <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-bold text-purple-400">
-                            {r.FastestLap?.Time?.time}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 hidden sm:table-cell text-f1-text-muted">{r.Constructor.name}</td>
+                        <td className="px-3 py-3 text-center">
+                          <span>{r.grid}</span>
+                          {gridDiff !== 0 && (
+                            <span className={`ml-1 text-xs ${gridDiff > 0 ? "text-green-400" : "text-red-400"}`}>
+                              {gridDiff > 0 ? `+${gridDiff}` : gridDiff}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-center hidden md:table-cell text-f1-text-muted">{r.laps}</td>
+                        <td className={`px-3 py-3 ${isDnf ? "text-red-400 font-medium" : "text-f1-text-muted"}`}>
+                          {r.Time?.time ?? r.status}
+                        </td>
+                        <td className="px-3 py-3 text-right font-bold">{r.points !== "0" ? r.points : ""}</td>
+                        <td className="px-3 py-3 text-center hidden lg:table-cell">
+                          {isFastestLap && (
+                            <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-bold text-purple-400">
+                              {r.FastestLap?.Time?.time}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  };
+                  return (
+                    <>
+                      {finishers.map(renderRow)}
+                      {dnfs.length > 0 && (
+                        <>
+                          <tr>
+                            <td colSpan={8} className="px-3 py-2 bg-red-950/20">
+                              <span className="text-xs font-bold uppercase tracking-wider text-red-400/70">
+                                Did Not Finish ({dnfs.length})
+                              </span>
+                            </td>
+                          </tr>
+                          {dnfs.map(renderRow)}
+                        </>
+                      )}
+                    </>
                   );
-                })}
+                })()}
               </tbody>
             </table>
           </div>
@@ -593,6 +617,43 @@ async function RaceContent({ round }: { round: string }) {
                   })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Race Pace Analysis */}
+      {paceData.length > 0 && (
+        <div className="mb-6 rounded-xl border border-f1-border bg-f1-card overflow-hidden">
+          <div className="border-b border-f1-border p-4">
+            <h3 className="font-bold">Race Pace</h3>
+            <p className="text-xs text-f1-text-muted mt-0.5">Fastest lap comparison — ranked by lap time</p>
+          </div>
+          <div className="divide-y divide-f1-border">
+            {paceData.map((d, i) => {
+              const color = getTeamColor(d.constructorId);
+              const delta = d.lapMs - paceData[0].lapMs;
+              const deltaSec = (delta / 1000).toFixed(3);
+              const barWidth = i === 0 ? 100 : Math.max(20, 100 - (delta / paceData[paceData.length - 1].lapMs) * 100 * 2);
+              return (
+                <div key={d.driverId} className={`flex items-center gap-3 px-4 py-2.5 ${i === 0 ? "bg-purple-950/20" : ""}`}>
+                  <span className="w-5 shrink-0 text-center text-xs font-bold text-f1-text-muted">{i + 1}</span>
+                  <span className="h-4 w-1 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold">
+                      {i === 0 && <span className="text-purple-400 mr-1">●</span>}
+                      {d.name}
+                    </p>
+                    <div className="mt-1 h-1 rounded-full bg-f1-dark overflow-hidden" style={{ width: "100%" }}>
+                      <div className="h-full rounded-full" style={{ width: `${barWidth}%`, backgroundColor: i === 0 ? "#c084fc" : color + "99" }} />
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className={`text-xs font-mono font-bold ${i === 0 ? "text-purple-400" : "text-f1-text"}`}>{d.lapTime}</p>
+                    {i > 0 && <p className="text-[10px] text-f1-text-muted font-mono">+{deltaSec}</p>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

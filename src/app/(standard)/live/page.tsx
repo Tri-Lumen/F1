@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 import {
   getLatestSession,
+  getOngoingScheduledSession,
   getLiveDrivers,
   getLivePositions,
   getLiveIntervals,
@@ -57,9 +58,48 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 async function LiveContent() {
-  const session = await getLatestSession();
+  // Fetch OpenF1 session and Ergast schedule fallback in parallel
+  const [session, ongoingScheduled] = await Promise.all([
+    getLatestSession(),
+    getOngoingScheduledSession(),
+  ]);
 
   if (!session) {
+    // If Ergast says a session should be underway but OpenF1 hasn't responded,
+    // show a "connecting" state instead of the misleading next-session countdown
+    if (ongoingScheduled) {
+      return (
+        <div style={{ ...cardStyle, padding: "32px 24px", textAlign: "center" }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>📡</div>
+          <p
+            style={{
+              fontFamily: BC,
+              fontWeight: 800,
+              fontSize: 20,
+              letterSpacing: "0.04em",
+              marginBottom: 8,
+            }}
+          >
+            {ongoingScheduled.raceName} — {ongoingScheduled.type}
+          </p>
+          <p
+            style={{
+              fontFamily: DM,
+              fontSize: 13,
+              color: "var(--color-f1-text-muted)",
+              maxWidth: 400,
+              margin: "0 auto 8px",
+            }}
+          >
+            Session is in progress. Connecting to live timing data&hellip;
+          </p>
+          <p style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)" }}>
+            This page refreshes automatically every 15&nbsp;seconds.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div>
         <div style={{ ...cardStyle, padding: "24px", textAlign: "center", marginBottom: 16 }}>
@@ -317,7 +357,7 @@ async function LiveContent() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-f1-border)" }}>
-                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Interval", "Gap", "Onboard"].map(
+                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Pit Window", "Interval", "Gap", "Onboard"].map(
                   (h) => (
                     <th
                       key={h}
@@ -451,6 +491,31 @@ async function LiveContent() {
                         </span>
                       ) : (
                         <span style={{ color: "var(--color-f1-text-muted)", fontSize: 11 }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      {tire?.age != null && (
+                        <span
+                          style={{
+                            fontFamily: BC,
+                            fontWeight: 700,
+                            fontSize: 9,
+                            letterSpacing: "0.06em",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            ...(tire.age >= 15 && tire.age <= 30
+                              ? { background: "rgba(34,197,94,0.15)", color: "#22c55e" }
+                              : tire.age > 30
+                              ? { background: "rgba(251,146,60,0.15)", color: "#fb923c" }
+                              : { color: "var(--color-f1-text-muted)", background: "transparent" })
+                          }}
+                        >
+                          {tire.age >= 15 && tire.age <= 30
+                            ? "IN WINDOW"
+                            : tire.age > 30
+                            ? "OVERDUE"
+                            : `~${15 - tire.age}L`}
+                        </span>
                       )}
                     </td>
                     <td style={{ padding: "10px 12px", textAlign: "right" }}>

@@ -46,6 +46,16 @@ interface Props {
 
 function StudioDriverRowImpl({ standing, rank, form, leaderPts, delay = 0 }: Props) {
   const [hovered, setHovered] = useState(false);
+
+  const trend: "up" | "down" | "stable" = (() => {
+    if (form.length < 2) return "stable";
+    const last = form[form.length - 1];
+    const avg = form.slice(0, -1).reduce((a, b) => a + b, 0) / (form.length - 1);
+    if (last > avg + 1) return "up";
+    if (last < avg - 1) return "down";
+    return "stable";
+  })();
+
   const constructorId =
     getDriverConstructorId(standing.Driver.driverId, standing.Constructors[0]?.constructorId) ?? "";
   const constructorName =
@@ -75,6 +85,20 @@ function StudioDriverRowImpl({ standing, rank, form, leaderPts, delay = 0 }: Pro
       }}
     >
       <PosPill pos={rank} />
+      {trend !== "stable" && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 900,
+            color: trend === "up" ? "#22c55e" : "#ef4444",
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+          title={trend === "up" ? "Trending up" : "Trending down"}
+        >
+          {trend === "up" ? "↑" : "↓"}
+        </span>
+      )}
       <span
         style={{
           width: 3,
