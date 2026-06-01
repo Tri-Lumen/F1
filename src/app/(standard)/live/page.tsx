@@ -29,6 +29,9 @@ import WeatherWidget from "@/components/WeatherWidget";
 import LiveLapTimes from "@/components/LiveLapTimes";
 import RefreshButton from "@/components/RefreshButton";
 import NextSessionCard from "@/components/NextSessionCard";
+import PageHeader from "@/components/PageHeader";
+import SectionHeading from "@/components/SectionHeading";
+import EmptyState from "@/components/EmptyState";
 import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
 
 const BC = "'Barlow Condensed', sans-serif";
@@ -40,21 +43,25 @@ const cardStyle = {
   background: "var(--color-f1-dark)",
 };
 
+// Live timing columns. `hideClass` collapses secondary columns on small
+// screens so the table never needs to scroll horizontally on a phone.
+const LIVE_COLUMNS: { label: string; align: "left" | "right" | "center"; hideClass?: string }[] = [
+  { label: "Pos", align: "left" },
+  { label: "#", align: "left", hideClass: "hidden sm:table-cell" },
+  { label: "Driver", align: "left" },
+  { label: "Team", align: "left", hideClass: "hidden lg:table-cell" },
+  { label: "Tire", align: "left" },
+  { label: "Age", align: "left", hideClass: "hidden md:table-cell" },
+  { label: "Pit Window", align: "left", hideClass: "hidden md:table-cell" },
+  { label: "Interval", align: "right", hideClass: "hidden sm:table-cell" },
+  { label: "Gap", align: "right" },
+  { label: "Onboard", align: "center" },
+];
+
 function SectionHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        fontFamily: BC,
-        fontWeight: 800,
-        fontSize: 14,
-        letterSpacing: "0.04em",
-        padding: "12px 14px",
-        borderBottom: "1px solid var(--color-f1-border)",
-      }}
-    >
-      {children}
-    </div>
-  );
+  // Thin wrapper so existing call sites keep working while delegating to the
+  // shared SectionHeading primitive.
+  return <SectionHeading variant="card" title={children} />;
 }
 
 async function LiveContent() {
@@ -102,14 +109,19 @@ async function LiveContent() {
 
     return (
       <div>
-        <div style={{ ...cardStyle, padding: "24px", textAlign: "center", marginBottom: 16 }}>
-          <p style={{ fontFamily: DM, fontSize: 13, color: "var(--color-f1-text-muted)" }}>
-            No session is currently active.{" "}
-            <Link href="/races" style={{ color: "var(--color-f1-accent)" }}>
+        <EmptyState
+          className="mb-4"
+          title="No session is currently active"
+          hint="Live timing appears here once a session goes green."
+          action={
+            <Link
+              href="/races"
+              className="rounded-lg bg-f1-dark px-3 py-1.5 text-xs font-medium text-f1-accent hover:bg-f1-border transition-colors"
+            >
               View race calendar
             </Link>
-          </p>
-        </div>
+          }
+        />
         <NextSessionCard />
       </div>
     );
@@ -355,28 +367,31 @@ async function LiveContent() {
         <SectionHeader>Live Timing</SectionHeader>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <caption className="sr-only">
+              Live timing — position, driver, tire, pit window, interval and gap
+            </caption>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--color-f1-border)" }}>
-                {["Pos", "#", "Driver", "Team", "Tire", "Age", "Pit Window", "Interval", "Gap", "Onboard"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: "8px 12px",
-                        fontFamily: BC,
-                        fontWeight: 700,
-                        fontSize: 9,
-                        letterSpacing: "0.1em",
-                        color: "var(--color-f1-text-muted)",
-                        textTransform: "uppercase",
-                        textAlign: h === "Gap" || h === "Interval" ? "right" : "left",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {LIVE_COLUMNS.map((col) => (
+                  <th
+                    key={col.label}
+                    scope="col"
+                    className={col.hideClass}
+                    style={{
+                      padding: "8px 12px",
+                      fontFamily: BC,
+                      fontWeight: 700,
+                      fontSize: 9,
+                      letterSpacing: "0.1em",
+                      color: "var(--color-f1-text-muted)",
+                      textTransform: "uppercase",
+                      textAlign: col.align,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {col.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -406,6 +421,7 @@ async function LiveContent() {
                       </span>
                     </td>
                     <td
+                      className="hidden sm:table-cell"
                       style={{
                         padding: "10px 12px",
                         fontFamily: "monospace",
@@ -441,6 +457,7 @@ async function LiveContent() {
                       </div>
                     </td>
                     <td
+                      className="hidden lg:table-cell"
                       style={{
                         padding: "10px 12px",
                         fontFamily: DM,
@@ -472,9 +489,10 @@ async function LiveContent() {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "10px 12px" }}>
+                    <td className="hidden md:table-cell" style={{ padding: "10px 12px" }}>
                       {tire?.age != null ? (
                         <span
+                          title={`${tire.age} laps on current tyre`}
                           style={{
                             fontFamily: "monospace",
                             fontSize: 11,
@@ -493,7 +511,7 @@ async function LiveContent() {
                         <span style={{ color: "var(--color-f1-text-muted)", fontSize: 11 }}>—</span>
                       )}
                     </td>
-                    <td style={{ padding: "10px 12px" }}>
+                    <td className="hidden md:table-cell" style={{ padding: "10px 12px" }}>
                       {tire?.age != null && (
                         <span
                           style={{
@@ -518,7 +536,7 @@ async function LiveContent() {
                         </span>
                       )}
                     </td>
-                    <td style={{ padding: "10px 12px", textAlign: "right" }}>
+                    <td className="hidden sm:table-cell" style={{ padding: "10px 12px", textAlign: "right" }}>
                       <span
                         style={{
                           fontFamily: "monospace",
@@ -573,14 +591,7 @@ async function LiveContent() {
       </div>
 
       {/* Weather + Tire Strategy */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "300px 1fr",
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-[300px_1fr]">
         <div style={{ ...cardStyle, overflow: "hidden" }}>
           <SectionHeader>Weather</SectionHeader>
           <div style={{ padding: 14 }}>
@@ -600,7 +611,7 @@ async function LiveContent() {
       </div>
 
       {/* Race Control + Team Radio */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div style={{ ...cardStyle, overflow: "hidden" }}>
           <SectionHeader>Race Control</SectionHeader>
           <div style={{ padding: 14 }}>
@@ -621,45 +632,22 @@ async function LiveContent() {
 export default function LivePage() {
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: 22,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: BC,
-              fontWeight: 900,
-              fontSize: 28,
-              letterSpacing: "0.02em",
-              lineHeight: 1,
-            }}
-          >
+      <PageHeader
+        title={
+          <>
             <span style={{ color: "var(--color-f1-accent)" }}>LIVE</span> SESSION
-          </div>
-          <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
-            Real-time timing, tire strategy, team radio &amp; onboard cameras
-          </div>
-        </div>
-        <RefreshButton intervalMs={15000} />
-      </div>
+          </>
+        }
+        subtitle="Real-time timing, tire strategy, team radio & onboard cameras"
+        actions={<RefreshButton intervalMs={15000} />}
+      />
 
       <Suspense
         fallback={
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="flex flex-col gap-4">
             <div style={{ height: 96, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             <div style={{ height: 384, borderRadius: 12, background: "var(--color-f1-dark)" }} />
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 16,
-              }}
-            >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div style={{ height: 256, borderRadius: 12, background: "var(--color-f1-dark)" }} />
               <div style={{ height: 256, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             </div>

@@ -162,7 +162,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const storedGlow    = ls("f1-glow-intensity");
     const storedMotion  = ls("f1-reduce-motion");
 
+    // Fall back to the OS colour-scheme preference when the user hasn't picked
+    // a mode yet, instead of always forcing dark.
     if (storedMode && isValidMode(storedMode)) setModeState(storedMode);
+    else if (typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches) {
+      setModeState("light");
+    }
     if (storedAccent && isValidAccent(storedAccent, parsedCustom)) setAccentState(storedAccent as AccentTheme);
     if (storedRadius && isValidRadius(storedRadius)) setBorderRadiusState(storedRadius);
     if (storedGlow) {
@@ -171,7 +176,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const n = parseInt(storedGlow, 10);
       setGlowIntensityState(Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 50);
     }
+    // Honour the OS reduced-motion preference as the default until the user
+    // overrides it in settings.
     if (storedMotion) setReduceMotionState(storedMotion === "true");
+    else if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setReduceMotionState(true);
+    }
 
     const storedCompact = ls("f1-compact-mode");
     if (storedCompact) setCompactModeState(storedCompact === "true");

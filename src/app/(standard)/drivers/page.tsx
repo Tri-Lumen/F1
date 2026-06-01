@@ -19,6 +19,9 @@ import {
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
+import PageHeader from "@/components/PageHeader";
+import CardShell from "@/components/CardShell";
+import SectionHeading from "@/components/SectionHeading";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
 import {
   getDriverNumberUrl,
@@ -169,12 +172,6 @@ async function DriversContent() {
     bestAvg && { label: "Best Avg Finish", value: (bestAvg.total / bestAvg.count).toFixed(1), name: bestAvg.name, icon: "📊" },
   ].filter(Boolean) as { label: string; value: string | number; name: string; icon: string }[];
 
-  const cardStyle = {
-    borderRadius: 12,
-    border: "1px solid var(--color-f1-border)",
-    background: "var(--color-f1-dark)",
-  };
-
   // Championship Calculator: for each of P2, P3 drivers, show if they can still win
   const calcData = standings.slice(1, 3).map((s) => {
     const pts = parseFloat(s.points);
@@ -204,20 +201,8 @@ async function DriversContent() {
     <>
       {/* Championship Status */}
       {clinchInfo && completedRaces.length > 0 && (
-        <div style={{ ...cardStyle, padding: "14px 18px", marginBottom: 18 }}>
-          <div
-            style={{
-              fontFamily: BC,
-              fontWeight: 800,
-              fontSize: 10,
-              letterSpacing: "0.1em",
-              color: "var(--color-f1-text-muted)",
-              textTransform: "uppercase",
-              marginBottom: 8,
-            }}
-          >
-            Championship Status
-          </div>
+        <CardShell className="mb-[18px] px-[18px] py-3.5">
+          <SectionHeading variant="label" title="Championship Status" />
           {clinchInfo.clinched ? (
             <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "var(--color-f1-accent)" }}>
               🏆 {clinchInfo.leaderName} has clinched the {CURRENT_YEAR} World Championship!
@@ -237,15 +222,13 @@ async function DriversContent() {
               </span>
             </div>
           )}
-        </div>
+        </CardShell>
       )}
 
       {/* Championship Calculator */}
       {calcData.length > 0 && completedRaces.length > 0 && !clinchInfo?.clinched && (
-        <div style={{ ...cardStyle, padding: "14px 18px", marginBottom: 18 }}>
-          <div style={{ fontFamily: BC, fontWeight: 800, fontSize: 10, letterSpacing: "0.1em", color: "var(--color-f1-text-muted)", textTransform: "uppercase", marginBottom: 10 }}>
-            Championship Calculator
-          </div>
+        <CardShell className="mb-[18px] px-[18px] py-3.5">
+          <SectionHeading variant="label" title="Championship Calculator" />
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {calcData.map((d) => {
               const color = getTeamColor(d.constructorId);
@@ -273,25 +256,13 @@ async function DriversContent() {
               );
             })}
           </div>
-        </div>
+        </CardShell>
       )}
 
       {/* Season Highlights */}
       {highlights.length > 0 && completedRaces.length > 0 && (
         <div style={{ marginBottom: 18 }}>
-          <div
-            style={{
-              fontFamily: BC,
-              fontWeight: 800,
-              fontSize: 10,
-              letterSpacing: "0.1em",
-              color: "var(--color-f1-text-muted)",
-              textTransform: "uppercase",
-              marginBottom: 10,
-            }}
-          >
-            Season Highlights
-          </div>
+          <SectionHeading variant="label" title="Season Highlights" />
           <div
             style={{
               display: "grid",
@@ -300,9 +271,9 @@ async function DriversContent() {
             }}
           >
             {highlights.map((h) => (
-              <div
+              <CardShell
                 key={h.label}
-                style={{ ...cardStyle, padding: "12px 10px", textAlign: "center" }}
+                className="px-2.5 py-3 text-center"
               >
                 <div style={{ fontSize: 18 }}>{h.icon}</div>
                 <div
@@ -331,26 +302,14 @@ async function DriversContent() {
                 <div style={{ fontFamily: DM, fontSize: 10, color: "var(--color-f1-text-muted)", marginTop: 2 }}>
                   {h.name.split(" ").at(-1)}
                 </div>
-              </div>
+              </CardShell>
             ))}
           </div>
         </div>
       )}
 
       {/* Driver Profile Cards */}
-      <div
-        style={{
-          fontFamily: BC,
-          fontWeight: 800,
-          fontSize: 10,
-          letterSpacing: "0.1em",
-          color: "var(--color-f1-text-muted)",
-          textTransform: "uppercase",
-          marginBottom: 12,
-        }}
-      >
-        Driver Profiles &amp; Stats
-      </div>
+      <SectionHeading variant="label" title="Driver Profiles & Stats" />
       <div
         style={{
           display: "grid",
@@ -368,13 +327,12 @@ async function DriversContent() {
           const teamColor = getTeamColor(constructorId);
 
           return (
-            <div
+            <CardShell
               key={s.Driver.driverId}
-              id={s.Driver.driverId}
-              style={{ ...cardStyle, overflow: "hidden" }}
+              variant="accent"
+              accentColor={teamColor}
             >
-              <div style={{ height: 2, background: teamColor }} />
-              <div style={{ padding: "14px 16px" }}>
+              <div id={s.Driver.driverId} style={{ padding: "14px 16px", scrollMarginTop: "6rem" }}>
                 <div
                   style={{
                     display: "flex",
@@ -547,20 +505,20 @@ async function DriversContent() {
                   </a>
                 </div>
               </div>
-            </div>
+            </CardShell>
           );
         })}
       </div>
 
       {/* Points Progression Chart */}
       {completedRaces.length > 0 && (
-        <div style={{ ...cardStyle, padding: 18, marginTop: 18 }}>
+        <CardShell className="mt-[18px] p-[18px]">
           <PointsProgressionChart
             completedRaces={completedRaces}
             driverStandings={standings}
             getTeamColor={getTeamColor}
           />
-        </div>
+        </CardShell>
       )}
     </>
   );
@@ -569,30 +527,25 @@ async function DriversContent() {
 export default function DriversPage() {
   return (
     <>
-      <div style={{ marginBottom: 22 }}>
-        <div
-          style={{
-            fontFamily: BC,
-            fontWeight: 900,
-            fontSize: 28,
-            letterSpacing: "0.02em",
-            lineHeight: 1,
-          }}
-        >
-          DRIVERS CHAMPIONSHIP
-        </div>
-        <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
-          {CURRENT_YEAR} Season · Full driver stats and standings
-        </div>
-      </div>
+      <PageHeader
+        title="Drivers Championship"
+        subtitle={`${CURRENT_YEAR} Season · Full driver stats and standings`}
+      />
 
       <Suspense
         fallback={
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          // Mirror the profile-card grid so content doesn't jump on load.
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 12,
+            }}
+          >
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                style={{ height: 64, borderRadius: 10, background: "var(--color-f1-dark)" }}
+                className="h-72 rounded-xl bg-f1-card animate-pulse"
               />
             ))}
           </div>

@@ -32,6 +32,11 @@ export default function AppShell({
 
   return (
     <div style={{ minHeight: "100vh" }}>
+      {/* Skip link — first focusable element for keyboard / screen-reader users */}
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+
       {/* Mobile top bar */}
       <div className="sticky top-0 z-[120] flex items-center gap-3 border-b border-f1-border bg-f1-black/90 px-4 py-2.5 acrylic md:hidden">
         <button
@@ -76,8 +81,14 @@ export default function AppShell({
         hasLiveSession={hasLiveSession}
       />
 
-      <main className="min-w-0 px-4 pb-20 pt-4 md:ml-56 md:px-6 md:pb-12 md:pt-6">
-        {children}
+      {/* `md:ml-56` (14rem = 224px) offsets the fixed sidebar — matches
+          --sidebar-w. The inner wrapper caps content width and centres it so
+          1440px+ and large Electron windows don't stretch edge-to-edge. */}
+      <main
+        id="main-content"
+        className="min-w-0 px-4 pb-20 pt-4 md:ml-56 md:px-6 md:pb-12 md:pt-6"
+      >
+        <div className="mx-auto w-full max-w-[var(--content-max)]">{children}</div>
       </main>
 
       <BottomTabBar hasLiveSession={hasLiveSession} />

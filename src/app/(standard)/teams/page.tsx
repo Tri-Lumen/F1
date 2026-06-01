@@ -171,7 +171,7 @@ async function TeamsContent() {
                 </div>
 
                 {/* Stats Row */}
-                <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-8">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
                   <div className="rounded-lg bg-f1-dark p-2 text-center">
                     <p className="text-xs text-f1-text-muted">WINS</p>
                     <p className="text-lg font-black">{s.wins}</p>
