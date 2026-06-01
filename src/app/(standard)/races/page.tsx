@@ -17,6 +17,10 @@ export const metadata: Metadata = {
 import RaceCard from "@/components/RaceCard";
 import StudioRaceCard from "@/components/StudioRaceCard";
 import type { StudioRaceCardData } from "@/components/StudioRaceCard";
+import PageHeader from "@/components/PageHeader";
+import CardShell from "@/components/CardShell";
+import SectionHeading from "@/components/SectionHeading";
+import Grid from "@/components/Grid";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -49,26 +53,10 @@ async function RacesContent() {
     buildStudioRaceCardData(resultsByRound.get(race.round) ?? race),
   );
 
-  const cardStyle = {
-    borderRadius: 12,
-    border: "1px solid var(--color-f1-border)",
-    background: "var(--color-f1-dark)",
-  };
-
-  const sectionLabel = {
-    fontFamily: BC,
-    fontWeight: 800,
-    fontSize: 10,
-    letterSpacing: "0.1em",
-    color: "var(--color-f1-text-muted)",
-    textTransform: "uppercase" as const,
-    marginBottom: 12,
-  };
-
   return (
     <>
       {/* Season Progress Bar */}
-      <div style={{ ...cardStyle, padding: "14px 18px", marginBottom: 22 }}>
+      <CardShell className="mb-[22px] px-[18px] py-3.5">
         <div
           style={{
             display: "flex",
@@ -102,47 +90,35 @@ async function RacesContent() {
             }}
           />
         </div>
-      </div>
+      </CardShell>
 
       {/* Upcoming Races */}
       {upcoming.length > 0 && (
         <div style={{ marginBottom: 28 }}>
-          <div style={sectionLabel}>
-            Upcoming Races{" "}
-            <span style={{ color: "var(--color-f1-text-muted)" }}>({upcoming.length} remaining)</span>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 12,
-            }}
-          >
+          <SectionHeading
+            variant="label"
+            title={`Upcoming Races (${upcoming.length} remaining)`}
+          />
+          <Grid minColWidth={280} gap={12}>
             {upcoming.map((race) => (
               <RaceCard key={race.round} race={race} showSchedule />
             ))}
-          </div>
+          </Grid>
         </div>
       )}
 
       {/* Completed Races */}
       {completedCards.length > 0 && (
         <div>
-          <div style={sectionLabel}>
-            Completed Races{" "}
-            <span style={{ color: "var(--color-f1-text-muted)" }}>({completedCards.length} completed)</span>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 12,
-            }}
-          >
+          <SectionHeading
+            variant="label"
+            title={`Completed Races (${completedCards.length} completed)`}
+          />
+          <Grid minColWidth={280} gap={12}>
             {completedCards.map((r, i) => (
               <StudioRaceCard key={r.round} race={r} delay={i * 40} />
             ))}
-          </div>
+          </Grid>
         </div>
       )}
     </>
@@ -152,39 +128,18 @@ async function RacesContent() {
 export default function RacesPage() {
   return (
     <>
-      <div style={{ marginBottom: 22 }}>
-        <div
-          style={{
-            fontFamily: BC,
-            fontWeight: 900,
-            fontSize: 28,
-            letterSpacing: "0.02em",
-            lineHeight: 1,
-          }}
-        >
-          RACE CALENDAR
-        </div>
-        <div style={{ fontFamily: DM, fontSize: 12, color: "var(--color-f1-text-muted)", marginTop: 4 }}>
-          {CURRENT_YEAR} Season · Full schedule with results
-        </div>
-      </div>
+      <PageHeader
+        title="Race Calendar"
+        subtitle={`${CURRENT_YEAR} Season · Full schedule with results`}
+      />
 
       <Suspense
         fallback={
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: 12,
-            }}
-          >
+          <Grid minColWidth={280} gap={12}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                style={{ height: 160, borderRadius: 10, background: "var(--color-f1-dark)" }}
-              />
+              <div key={i} className="h-40 rounded-xl bg-f1-card animate-pulse" />
             ))}
-          </div>
+          </Grid>
         }
       >
         <RacesContent />

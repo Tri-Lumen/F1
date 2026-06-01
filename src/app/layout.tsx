@@ -39,8 +39,10 @@ export default function RootLayout({
                   var gi = localStorage.getItem('f1-glow-intensity');
 
                   if (m === 'light' || m === 'dark') el.setAttribute('data-mode', m);
+                  else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) el.setAttribute('data-mode', 'light');
                   if (r === 'sharp' || r === 'default' || r === 'rounded') el.setAttribute('data-radius', r);
                   if (rm === 'true') el.setAttribute('data-reduce-motion', 'true');
+                  else if (rm === null && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) el.setAttribute('data-reduce-motion', 'true');
                   if (gi) {
                     var gp = parseInt(gi, 10);
                     var g = isFinite(gp) ? Math.min(100, Math.max(0, gp)) : 50;

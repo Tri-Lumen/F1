@@ -15,7 +15,6 @@ import {
 } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
 import { buildStudioRaceCardData } from "@/lib/raceCards";
-import SidebarNav from "@/components/SidebarNav";
 import LeaderHero from "@/components/LeaderHero";
 import ChampionshipBar from "@/components/ChampionshipBar";
 import StudioDriverRow from "@/components/StudioDriverRow";
@@ -24,6 +23,10 @@ import StudioRaceCard from "@/components/StudioRaceCard";
 import type { StudioRaceCardData } from "@/components/StudioRaceCard";
 import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
+import PageHeader from "@/components/PageHeader";
+import CardShell from "@/components/CardShell";
+import SectionHeading from "@/components/SectionHeading";
+import EmptyState from "@/components/EmptyState";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -85,14 +88,15 @@ async function DashboardContent() {
 
   if (!leader || !second) {
     return (
-      <main style={{ marginLeft: 224, flex: 1, padding: "40px 28px", color: "#555", fontFamily: DM }}>
-        Season data not yet available. Check back soon.
-      </main>
+      <EmptyState
+        title="Season data not yet available"
+        hint="Standings will appear here once the season opens. Check back soon."
+      />
     );
   }
 
   return (
-    <main style={{ marginLeft: 224, flex: 1, padding: "24px 26px 48px", minWidth: 0 }}>
+    <>
       <Suspense fallback={null}>
         <LiveSessionBanner />
       </Suspense>
@@ -100,16 +104,10 @@ async function DashboardContent() {
       {/* Today's Sessions Widget */}
       {todaySessions.length > 0 && (
         <div
+          className="mb-4 flex flex-wrap items-center gap-3 rounded-xl px-[18px] py-3"
           style={{
-            borderRadius: 12,
             border: "1px solid color-mix(in srgb, var(--color-f1-accent) 30%, var(--color-f1-border))",
             background: "color-mix(in srgb, var(--color-f1-accent) 6%, var(--color-f1-dark))",
-            padding: "12px 18px",
-            marginBottom: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
           }}
         >
           <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 12, letterSpacing: "0.08em", color: "var(--color-f1-accent)", textTransform: "uppercase" }}>
@@ -147,69 +145,27 @@ async function DashboardContent() {
 
       {/* Championship stacked bar */}
       {constructorStandings.length > 0 && (
-        <div
-          style={{
-            borderRadius: 12,
-            border: "1px solid #1c1c1c",
-            background: "#131313",
-            padding: "14px 18px",
-            marginBottom: 18,
-          }}
-        >
+        <CardShell className="mb-[18px] px-[18px] py-3.5">
           <ChampionshipBar standings={constructorStandings} />
-        </div>
+        </CardShell>
       )}
 
-      {/* 3-column grid: standings (×2) + next race */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr 1fr",
-          gap: 16,
-          marginBottom: 18,
-        }}
-      >
-        {/* Driver standings — spans 2 cols */}
-        <div
-          style={{
-            gridColumn: "span 2",
-            borderRadius: 12,
-            border: "1px solid #1c1c1c",
-            background: "#131313",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "12px 14px",
-              borderBottom: "1px solid #1c1c1c",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: BC,
-                fontWeight: 800,
-                fontSize: 14,
-                letterSpacing: "0.04em",
-              }}
-            >
-              Driver Standings
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                color: "#3a3a3a",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                fontFamily: DM,
-              }}
-            >
-              pts · last 5 form
-            </span>
-          </div>
+      {/* standings (×2) + next race */}
+      <div className="mb-[18px] grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {/* Driver standings — spans 2 cols on large screens */}
+        <CardShell className="overflow-hidden lg:col-span-2">
+          <SectionHeading
+            variant="card"
+            title="Driver Standings"
+            action={
+              <span
+                className="text-[9px] uppercase tracking-[0.1em] text-f1-text-muted"
+                style={{ fontFamily: DM }}
+              >
+                pts · last 5 form
+              </span>
+            }
+          />
           {driverStandings.slice(0, 10).map((s, i) => (
             <StudioDriverRow
               key={s.Driver.driverId}
@@ -220,25 +176,13 @@ async function DashboardContent() {
               delay={i * 45 + 150}
             />
           ))}
-        </div>
+        </CardShell>
 
         {/* Next race card */}
         {nextRace ? (
           <StudioNextRaceCard race={nextRace} nextSessionDate={nextSessionISO} />
         ) : (
-          <div
-            style={{
-              borderRadius: 12,
-              border: "1px solid #1c1c1c",
-              background: "#131313",
-              padding: 18,
-              color: "#555",
-              fontFamily: DM,
-              fontSize: 12,
-            }}
-          >
-            No upcoming race scheduled.
-          </div>
+          <EmptyState title="No upcoming race scheduled" />
         )}
       </div>
 
@@ -257,18 +201,10 @@ async function DashboardContent() {
         const totalPts = p1Pts + p2Pts || 1;
         const p1Pct = Math.round((p1Pts / totalPts) * 100);
         return (
-          <div
-            style={{
-              borderRadius: 12,
-              border: "1px solid #1c1c1c",
-              background: "#131313",
-              padding: "14px 18px",
-              marginBottom: 18,
-            }}
-          >
+          <CardShell className="mb-[18px] px-[18px] py-3.5">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
               <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 13, letterSpacing: "0.04em" }}>Championship Battle</span>
-              <span style={{ fontFamily: DM, fontSize: 10, color: "#3a3a3a" }}>
+              <span style={{ fontFamily: DM, fontSize: 10, color: "var(--color-f1-text-muted)" }}>
                 {races.length - completedCount} races left · {totalRemaining} pts available
               </span>
             </div>
@@ -278,7 +214,7 @@ async function DashboardContent() {
                 <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 22, color: p1Color, marginLeft: 8 }}>{p1.points}</span>
               </div>
               <div style={{ textAlign: "center" }}>
-                <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 11, color: "#555" }}>GAP</span>
+                <span style={{ fontFamily: BC, fontWeight: 800, fontSize: 11, color: "var(--color-f1-text-muted)" }}>GAP</span>
                 <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 20, color: p1Color }}>–{gap.toFixed(0)}</div>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -287,46 +223,28 @@ async function DashboardContent() {
               </div>
             </div>
             {/* Battle bar */}
-            <div style={{ height: 6, borderRadius: 3, background: "#0e0e0e", overflow: "hidden", display: "flex" }}>
+            <div style={{ height: 6, borderRadius: 3, background: "var(--color-f1-black)", overflow: "hidden", display: "flex" }}>
               <div style={{ width: `${p1Pct}%`, background: p1Color, transition: "width 0.6s" }} />
               <div style={{ flex: 1, background: p2Color, opacity: 0.7 }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-              <span style={{ fontFamily: DM, fontSize: 9, color: "#444" }}>P1 · {p1Pct}%</span>
+              <span style={{ fontFamily: DM, fontSize: 9, color: "var(--color-f1-text-muted)" }}>P1 · {p1Pct}%</span>
               {gap <= totalRemaining && (
-                <span style={{ fontFamily: DM, fontSize: 9, color: "#444" }}>P2 can still catch</span>
+                <span style={{ fontFamily: DM, fontSize: 9, color: "var(--color-f1-text-muted)" }}>P2 can still catch</span>
               )}
               {gap > totalRemaining && (
                 <span style={{ fontFamily: DM, fontSize: 9, color: p1Color }}>Title mathematically close</span>
               )}
             </div>
-          </div>
+          </CardShell>
         );
       })()}
 
-      {/* 2-column: constructors + recent results */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      {/* constructors + recent results */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Constructor standings */}
-        <div
-          style={{
-            borderRadius: 12,
-            border: "1px solid #1c1c1c",
-            background: "#131313",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ padding: "12px 14px", borderBottom: "1px solid #1c1c1c" }}>
-            <span
-              style={{
-                fontFamily: BC,
-                fontWeight: 800,
-                fontSize: 14,
-                letterSpacing: "0.04em",
-              }}
-            >
-              Constructors
-            </span>
-          </div>
+        <CardShell className="overflow-hidden">
+          <SectionHeading variant="card" title="Constructors" />
           {constructorStandings.map((s, i) => (
             <StudioConstructorRow
               key={s.Constructor.constructorId}
@@ -335,57 +253,43 @@ async function DashboardContent() {
               delay={i * 50 + 200}
             />
           ))}
-        </div>
+        </CardShell>
 
         {/* Recent race results */}
         <div>
-          <div
-            style={{
-              fontFamily: BC,
-              fontWeight: 800,
-              fontSize: 14,
-              letterSpacing: "0.04em",
-              marginBottom: 11,
-            }}
-          >
-            Recent Results
-          </div>
+          <SectionHeading variant="label" title="Recent Results" />
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {recentRaces.map((r, i) => (
               <StudioRaceCard key={r.round} race={r} delay={i * 80 + 200} />
             ))}
             {recentRaces.length === 0 && (
-              <div style={{ color: "#555", fontFamily: DM, fontSize: 12, padding: "16px 0" }}>
-                No race results yet this season.
-              </div>
+              <EmptyState title="No race results yet this season" />
             )}
           </div>
         </div>
       </div>
-    </main>
+    </>
   );
 }
 
-export default async function Home() {
-  const driverStandings = await getDriverStandings();
-
+export default function Home() {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      <SidebarNav standings={driverStandings} />
+    <>
+      <PageHeader
+        title="Dashboard"
+        subtitle="2026 Season · championship standings, battles & recent results"
+      />
       <Suspense
         fallback={
-          <main
-            style={{ marginLeft: 224, flex: 1, padding: "24px 26px" }}
-            className="space-y-4"
-          >
+          <div className="space-y-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-20 rounded-xl bg-f1-card animate-pulse" />
             ))}
-          </main>
+          </div>
         }
       >
         <DashboardContent />
       </Suspense>
-    </div>
+    </>
   );
 }

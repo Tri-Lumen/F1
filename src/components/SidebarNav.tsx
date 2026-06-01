@@ -123,7 +123,7 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
     <aside
       className={`transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       style={{
-        width: 224,
+        width: "var(--sidebar-w)",
         height: "100vh",
         position: "fixed",
         left: 0,

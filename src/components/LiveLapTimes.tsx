@@ -79,16 +79,19 @@ export default function LiveLapTimes({
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
+          <caption className="sr-only">
+            Lap times by driver — last lap, best lap, sector times and speed trap
+          </caption>
           <thead>
             <tr className="border-b border-f1-border text-left text-xs uppercase tracking-wider text-f1-text-muted">
-              <th className="px-3 py-2 w-10">Pos</th>
-              <th className="px-3 py-2">Driver</th>
-              <th className="px-3 py-2 text-right">Last Lap</th>
-              <th className="px-3 py-2 text-right hidden sm:table-cell">Best</th>
-              <th className="px-3 py-2 text-right hidden md:table-cell">S1</th>
-              <th className="px-3 py-2 text-right hidden md:table-cell">S2</th>
-              <th className="px-3 py-2 text-right hidden md:table-cell">S3</th>
-              <th className="px-3 py-2 text-right hidden lg:table-cell">Speed Trap</th>
+              <th scope="col" className="px-3 py-2 w-10">Pos</th>
+              <th scope="col" className="px-3 py-2">Driver</th>
+              <th scope="col" className="px-3 py-2 text-right">Last Lap</th>
+              <th scope="col" className="px-3 py-2 text-right hidden sm:table-cell">Best</th>
+              <th scope="col" className="px-3 py-2 text-right hidden md:table-cell">S1</th>
+              <th scope="col" className="px-3 py-2 text-right hidden md:table-cell">S2</th>
+              <th scope="col" className="px-3 py-2 text-right hidden md:table-cell">S3</th>
+              <th scope="col" className="px-3 py-2 text-right hidden lg:table-cell">Speed Trap</th>
             </tr>
           </thead>
           <tbody>
