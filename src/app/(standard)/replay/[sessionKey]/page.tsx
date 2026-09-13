@@ -1,7 +1,7 @@
 export const revalidate = 86400;
 
 import type { Metadata } from "next";
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   getSessionByKey,
   getLiveDrivers,
@@ -14,9 +14,6 @@ import {
   getWeatherSeries,
 } from "@/lib/api";
 import ReplayClient from "./ReplayClient";
-
-const BC = "'Barlow Condensed', sans-serif";
-const DM = "'DM Sans', sans-serif";
 
 interface PageProps {
   params: Promise<{ sessionKey: string }>;
@@ -35,15 +32,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ReplayPage({ params }: PageProps) {
   const { sessionKey } = await params;
   const key = Number(sessionKey);
+  // A session key either resolves to a real OpenF1 session or it doesn't —
+  // unlike a race round, there's no "scheduled but hasn't happened yet"
+  // middle state, so both cases are genuine 404s.
   if (!Number.isFinite(key)) {
-    return (
-      <NotFoundBlock message={`"${sessionKey}" is not a valid session key.`} />
-    );
+    notFound();
   }
 
   const session = await getSessionByKey(key);
   if (!session) {
-    return <NotFoundBlock message={`Session ${key} was not found on OpenF1.`} />;
+    notFound();
   }
 
   // All data fetched once, in parallel. OpenF1 returns full history when
@@ -73,51 +71,5 @@ export default async function ReplayPage({ params }: PageProps) {
       laps={laps}
       weatherSeries={weatherSeries}
     />
-  );
-}
-
-function NotFoundBlock({ message }: { message: string }) {
-  return (
-    <div
-      style={{
-        borderRadius: 12,
-        border: "1px solid var(--color-f1-border)",
-        background: "var(--color-f1-dark)",
-        padding: 24,
-        textAlign: "center",
-      }}
-    >
-      <p
-        style={{
-          fontFamily: BC,
-          fontWeight: 800,
-          fontSize: 16,
-          letterSpacing: "0.02em",
-          marginBottom: 6,
-        }}
-      >
-        Replay unavailable
-      </p>
-      <p
-        style={{
-          fontFamily: DM,
-          fontSize: 12,
-          color: "var(--color-f1-text-muted)",
-          marginBottom: 14,
-        }}
-      >
-        {message}
-      </p>
-      <Link
-        href="/replay"
-        style={{
-          fontFamily: DM,
-          fontSize: 12,
-          color: "var(--color-f1-accent)",
-        }}
-      >
-        Back to replay index
-      </Link>
-    </div>
   );
 }

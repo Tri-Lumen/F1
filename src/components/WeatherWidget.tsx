@@ -1,4 +1,5 @@
 import type { WeatherData } from "@/lib/types";
+import EmptyState from "@/components/EmptyState";
 
 function windDirectionLabel(deg: number): string {
   const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -10,7 +11,7 @@ export default function WeatherWidget({
 }: {
   weather: WeatherData | null;
 }) {
-  if (!weather) return null;
+  if (!weather) return <EmptyState title="No weather data yet" />;
 
   const isRaining = weather.rainfall > 0;
 

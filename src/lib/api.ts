@@ -674,6 +674,17 @@ export function getCurrentYear(): string {
   return getCurrentSeason();
 }
 
+/**
+ * Max points a driver can score in one round: race win (25) + fastest lap
+ * (1), plus the sprint win (8) on a sprint weekend. Single source of truth
+ * for "championship still alive" math — previously computed two different,
+ * disagreeing ways on the home page (flat 26/round, ignoring sprints) and
+ * the drivers page (25 + sprint bonus, dropping the fastest-lap point).
+ */
+export function getMaxPointsForRound(hasSprint: boolean): number {
+  return hasSprint ? 34 : 26;
+}
+
 /** All sessions from the race schedule that start today (UTC date match). */
 export async function getTodaySessions(): Promise<ScheduledSession[]> {
   let races: Race[] = [];

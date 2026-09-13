@@ -123,7 +123,7 @@ async function HighlightsContent() {
           driverNationality: poleDriver.Driver.nationality,
           constructorId: cid,
           constructorName: poleDriver.Constructor.name,
-          detail: "Pole position",
+          detail: "Grid P1",
           isFirst: true,
         });
       }
@@ -187,7 +187,7 @@ async function HighlightsContent() {
   // Highlight type config
   const typeConfig = {
     win:          { emoji: "🏆", label: "Race Win",     color: "#FFD700" },
-    pole:         { emoji: "🎯", label: "Pole Position", color: "#A855F7" },
+    pole:         { emoji: "🎯", label: "Grid P1",       color: "#A855F7" },
     "fastest-lap":{ emoji: "⚡", label: "Fastest Lap",  color: "#8B5CF6" },
     dnf:          { emoji: "💥", label: "DNF",          color: "#EF4444" },
     milestone:    { emoji: "🌟", label: "Milestone",    color: "var(--color-f1-accent)" },
@@ -206,7 +206,7 @@ async function HighlightsContent() {
           <p style={{ fontFamily: BC, fontWeight: 900, fontSize: 36 }}>{uniqueWinners}</p>
         </div>
         <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">
-          <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Different Polesitters</p>
+          <p className="text-xs uppercase tracking-wider text-f1-text-muted font-bold mb-1">Different Grid P1s</p>
           <p style={{ fontFamily: BC, fontWeight: 900, fontSize: 36 }}>{uniquePolesitters}</p>
         </div>
         <div className="rounded-xl border border-f1-border bg-f1-card p-4 text-center">

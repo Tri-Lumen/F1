@@ -10,6 +10,7 @@ import {
   getNextScheduledSession,
   getTodaySessions,
   getRaceDate,
+  getMaxPointsForRound,
   getTeamColor,
   getCountryFlagByCountry,
 } from "@/lib/api";
@@ -195,7 +196,9 @@ async function DashboardContent() {
         const p1Pts = parseFloat(p1.points);
         const p2Pts = parseFloat(p2.points);
         const gap = p1Pts - p2Pts;
-        const totalRemaining = (races.length - completedCount) * 26;
+        const totalRemaining = races
+          .filter((r) => getRaceDate(r) > now)
+          .reduce((sum, r) => sum + getMaxPointsForRound(!!r.Sprint), 0);
         const p1Cid = getDriverConstructorId(p1.Driver.driverId, p1.Constructors[0]?.constructorId) ?? "";
         const p2Cid = getDriverConstructorId(p2.Driver.driverId, p2.Constructors[0]?.constructorId) ?? "";
         const p1Color = getTeamColor(p1Cid);

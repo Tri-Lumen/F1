@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { calcTimeLeft } from "@/lib/countdown";
 
 export interface NavSession {
   type: string;
@@ -31,18 +32,14 @@ export default function SessionPill({ session, isLive }: SessionPillProps) {
     const target = new Date(session.date);
 
     function tick() {
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
+      const { total, days, hours, minutes } = calcTimeLeft(target);
+      if (total <= 0) {
         setLabel("starting");
         return;
       }
-      const days = Math.floor(diff / 86400000);
-      const hours = Math.floor(diff / 3600000) % 24;
-      const mins = Math.floor(diff / 60000) % 60;
-
       if (days > 0) setLabel(`${session!.type} · ${days}d ${hours}h`);
-      else if (hours > 0) setLabel(`${session!.type} · ${hours}h ${mins}m`);
-      else setLabel(`${session!.type} · ${mins}m`);
+      else if (hours > 0) setLabel(`${session!.type} · ${hours}h ${minutes}m`);
+      else setLabel(`${session!.type} · ${minutes}m`);
     }
 
     tick();

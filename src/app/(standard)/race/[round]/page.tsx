@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import { Suspense } from "react";
 import Link from "next/link";
@@ -61,6 +61,11 @@ async function RaceContent({ round }: { round: string }) {
   const nextRound = roundNum < totalRounds ? roundNum + 1 : null;
 
   if (!race) {
+    // A round number outside the actual schedule (e.g. this season only has
+    // 24 rounds and someone requests round 27) genuinely doesn't exist —
+    // that's a real 404, distinct from a scheduled round that just hasn't
+    // been run yet (which legitimately has no results and isn't an error).
+    if (!schedule.some((r) => r.round === round)) notFound();
     return (
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
         <p className="text-f1-text-muted">
@@ -629,12 +634,25 @@ async function RaceContent({ round }: { round: string }) {
             <p className="text-xs text-f1-text-muted mt-0.5">Fastest lap comparison — ranked by lap time</p>
           </div>
           <div className="divide-y divide-f1-border">
-            {paceData.map((d, i) => {
-              const color = getTeamColor(d.constructorId);
-              const delta = d.lapMs - paceData[0].lapMs;
-              const deltaSec = (delta / 1000).toFixed(3);
-              const barWidth = i === 0 ? 100 : Math.max(20, 100 - (delta / paceData[paceData.length - 1].lapMs) * 100 * 2);
-              return (
+            {(() => {
+              // paceData is sorted ascending by lapMs (fastest first), so the
+              // spread between the fastest and slowest lap is the real
+              // denominator for bar width — not a driver's raw lap time,
+              // which is ~90,000ms and dwarfs the (much smaller) gap between
+              // drivers, flattening every bar to 95-100% regardless of delta.
+              const paceRange =
+                paceData.length > 1
+                  ? paceData[paceData.length - 1].lapMs - paceData[0].lapMs
+                  : 0;
+              return paceData.map((d, i) => {
+                const color = getTeamColor(d.constructorId);
+                const delta = d.lapMs - paceData[0].lapMs;
+                const deltaSec = (delta / 1000).toFixed(3);
+                const barWidth =
+                  i === 0 || paceRange === 0
+                    ? 100
+                    : Math.max(20, 100 - (delta / paceRange) * 80);
+                return (
                 <div key={d.driverId} className={`flex items-center gap-3 px-4 py-2.5 ${i === 0 ? "bg-purple-950/20" : ""}`}>
                   <span className="w-5 shrink-0 text-center text-xs font-bold text-f1-text-muted">{i + 1}</span>
                   <span className="h-4 w-1 rounded-full shrink-0" style={{ backgroundColor: color }} />
@@ -652,8 +670,9 @@ async function RaceContent({ round }: { round: string }) {
                     {i > 0 && <p className="text-[10px] text-f1-text-muted font-mono">+{deltaSec}</p>}
                   </div>
                 </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
       )}

@@ -112,6 +112,14 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
   const pathname = usePathname();
   const isMoreActive = MORE_LINKS.some((l) => pathname.startsWith(l.href));
   const [moreOpen, setMoreOpen] = useState(isMoreActive);
+
+  // Auto-expand when client-side navigation lands on a "More" route — the
+  // initial useState only captured this at first mount, so without this the
+  // section stays collapsed if you navigate straight to a More page from
+  // elsewhere in the app. Never auto-collapses, so a manual toggle sticks.
+  useEffect(() => {
+    if (isMoreActive) setMoreOpen(true);
+  }, [isMoreActive]);
   // Show the platform-correct search shortcut. Defaults to the Mac glyph on the
   // server render, then corrects after mount to avoid a hydration mismatch.
   const [isMac, setIsMac] = useState(true);

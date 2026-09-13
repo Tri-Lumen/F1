@@ -22,12 +22,17 @@ interface Props {
 export default function ConstructorPointsChart({
   completedRaces,
   constructorStandings,
-  topN = 10,
+  topN,
   getTeamColor,
 }: Props) {
   if (completedRaces.length === 0) return null;
 
-  const topTeams = constructorStandings.slice(0, topN);
+  // Unlike the driver standings (20+ entries), the constructor grid tops out
+  // around a dozen teams, so there's no clutter risk in showing all of them
+  // by default. Only truncate when a caller explicitly asks for a subset via
+  // `topN` — and reflect that truthfully in the subtitle below.
+  const isTruncated = topN != null && topN < constructorStandings.length;
+  const topTeams = topN != null ? constructorStandings.slice(0, topN) : constructorStandings;
 
   // Build cumulative points per constructor per race
   const cumulativePoints: Record<string, number[]> = {};
@@ -51,7 +56,9 @@ export default function ConstructorPointsChart({
   // Chart dimensions
   const W = 800;
   const H = 220;
-  const PAD = { top: 12, right: 16, bottom: 32, left: 48 };
+  // `right` is sized to comfortably fit the longest end-of-line label —
+  // full constructor names (e.g. "Mercedes", "Williams"), not just codes.
+  const PAD = { top: 12, right: 56, bottom: 32, left: 48 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
 
@@ -73,16 +80,29 @@ export default function ConstructorPointsChart({
 
   const xLabelEvery = numRaces <= 10 ? 1 : 5;
 
+  // Text alternative for screen readers, since the chart itself is a
+  // decorative SVG (aria-hidden below).
+  const chartSummary =
+    `Cumulative constructors' championship points after ${numRaces} race${numRaces === 1 ? "" : "s"}, ` +
+    `from highest to lowest: ` +
+    topTeams
+      .map((t) => `${t.Constructor.name} ${cumulativePoints[t.Constructor.constructorId]?.at(-1) ?? 0}`)
+      .join(", ") +
+    ".";
+
   return (
     <div className="rounded-xl border border-f1-border bg-f1-card overflow-hidden">
       <div className="border-b border-f1-border px-5 py-4">
         <h2 className="font-bold text-lg">Constructor Points Progression</h2>
         <p className="text-xs text-f1-text-muted mt-0.5">
-          Cumulative championship points — all {topTeams.length} constructors
+          Cumulative championship points —{" "}
+          {isTruncated ? `top ${topTeams.length}` : `all ${topTeams.length}`}{" "}
+          constructors
         </p>
       </div>
 
       <div className="p-4">
+        <p className="sr-only">{chartSummary}</p>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"

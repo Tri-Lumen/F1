@@ -67,9 +67,12 @@ async function PredictionsContent() {
       polePosition = quali?.find((q) => q.position === "1")?.Driver.driverId;
     }
     const raceDate = getRaceDate(race);
-    const qualiDate = race.Qualifying
-      ? new Date(`${race.Qualifying.date}T${(race.Qualifying.time ?? "00:00:00Z").endsWith("Z") ? race.Qualifying.time ?? "00:00:00Z" : `${race.Qualifying.time}Z`}`)
-      : raceDate;
+    let qualiDate = raceDate;
+    if (race.Qualifying) {
+      const qualiTime = race.Qualifying.time ?? "00:00:00Z";
+      const qualiTimeStr = qualiTime.endsWith("Z") ? qualiTime : `${qualiTime}Z`;
+      qualiDate = new Date(`${race.Qualifying.date}T${qualiTimeStr}`);
+    }
 
     return {
       round: race.round,

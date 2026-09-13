@@ -21,7 +21,7 @@ import RefreshButton from "@/components/RefreshButton";
 import PageHeader from "@/components/PageHeader";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
-import { getDriverNumber } from "@/lib/driverOverrides";
+import { getDriverNumber, getDriverConstructorId } from "@/lib/driverOverrides";
 import { getTeamLogoUrl } from "@/lib/profileImages";
 
 interface TeamStats {
@@ -53,7 +53,9 @@ function computeTeamStats(
 
   for (const race of allRaces) {
     const teamResults = (race.Results ?? []).filter(
-      (r) => r.Constructor.constructorId === constructorId
+      (r) =>
+        (getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ??
+          r.Constructor.constructorId) === constructorId
     );
     if (teamResults.length > 0) racesEntered++;
 
@@ -105,7 +107,7 @@ async function TeamsContent() {
   // Map drivers to teams
   const teamDrivers = new Map<string, typeof driverStandings>();
   for (const d of driverStandings) {
-    const teamId = d.Constructors[0]?.constructorId;
+    const teamId = getDriverConstructorId(d.Driver.driverId, d.Constructors[0]?.constructorId);
     if (teamId) {
       const existing = teamDrivers.get(teamId) ?? [];
       existing.push(d);
@@ -181,7 +183,7 @@ async function TeamsContent() {
                     <p className="text-lg font-black">{stats.podiums}</p>
                   </div>
                   <div className="rounded-lg bg-f1-dark p-2 text-center">
-                    <p className="text-xs text-f1-text-muted">POLES</p>
+                    <p className="text-xs text-f1-text-muted">GRID P1S</p>
                     <p className="text-lg font-black">{stats.poles}</p>
                   </div>
                   <div className="rounded-lg bg-f1-dark p-2 text-center">

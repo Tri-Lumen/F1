@@ -10,7 +10,10 @@ export default async function StandardLayout({
 }) {
   const [standings, latestSession] = await Promise.all([
     getDriverStandings(),
-    getLatestSession().catch(() => null),
+    getLatestSession().catch((err) => {
+      console.error("[layout] getLatestSession failed:", err);
+      return null;
+    }),
   ]);
   const hasLiveSession = latestSession ? isSessionLive(latestSession) : false;
 

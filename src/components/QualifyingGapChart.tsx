@@ -1,18 +1,6 @@
 import type { QualifyingResult } from "@/lib/types";
 import { getTeamColor } from "@/lib/api";
-
-/** Parse a lap time string ("1:23.456" or "83.456") into milliseconds. */
-function parseMs(t: string | undefined): number | null {
-  if (!t) return null;
-  const ci = t.indexOf(":");
-  if (ci !== -1) {
-    return (
-      parseInt(t.slice(0, ci)) * 60_000 +
-      parseFloat(t.slice(ci + 1)) * 1_000
-    );
-  }
-  return parseFloat(t) * 1_000;
-}
+import { parseLapTimeToMs as parseMs } from "@/lib/lapTime";
 
 export default function QualifyingGapChart({
   qualifying,
@@ -44,6 +32,15 @@ export default function QualifyingGapChart({
   const W = PL + BW + PR;
   const H = classified.length * ROW_H + 4;
 
+  // Text alternative for screen readers, since the chart itself is a
+  // decorative SVG (aria-hidden below).
+  const poleDriver = classified[0];
+  const backmarker = classified[classified.length - 1];
+  const chartSummary =
+    `Qualifying gap to pole for ${classified.length} drivers. ` +
+    `Pole: ${poleDriver.Driver.code} at ${(poleMs / 1000).toFixed(3)}s. ` +
+    `Largest gap: ${backmarker.Driver.code} at +${(maxGap / 1000).toFixed(3)}s.`;
+
   return (
     <div className="mb-6 rounded-xl border border-f1-border bg-f1-card overflow-hidden">
       <div className="border-b border-f1-border px-5 py-4">
@@ -53,6 +50,7 @@ export default function QualifyingGapChart({
         </p>
       </div>
       <div className="p-5 overflow-x-auto">
+        <p className="sr-only">{chartSummary}</p>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           aria-hidden="true"

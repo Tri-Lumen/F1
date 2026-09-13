@@ -6,10 +6,6 @@ import StudioCountdownTiles from "@/components/StudioCountdownTiles";
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
 
-function pad(n: number) {
-  return String(Math.max(0, n)).padStart(2, "0");
-}
-
 function getSessionLabel(key: string): string {
   const labels: Record<string, string> = {
     FirstPractice: "FP1",
@@ -23,14 +19,13 @@ function getSessionLabel(key: string): string {
   return labels[key] ?? key;
 }
 
-function formatSessionDay(dateStr: string): string {
-  const d = new Date(dateStr + "Z");
-  return d.toLocaleDateString("en-US", { weekday: "short" });
+/** `isoDate` must already be a fully-qualified ISO datetime (with Z/offset). */
+function formatSessionDay(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("en-US", { weekday: "short" });
 }
 
-function formatSessionTime(dateStr: string): string {
-  const d = new Date(dateStr + "Z");
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+function formatSessionTime(isoDate: string): string {
+  return new Date(isoDate).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 interface Props {
@@ -200,8 +195,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
                     letterSpacing: "0.04em",
                   }}
                 >
-                  {formatSessionDay(s.date + "T" + timeStr.replace("Z", ""))} ·{" "}
-                  {formatSessionTime(s.date + "T" + timeStr.replace("Z", ""))}
+                  {formatSessionDay(fullDate)} · {formatSessionTime(fullDate)}
                 </span>
               </div>
             );
