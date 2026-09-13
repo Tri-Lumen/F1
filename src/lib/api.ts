@@ -57,36 +57,55 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
-async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
-  try {
-    const fetchOptions = revalidate === false
-      ? { cache: 'no-store' as const, signal }
-      : { next: { revalidate }, signal };
-    const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error(`[API] fetchErgast failed for ${path}:`, err);
-    return null;
-  } finally {
-    clear();
+const ERGAST_MAX_RETRIES = 2;
+
+/**
+ * Shared Ergast fetch with retry + backoff on transient failures.
+ *
+ * A single-attempt fetch means a transient timeout/429/5xx silently resolves
+ * to `null`, which callers can't distinguish from "this driver/round
+ * genuinely has no data" (e.g. getDriverCareerWins reporting 0 wins) or "no
+ * more pages" (fetchAllRaceResults truncating the rest of a season). Retrying
+ * the transient cases with backoff — same approach as fetchOpenF1 below —
+ * makes a real 0/end-of-data result trustworthy instead of a network hiccup
+ * masquerading as one.
+ */
+async function fetchErgastJson<T>(
+  path: string,
+  buildOptions: (signal: AbortSignal) => RequestInit,
+): Promise<T | null> {
+  for (let attempt = 0; attempt <= ERGAST_MAX_RETRIES; attempt++) {
+    const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+    let retryable = false;
+    try {
+      const res = await fetch(`${ERGAST_BASE}${path}`, buildOptions(signal));
+      if (res.ok) return await res.json();
+      retryable = res.status === 429 || res.status >= 500;
+    } catch (err) {
+      retryable = true;
+      if (attempt === ERGAST_MAX_RETRIES) {
+        console.error(`[API] fetchErgast failed for ${path}:`, err);
+      }
+    } finally {
+      clear();
+    }
+    if (!retryable || attempt === ERGAST_MAX_RETRIES) return null;
+    await sleep(400 * 2 ** attempt); // 400ms, 800ms
   }
+  return null;
+}
+
+async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
+  return fetchErgastJson<T>(path, (signal) =>
+    revalidate === false
+      ? { cache: 'no-store' as const, signal }
+      : { next: { revalidate }, signal }
+  );
 }
 
 /** Historical data fetch — 24 h cache since completed seasons never change */
 async function fetchErgastArchive<T>(path: string): Promise<T | null> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 }, signal });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error(`[API] fetchErgastArchive failed for ${path}:`, err);
-    return null;
-  } finally {
-    clear();
-  }
+  return fetchErgastJson<T>(path, (signal) => ({ next: { revalidate: 86400 }, signal }));
 }
 
 /**
@@ -196,9 +215,13 @@ export async function getRaceResults(round: string): Promise<RaceResult[]> {
  * Once a race was more than 2 hours ago we can safely cache it for 24 h;
  * if it's still within the live window we flush every request.
  */
-function raceRevalidate(raceDateISO: string | undefined): number | false {
-  if (!raceDateISO) return false;
-  const raceEnd = new Date(raceDateISO).getTime() + 2 * 60 * 60 * 1000;
+function raceRevalidate(race: Race | undefined): number | false {
+  if (!race) return false;
+  // Reuses getRaceDate() rather than parsing race.time inline, so the same
+  // "assume UTC when the API omits the Z suffix" handling applies here as
+  // everywhere else this data is used — parsing it as local server time
+  // would shift raceEnd and could misclassify a still-live race as ended.
+  const raceEnd = getRaceDate(race).getTime() + 2 * 60 * 60 * 1000;
   return Date.now() > raceEnd ? 86400 : false;
 }
 
@@ -206,9 +229,7 @@ export async function getRaceWithResults(round: string): Promise<Race | null> {
   // First do a cheap schedule fetch (already cached at 5 min) to decide TTL
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
     `/${getCurrentSeason()}/${round}/results/?limit=30`,
     ttl,
@@ -220,9 +241,7 @@ export async function getQualifyingResults(round: string): Promise<QualifyingRes
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
   // Qualifying ends ~2 h before race day; use race date as conservative upper bound
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
     `/${getCurrentSeason()}/${round}/qualifying/?limit=30`,
     ttl,
@@ -260,9 +279,7 @@ export async function getAllSprintResults(): Promise<Race[]> {
 export async function getPitStops(round: string): Promise<PitStop[]> {
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
     `/${getCurrentSeason()}/${round}/pitstops/?limit=100`,
     ttl,
@@ -523,6 +540,33 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
   if (!upcoming.length) return null;
   upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
   return upcoming[0];
+}
+
+/**
+ * Returns every not-yet-started session (FP/Sprint/Qualifying/Race) belonging
+ * to the next upcoming race weekend — i.e. the same race as
+ * getNextScheduledSession(), but every remaining slot rather than just the
+ * soonest one. Used to back the "auto-subscribe to all weekend sessions"
+ * notification setting.
+ */
+export async function getUpcomingWeekendSessions(): Promise<ScheduledSession[]> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return [];
+  }
+
+  const now = new Date();
+  const upcoming: ScheduledSession[] = [];
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date > now) upcoming.push(toScheduledSession(type, race, date));
+  }
+  if (!upcoming.length) return [];
+
+  upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
+  const nextRound = upcoming[0].round;
+  return upcoming.filter((s) => s.round === nextRound);
 }
 
 /**

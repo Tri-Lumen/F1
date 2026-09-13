@@ -3,6 +3,7 @@ import type { Race } from "@/lib/types";
 import { getCountryFlagByCountry, getF1TVRaceUrl, getRaceDate, getTeamColor } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 import LocalRaceTime from "@/components/LocalRaceTime";
+import { LocalDate, LocalTime } from "@/components/LocalDateTime";
 
 export interface RaceResultSummary {
   winner?: { name: string; constructorId: string; time?: string };
@@ -34,12 +35,9 @@ function isRaceWeekend(race: Race): boolean {
   return now >= firstDay && now <= endWindow;
 }
 
-function formatSessionTime(dateStr: string, timeStr: string): string {
+function sessionIso(dateStr: string, timeStr: string): string {
   const ts = timeStr.endsWith("Z") ? timeStr : `${timeStr}Z`;
-  const d = new Date(`${dateStr}T${ts}`);
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) +
-    " " +
-    d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+  return `${dateStr}T${ts}`;
 }
 
 export default function RaceCard({ race, resultSummary, showSchedule }: { race: Race; resultSummary?: RaceResultSummary; showSchedule?: boolean }) {
@@ -161,7 +159,8 @@ export default function RaceCard({ race, resultSummary, showSchedule }: { race: 
                     {s.label}
                   </span>
                   <span className="text-f1-text-muted font-mono text-[11px]">
-                    {formatSessionTime(s.date, s.time)}
+                    <LocalDate iso={sessionIso(s.date, s.time)} />{" "}
+                    <LocalTime iso={sessionIso(s.date, s.time)} />
                   </span>
                 </div>
               ))}

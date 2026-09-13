@@ -71,6 +71,12 @@ async function fixRemoteForDocker(cwd: string): Promise<void> {
   }
 }
 
+// Guards against two overlapping POSTs interleaving their git pull / npm ci /
+// npm run build steps against the same working tree (e.g. `rm .next` from one
+// request racing `npm run build` from another). A single in-memory flag is
+// enough since this route only ever runs inside one container process.
+let updateInProgress = false;
+
 export async function POST(req: Request) {
   if (!isAuthorized(req)) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -91,6 +97,14 @@ export async function POST(req: Request) {
       { status: 409 }
     );
   }
+
+  if (updateInProgress) {
+    return NextResponse.json(
+      { success: false, error: "An update is already in progress on this server" },
+      { status: 409 },
+    );
+  }
+  updateInProgress = true;
 
   const cwd = process.cwd();
   const steps: { step: string; output: string }[] = [];
@@ -171,6 +185,12 @@ export async function POST(req: Request) {
       // back up with the new build, so exit once the response below has
       // had a moment to flush to the client.
       setTimeout(() => process.exit(0), 1000);
+      // Deliberately leave updateInProgress set: the process exits and Docker
+      // restarts it fresh (with the flag re-initialized to false), so there's
+      // no later request on *this* process to unblock — clearing it now would
+      // just reopen the race during the ~1s flush window before exit.
+    } else {
+      updateInProgress = false;
     }
 
     return NextResponse.json({
@@ -179,6 +199,7 @@ export async function POST(req: Request) {
       steps,
     });
   } catch (err: unknown) {
+    updateInProgress = false;
     const error = err as { message?: string; stdout?: string; stderr?: string };
     steps.push({
       step: "error",

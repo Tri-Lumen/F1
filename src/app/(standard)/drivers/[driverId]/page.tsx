@@ -178,7 +178,8 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
   const teammateH2H = (() => {
     const teammates = standings.filter(
       (s) =>
-        s.Constructors[0]?.constructorId === constructor?.constructorId &&
+        (getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? "") ===
+          constructorId &&
         s.Driver.driverId !== driverId
     );
     if (teammates.length === 0) return null;

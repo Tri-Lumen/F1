@@ -12,6 +12,7 @@ import {
   getCountryFlag,
   getCurrentYear,
 } from "@/lib/api";
+import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
 
 export const metadata: Metadata = {
@@ -71,7 +72,8 @@ async function StatsContent() {
     for (const r of results) {
       const id = r.Driver.driverId;
       const name = `${r.Driver.givenName} ${r.Driver.familyName}`;
-      const cid = r.Constructor.constructorId;
+      const cid = getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId;
+      const cname = getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name;
       const pos = parseInt(r.position);
       const grid = parseInt(r.grid);
       const pts = parseFloat(r.points);
@@ -93,7 +95,7 @@ async function StatsContent() {
 
       // DNFs per team
       if (isDnf) {
-        const t = teamDNFMap.get(cid) ?? { name: r.Constructor.name, constructorId: cid, dnfs: 0 };
+        const t = teamDNFMap.get(cid) ?? { name: cname, constructorId: cid, dnfs: 0 };
         teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
       }
 
@@ -119,7 +121,8 @@ async function StatsContent() {
     for (const r of results) {
       const id = r.Driver.driverId;
       const name = `${r.Driver.givenName} ${r.Driver.familyName}`;
-      const cid = r.Constructor.constructorId;
+      const cid = getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId;
+      const cname = getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name;
       const pos = parseInt(r.position);
       const grid = parseInt(r.grid);
       const pts = parseFloat(r.points);
@@ -136,7 +139,7 @@ async function StatsContent() {
 
       // DNFs from sprint
       if (isDnf) {
-        const t = teamDNFMap.get(cid) ?? { name: r.Constructor.name, constructorId: cid, dnfs: 0 };
+        const t = teamDNFMap.get(cid) ?? { name: cname, constructorId: cid, dnfs: 0 };
         teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
       }
 
@@ -170,8 +173,9 @@ async function StatsContent() {
   const driverNameMap = new Map<string, string>();
   for (const race of completedRaces) {
     for (const r of race.Results ?? []) {
-      driverTeamMap.set(r.Driver.driverId, r.Constructor.constructorId);
-      driverNameMap.set(r.Driver.driverId, r.Constructor.name);
+      const id = r.Driver.driverId;
+      driverTeamMap.set(id, getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId);
+      driverNameMap.set(id, getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name);
     }
   }
 
@@ -223,7 +227,7 @@ async function StatsContent() {
       if (isDnf) continue; // exclude DNFs from consistency
       const existing = consistencyMap.get(id) ?? {
         name: `${r.Driver.givenName} ${r.Driver.familyName}`,
-        constructorId: r.Constructor.constructorId,
+        constructorId: getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId,
         nationality: r.Driver.nationality,
         positions: [],
       };
@@ -255,7 +259,7 @@ async function StatsContent() {
       if (!driverInfoMap.has(r.Driver.driverId)) {
         driverInfoMap.set(r.Driver.driverId, {
           name: `${r.Driver.givenName} ${r.Driver.familyName}`,
-          constructorId: r.Constructor.constructorId,
+          constructorId: getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ?? r.Constructor.constructorId,
         });
       }
     }

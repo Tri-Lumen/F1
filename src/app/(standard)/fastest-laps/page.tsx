@@ -9,6 +9,7 @@ import {
   getCountryFlag,
   getCurrentYear,
 } from "@/lib/api";
+import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
 
 const BC = "'Barlow Condensed', sans-serif";
@@ -50,8 +51,8 @@ async function FastestLapsContent() {
       driverName: `${fl.Driver.givenName} ${fl.Driver.familyName}`,
       driverId: fl.Driver.driverId,
       nationality: fl.Driver.nationality,
-      team: fl.Constructor.name,
-      constructorId: fl.Constructor.constructorId,
+      team: getDriverConstructorName(fl.Driver.driverId, fl.Constructor.name) ?? fl.Constructor.name,
+      constructorId: getDriverConstructorId(fl.Driver.driverId, fl.Constructor.constructorId) ?? fl.Constructor.constructorId,
       lapTime: fl.FastestLap?.Time.time ?? "",
       lap: fl.FastestLap?.lap ?? "",
       avgSpeed: fl.FastestLap?.AverageSpeed?.speed

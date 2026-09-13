@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decodeEntities, stripHtml, parseItem } from "./route";
+import { decodeEntities, stripHtml, parseItem, isAllowedUrl } from "./route";
 
 describe("stripHtml", () => {
   it("unwraps a CDATA-wrapped title intact (regression)", () => {
@@ -53,5 +53,48 @@ describe("parseItem", () => {
 
   it("returns null when the item has no title or link", () => {
     expect(parseItem("<description>No title or link here</description>", "Test Feed", "test")).toBeNull();
+  });
+});
+
+describe("isAllowedUrl (SSRF guard for og:image fetches)", () => {
+  it("allows ordinary public HTTPS URLs", () => {
+    expect(isAllowedUrl("https://example.com/article")).toBe(true);
+  });
+
+  it("blocks non-HTTP(S) schemes", () => {
+    expect(isAllowedUrl("file:///etc/passwd")).toBe(false);
+    expect(isAllowedUrl("not a url")).toBe(false);
+  });
+
+  it("blocks localhost and dotted-quad loopback/private IPv4", () => {
+    expect(isAllowedUrl("http://localhost/")).toBe(false);
+    expect(isAllowedUrl("http://127.0.0.1/")).toBe(false);
+    expect(isAllowedUrl("http://10.0.0.5/")).toBe(false);
+    expect(isAllowedUrl("http://192.168.1.1/")).toBe(false);
+    expect(isAllowedUrl("http://169.254.169.254/")).toBe(false); // cloud metadata
+  });
+
+  it("blocks alternate IPv4 encodings the URL parser normalizes to a private address", () => {
+    expect(isAllowedUrl("http://127.1/")).toBe(false);
+    expect(isAllowedUrl("http://0177.0.0.1/")).toBe(false); // octal
+    expect(isAllowedUrl("http://2130706433/")).toBe(false); // decimal
+    expect(isAllowedUrl("http://127.0.0.1./")).toBe(false); // trailing-dot FQDN
+  });
+
+  it("blocks IPv6 loopback, link-local, and unique-local addresses", () => {
+    expect(isAllowedUrl("http://[::1]/")).toBe(false);
+    expect(isAllowedUrl("http://[fe80::1]/")).toBe(false);
+    expect(isAllowedUrl("http://[fc00::1]/")).toBe(false);
+    expect(isAllowedUrl("http://[fd12:3456::1]/")).toBe(false);
+  });
+
+  it("blocks IPv4-mapped / NAT64 IPv6 addresses embedding a private IPv4", () => {
+    expect(isAllowedUrl("http://[::ffff:127.0.0.1]/")).toBe(false);
+    expect(isAllowedUrl("http://[::ffff:169.254.169.254]/")).toBe(false);
+    expect(isAllowedUrl("http://[64:ff9b::127.0.0.1]/")).toBe(false);
+  });
+
+  it("allows a public IPv6 address", () => {
+    expect(isAllowedUrl("http://[2001:db8::1]/")).toBe(true);
   });
 });

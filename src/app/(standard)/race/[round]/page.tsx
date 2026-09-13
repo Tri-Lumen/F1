@@ -384,13 +384,33 @@ async function RaceContent({ round }: { round: string }) {
               const W = 560;
               const H = 200;
               const PAD = { left: 32, right: 32, top: 12, bottom: 12 };
-              const n = results.filter((r) => parseInt(r.grid) > 0).length;
+              const gridded = results.filter((r) => parseInt(r.grid) > 0);
+              const n = gridded.length;
               const xLeft = PAD.left;
               const xRight = W - PAD.right;
               const chartH = H - PAD.top - PAD.bottom;
 
-              const yForPos = (pos: number) =>
-                PAD.top + ((pos - 1) / Math.max(n - 1, 1)) * chartH;
+              // Plot by rank within this filtered set rather than the raw grid/
+              // finish numbers — pit-lane starters (grid=0) are excluded above,
+              // which can leave gaps in the remaining cars' actual position
+              // numbers (e.g. a pit-lane starter finishing P5 among 20 plotted
+              // cars can push the highest finish position to 22). Using the raw
+              // number as pos-1 / (n-1) would then plot past chartH and get
+              // clipped by this card's overflow-hidden. Ranking within the
+              // plotted set keeps every dot within [0, chartH] while still
+              // showing the real grid/finish numbers as text labels.
+              const gridRank = new Map(
+                [...gridded]
+                  .sort((a, b) => parseInt(a.grid) - parseInt(b.grid))
+                  .map((r, i) => [r.Driver.driverId, i + 1])
+              );
+              const finishRank = new Map(
+                [...gridded]
+                  .sort((a, b) => parseInt(a.position) - parseInt(b.position))
+                  .map((r, i) => [r.Driver.driverId, i + 1])
+              );
+              const yForRank = (rank: number) =>
+                PAD.top + ((rank - 1) / Math.max(n - 1, 1)) * chartH;
 
               return (
                 <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ maxHeight: 200 }}>
@@ -398,16 +418,15 @@ async function RaceContent({ round }: { round: string }) {
                   <text x={xLeft} y={H - 2} textAnchor="middle" fontSize={9} fill="currentColor" opacity={0.4}>GRID</text>
                   <text x={xRight} y={H - 2} textAnchor="middle" fontSize={9} fill="currentColor" opacity={0.4}>FINISH</text>
 
-                  {results
-                    .filter((r) => parseInt(r.grid) > 0)
+                  {gridded
                     .map((r) => {
                       const grid = parseInt(r.grid);
                       const finish = parseInt(r.position);
                       const color = getTeamColor(r.Constructor.constructorId);
                       const isDnf = r.status !== "Finished" && !r.status.startsWith("+");
                       const gained = grid - finish;
-                      const yStart = yForPos(grid);
-                      const yEnd = yForPos(finish);
+                      const yStart = yForRank(gridRank.get(r.Driver.driverId)!);
+                      const yEnd = yForRank(finishRank.get(r.Driver.driverId)!);
                       const lastName = r.Driver.familyName.slice(0, 3).toUpperCase();
 
                       return (

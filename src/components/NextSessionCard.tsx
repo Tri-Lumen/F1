@@ -2,6 +2,7 @@ import { getNextScheduledSession, getCountryFlagByCountry } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 import CountdownTimer from "@/components/CountdownTimer";
 import NotifyButton from "@/components/NotifyButton";
+import { LocalDate, LocalTime } from "@/components/LocalDateTime";
 
 export default async function NextSessionCard() {
   const session = await getNextScheduledSession();
@@ -9,15 +10,6 @@ export default async function NextSessionCard() {
 
   const flag = getCountryFlagByCountry(session.country);
   const dateStr = session.date.toISOString();
-
-  const sessionDate = session.date.toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZoneName: "short",
-  });
 
   const isRace = session.type === "Race";
 
@@ -63,7 +55,7 @@ export default async function NextSessionCard() {
               {session.locality}, {session.country}
             </p>
             <p className="text-xs text-f1-text-muted mt-1.5 font-mono">
-              {sessionDate}
+              <LocalDate iso={dateStr} /> &middot; <LocalTime iso={dateStr} withZone />
             </p>
           </div>
 

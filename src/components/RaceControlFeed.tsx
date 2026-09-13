@@ -1,4 +1,5 @@
 import type { RaceControlMessage } from "@/lib/types";
+import { LocalClockTime } from "@/components/LocalDateTime";
 
 const FLAG_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   GREEN:  { bg: "bg-green-500/20", text: "text-green-400", label: "GREEN" },
@@ -49,11 +50,6 @@ export default function RaceControlFeed({
         {recent.map((msg) => {
           const flagStyle = msg.flag ? FLAG_STYLES[msg.flag] ?? null : null;
           const icon = CATEGORY_ICONS[msg.category] ?? "ℹ️";
-          const time = new Date(msg.date).toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
           // Key on message content (not array index) so new messages don't
           // reshuffle the keys of existing rows and drop CSS transitions.
           const rowKey = `${msg.date}|${msg.category}|${msg.flag ?? ""}|${msg.message}`;
@@ -68,7 +64,7 @@ export default function RaceControlFeed({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[10px] font-mono text-f1-text-muted">
-                      {time}
+                      <LocalClockTime iso={msg.date} />
                     </span>
                     {msg.lap_number && (
                       <span className="text-[10px] text-f1-text-muted">

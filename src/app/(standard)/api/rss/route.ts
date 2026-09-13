@@ -12,8 +12,66 @@ const MAX_ITEMS_PER_FEED = 200;
  * fetch an arbitrary attacker-chosen address. */
 const FEED_URL_BY_ID = new Map(DEFAULT_RSS_FEEDS.map((f) => [f.id, f.url]));
 
+function isPrivateIpv4Octets(a: number, b: number): boolean {
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254) ||
+    a === 0
+  );
+}
+
+/**
+ * Expand a bracket-stripped, lowercase IPv6 literal (as `URL` normalizes it,
+ * e.g. "::ffff:a9fe:a9fe") into its 16 bytes, or null if it doesn't parse as
+ * exactly 8 groups (with at most one "::" compression).
+ */
+function parseIpv6Bytes(host: string): number[] | null {
+  const parts = host.split("::");
+  if (parts.length > 2) return null;
+  const head = parts[0] ? parts[0].split(":") : [];
+  const tail = parts.length === 2 && parts[1] ? parts[1].split(":") : [];
+  const missing = 8 - (head.length + tail.length);
+  if (parts.length === 1 && head.length !== 8) return null;
+  if (parts.length === 2 && missing < 0) return null;
+  const groups = [...head, ...Array(parts.length === 2 ? missing : 0).fill("0"), ...tail];
+  if (groups.length !== 8) return null;
+  const bytes: number[] = [];
+  for (const g of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
+    const v = parseInt(g, 16);
+    bytes.push((v >> 8) & 0xff, v & 0xff);
+  }
+  return bytes;
+}
+
+/** True if a normalized (bracket-stripped) IPv6 literal falls in a
+ * loopback/link-local/unique-local range, or embeds a private IPv4 address
+ * (IPv4-mapped `::ffff:a.b.c.d`, the `64:ff9b::/96` NAT64 prefix, or the
+ * deprecated IPv4-compatible `::a.b.c.d` form). */
+function isPrivateIpv6(inner: string): boolean {
+  if (inner === "::1" || inner === "::") return true;
+  const bytes = parseIpv6Bytes(inner);
+  if (!bytes) return false;
+  const first = bytes[0];
+  if (first === 0xfe && (bytes[1] & 0xc0) === 0x80) return true; // fe80::/10 link-local
+  if (first === 0xfc || first === 0xfd) return true; // fc00::/7 unique-local
+  const isV4Mapped = bytes.slice(0, 10).every((b) => b === 0) && bytes[10] === 0xff && bytes[11] === 0xff;
+  const isNat64 =
+    bytes[0] === 0x00 && bytes[1] === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b &&
+    bytes.slice(4, 12).every((b) => b === 0);
+  const isV4Compatible =
+    bytes.slice(0, 12).every((b) => b === 0) && bytes.slice(12).some((b) => b !== 0);
+  if (isV4Mapped || isNat64 || isV4Compatible) {
+    return isPrivateIpv4Octets(bytes[12], bytes[13]);
+  }
+  return false;
+}
+
 /** Block requests to private/internal IP ranges and non-HTTP(S) schemes. */
-function isAllowedUrl(raw: string): boolean {
+export function isAllowedUrl(raw: string): boolean {
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -21,32 +79,28 @@ function isAllowedUrl(raw: string): boolean {
     return false;
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+  // `URL` already normalizes alternate IP encodings (decimal/octal/hex
+  // octets, short forms like "127.1", a trailing-dot FQDN) to a canonical
+  // form before `hostname` is read here, so the checks below see that
+  // canonical value rather than the attacker-supplied spelling.
   const host = parsed.hostname;
-  // Block loopback, link-local, and private ranges
   if (
     host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "[::1]" ||
     host === "0.0.0.0" ||
     host.endsWith(".local") ||
     host === "metadata.google.internal"
   ) {
     return false;
   }
+  if (host.startsWith("[") && host.endsWith("]")) {
+    if (isPrivateIpv6(host.slice(1, -1))) return false;
+    return true;
+  }
   // Block private IPv4 ranges
   const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
   if (ipv4) {
     const [, a, b] = ipv4.map(Number);
-    if (
-      a === 10 ||
-      a === 127 ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      (a === 169 && b === 254) ||
-      a === 0
-    ) {
-      return false;
-    }
+    if (isPrivateIpv4Octets(a, b)) return false;
   }
   return true;
 }
