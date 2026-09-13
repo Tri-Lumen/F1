@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
+import ChampionshipEvolutionChart from "@/components/ChampionshipEvolutionChart";
 
 export const metadata: Metadata = {
   title: "Season Stats — F1 2026",
@@ -632,142 +633,12 @@ async function StatsContent() {
         </div>
       )}
 
-      {/* Championship Points Evolution */}
+      {/* Championship Points Evolution (absolute points, or gap to leader — formerly the standalone /gap page) */}
       {top8Evolution.length > 0 && numRounds > 1 && (
-        <div id="evolution" className="rounded-xl border border-[#1c1c1c] bg-[#131313] overflow-hidden scroll-mt-16">
-          <div className="border-b border-[#1c1c1c] p-4">
-            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Championship Evolution</h2>
-            <p className="text-xs text-f1-text-muted mt-0.5">
-              Cumulative points for top drivers after each round
-            </p>
-          </div>
-          <div className="p-4">
-            {/* SVG sparkline chart */}
-            {(() => {
-              const W = 800;
-              const H = 220;
-              const PAD = { top: 16, right: 24, bottom: 32, left: 48 };
-              const chartW = W - PAD.left - PAD.right;
-              const chartH = H - PAD.top - PAD.bottom;
-              const maxPts = Math.max(...top8Evolution.map((d) => d.points.at(-1) ?? 0));
-
-              const xScale = (i: number) =>
-                PAD.left + (i / Math.max(numRounds - 1, 1)) * chartW;
-              const yScale = (pts: number) =>
-                PAD.top + chartH - (pts / (maxPts || 1)) * chartH;
-
-              return (
-                <svg
-                  viewBox={`0 0 ${W} ${H}`}
-                  className="w-full"
-                  style={{ maxHeight: 240 }}
-                >
-                  {/* Grid lines */}
-                  {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-                    const y = PAD.top + chartH * (1 - frac);
-                    const pts = Math.round(maxPts * frac);
-                    return (
-                      <g key={frac}>
-                        <line
-                          x1={PAD.left}
-                          x2={W - PAD.right}
-                          y1={y}
-                          y2={y}
-                          stroke="currentColor"
-                          strokeOpacity={0.08}
-                          strokeWidth={1}
-                        />
-                        <text
-                          x={PAD.left - 6}
-                          y={y + 4}
-                          textAnchor="end"
-                          fontSize={10}
-                          fill="currentColor"
-                          opacity={0.4}
-                        >
-                          {pts}
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Round labels on x-axis */}
-                  {completedRaces.map((race, i) => {
-                    if (i % Math.max(1, Math.floor(numRounds / 8)) !== 0) return null;
-                    return (
-                      <text
-                        key={race.round}
-                        x={xScale(i)}
-                        y={H - 6}
-                        textAnchor="middle"
-                        fontSize={9}
-                        fill="currentColor"
-                        opacity={0.35}
-                      >
-                        R{race.round}
-                      </text>
-                    );
-                  })}
-
-                  {/* Lines per driver */}
-                  {top8Evolution.map((driver) => {
-                    const color = getTeamColor(driver.constructorId);
-                    const points = driver.points.map((pts, i) => ({
-                      x: xScale(i),
-                      y: yScale(pts),
-                    }));
-                    const d = points
-                      .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-                      .join(" ");
-                    const last = points.at(-1)!;
-                    const shortName = driver.name.split(" ").pop() ?? driver.name;
-
-                    return (
-                      <g key={driver.driverId}>
-                        <path
-                          d={d}
-                          fill="none"
-                          stroke={color}
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          opacity={0.85}
-                        />
-                        {/* Label at end of line */}
-                        <text
-                          x={last.x + 4}
-                          y={last.y + 4}
-                          fontSize={9}
-                          fill={color}
-                          fontWeight="bold"
-                        >
-                          {shortName}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              );
-            })()}
-
-            {/* Legend */}
-            <div className="mt-2 flex flex-wrap gap-3">
-              {top8Evolution.map((d) => {
-                const color = getTeamColor(d.constructorId);
-                const shortName = d.name.split(" ").pop() ?? d.name;
-                return (
-                  <div key={d.driverId} className="flex items-center gap-1.5">
-                    <span className="h-2 w-4 rounded-full inline-block" style={{ backgroundColor: color }} />
-                    <span className="text-xs text-f1-text-muted">{shortName}</span>
-                    <span className="text-xs font-bold" style={{ color }}>
-                      {d.points.at(-1)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <ChampionshipEvolutionChart
+          evolution={top8Evolution}
+          rounds={completedRaces.map((r) => ({ round: r.round, raceName: r.raceName }))}
+        />
       )}
     </div>
   );
