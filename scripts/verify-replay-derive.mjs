@@ -107,7 +107,7 @@ for (let i = 0; i < 5; i++) {
   }
 }
 
-// Check ANT gap = 0 (leader)
+// Check ANT gap is null (leader has no interval to anyone ahead)
 const antIv = intervals.get(12);
 if (antIv?.gap !== null && antIv?.gap !== 0) {
   pass = false;

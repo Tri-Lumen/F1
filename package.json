@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "test": "vitest run",
     "sync-portraits": "node scripts/sync-f1-portraits.mjs",
     "electron:dev": "next build && electron .",
     "electron:build": "next build && electron-builder",
@@ -26,20 +27,24 @@
   },
   "license": "ISC",
   "dependencies": {
+    "electron-updater": "^6.3.0"
+  },
+  "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.14",
-    "electron-updater": "^6.3.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
     "next": "^16.1.6",
     "postcss": "^8.5.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tailwindcss": "^4.1.18"
-  },
-  "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0",
-    "typescript": "5.9.3"
+    "tailwindcss": "^4.1.18",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.0"
   },
   "build": {
     "appId": "com.trilumen.deltadashboard",

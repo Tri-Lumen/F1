@@ -1,6 +1,6 @@
 'use strict';
 
-const { app, BrowserWindow, shell, dialog, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, dialog, Menu, ipcMain, session } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -135,6 +135,62 @@ const serverScript = path.join(serverRoot, 'server.js');
 let nextServer = null;
 let mainWindow = null;
 let serverPort = null;
+
+// ---------------------------------------------------------------------------
+// Origin check
+// ---------------------------------------------------------------------------
+
+// Exact-origin match against the local Next.js server, using proper URL
+// parsing rather than a string prefix — `url.startsWith(base)` would also
+// (incorrectly) accept a port whose digits merely prefix the real one, e.g.
+// matching both `http://127.0.0.1:3000` and `http://127.0.0.1:30001`.
+function isAppOrigin(url, port) {
+  try {
+    return new URL(url).origin === `http://127.0.0.1:${port}`;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Content Security Policy
+// ---------------------------------------------------------------------------
+
+let cspConfigured = false;
+
+// Minimal same-origin CSP for responses from the embedded Next.js server.
+// Low risk in practice (everything is already same-origin loopback content,
+// with no direct external fetch/WebSocket calls from the renderer — external
+// data goes through this app's own API routes), but cheap defense-in-depth
+// against any injected content trying to load or exfiltrate to a remote origin.
+function configureCsp() {
+  if (cspConfigured) return;
+  cspConfigured = true;
+  session.defaultSession.webRequest.onHeadersReceived(
+    { urls: ['http://127.0.0.1:*/*'] },
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline'; " +
+              "style-src 'self' 'unsafe-inline'; " +
+              // next/image proxies remote images through this server's own
+              // /_next/image route, but img-src also allows the configured
+              // remote hosts directly in case any <img> ever bypasses it.
+              "img-src 'self' data: https://media.formula1.com https://*.formula1.com; " +
+              "font-src 'self' data:; " +
+              "connect-src 'self'; " +
+              "object-src 'none'; " +
+              "base-uri 'none'; " +
+              "frame-ancestors 'none'",
+          ],
+        },
+      });
+    }
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Port finder
@@ -388,6 +444,8 @@ function buildMenu(port) {
 // ---------------------------------------------------------------------------
 
 async function createWindow() {
+  configureCsp();
+
   try {
     serverPort = await findFreePort(3000);
   } catch (err) {
@@ -465,7 +523,7 @@ async function createWindow() {
 
   // Open external URLs (F1TV, etc.) in the system browser.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith(`http://127.0.0.1:${serverPort}`)) {
+    if (!isAppOrigin(url, serverPort)) {
       shell.openExternal(url);
       return { action: 'deny' };
     }
@@ -473,7 +531,7 @@ async function createWindow() {
   });
 
   mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith(`http://127.0.0.1:${serverPort}`)) {
+    if (!isAppOrigin(url, serverPort)) {
       event.preventDefault();
       shell.openExternal(url);
     }

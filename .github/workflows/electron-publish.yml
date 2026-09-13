@@ -1,13 +1,14 @@
-name: Build and publish Electron app
+name: Build and publish Electron app (branch smoke build)
 
-# Trigger on version tags (e.g. v1.2.3) or manual dispatch.
-# Always use lowercase v prefix (e.g. v1.2.3) to ensure electron-updater can parse the tag.
+# Runs the 3-platform Electron build matrix as a smoke test on ordinary
+# pushes to main, or on manual dispatch. Tagged releases are handled by the
+# separate electron-release.yml trigger — see electron-build.yml (the
+# reusable workflow both call) for why the two triggers are kept apart
+# instead of combining `tags` and `paths-ignore` in one `push:` block.
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v[0-9]*'
     # Skip the 3-platform matrix smoke build on main pushes that don't
     # affect the Electron output (docs, Docker-only, design preview, etc.).
     paths-ignore:
@@ -22,137 +23,15 @@ on:
       - 'LICENSE'
   workflow_dispatch:
 
-permissions:
-  contents: write   # required to create releases and upload assets
-
-# Cancel superseded smoke builds on main; never cancel a tag build mid-flight.
+# Cancel superseded smoke builds on main — this trigger never handles tag
+# pushes, so it's always safe to cancel an in-flight run here.
 concurrency:
   group: electron-publish-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            platform: win
-            artifact: dist-electron/*.exe
-          - os: macos-latest
-            platform: mac
-            artifact: dist-electron/*.dmg
-          - os: ubuntu-22.04
-            platform: linux
-            artifact: dist-electron/*.AppImage
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      # The git tag is the source of truth for the released version. Inject
-      # it into package.json so electron-builder embeds the correct version
-      # in the binary and latest.yml — otherwise electron-updater compares
-      # the stale package.json version to itself and silently reports
-      # "up to date", swallowing the release.
-      - name: Inject tag version into package.json
-        if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
-        run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          npm version "$TAG" --no-git-tag-version --allow-same-version
-
-      # Linux: install system libraries required by Electron / AppImage builder
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libnotify-dev \
-            libnss3 \
-            libxss1 \
-            libxtst6 \
-            xauth \
-            xvfb \
-            libgbm-dev \
-            libfuse2 \
-            fakeroot
-
-      - name: Build Next.js (standalone output)
-        run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
-
-      # Configure macOS code signing only when a certificate secret is present.
-      # Passing CSC_LINK as an empty string causes electron-builder to resolve
-      # it to the working directory path, producing a "not a file" error.
-      - name: Configure macOS code signing
-        if: runner.os == 'macOS'
-        run: |
-          if [ -n "$MAC_CERT" ]; then
-            echo "CSC_LINK=$MAC_CERT" >> $GITHUB_ENV
-            echo "CSC_KEY_PASSWORD=$MAC_CERT_PWD" >> $GITHUB_ENV
-          else
-            echo "CSC_IDENTITY_AUTO_DISCOVERY=false" >> $GITHUB_ENV
-          fi
-        env:
-          MAC_CERT: ${{ secrets.MAC_CERTIFICATE }}
-          MAC_CERT_PWD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
-
-      - name: Build Electron app (${{ matrix.platform }})
-        run: npx electron-builder --${{ matrix.platform }} --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS signing vars are set conditionally by the step above.
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # ----------------------------------------------------------------
-          # Windows code signing (optional; unsigned builds trigger SmartScreen)
-          # ----------------------------------------------------------------
-          WIN_CSC_LINK: ${{ secrets.WIN_CERTIFICATE }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: delta-dashboard-${{ matrix.platform }}
-          path: ${{ matrix.artifact }}
-          if-no-files-found: error
-
-      # Explicitly upload all release-worthy assets to the GitHub release.
-      # electron-builder --publish should handle this, but if it silently
-      # fails (e.g. token scope, race condition) this step ensures the
-      # installers and auto-update manifests are present on the release page.
-      - name: Upload assets to GitHub release
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          shopt -s nullglob
-          files=(dist-electron/*.exe dist-electron/*.dmg dist-electron/*.zip dist-electron/*.AppImage dist-electron/*.deb dist-electron/*.yml)
-          shopt -u nullglob
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "::warning::No release assets found in dist-electron/"
-            exit 1
-          fi
-          for f in "${files[@]}"; do
-            # Skip blockmap files — they are not needed on the release page
-            [[ "$f" == *.blockmap ]] && continue
-            echo "Uploading $f to release $TAG ..."
-            gh release upload "$TAG" "$f" --clobber
-          done
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/electron-build.yml
+    permissions:
+      contents: write
+    secrets: inherit

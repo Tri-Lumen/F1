@@ -52,7 +52,7 @@ function isAllowedUrl(raw: string): boolean {
 }
 
 /** Unescape HTML entities commonly found in RSS feeds */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -80,7 +80,7 @@ function decodeEntities(text: string): string {
 }
 
 /** Strip HTML tags from a string */
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   // Unwrap CDATA sections before stripping tags — the generic tag regex
   // below has no CDATA awareness, so `<![CDATA[text]]>` (the standard
   // wrapping for <title>/<description> in most RSS feeds) would otherwise
@@ -236,7 +236,7 @@ async function backfillOgImages(articles: RssArticle[], concurrency = 8): Promis
 }
 
 /** Parse a single RSS/Atom item/entry element */
-function parseItem(itemXml: string, sourceName: string, sourceId: string): RssArticle | null {
+export function parseItem(itemXml: string, sourceName: string, sourceId: string): RssArticle | null {
   const titleMatch = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/);
   const linkMatch =
     itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/) ||

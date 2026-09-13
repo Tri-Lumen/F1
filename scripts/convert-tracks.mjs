@@ -79,6 +79,11 @@ function scaleToViewBox(points, width, height, padding = 12) {
   const rangeX = maxX - minX;
   const rangeY = maxY - minY;
 
+  // Degenerate track data (all points share an X or Y coordinate) would
+  // otherwise divide by zero and produce Infinity/NaN coordinates below.
+  // Mirrors the guard in convert-geojson.py's scale_to_viewbox.
+  if (rangeX === 0 || rangeY === 0) return points;
+
   const scaleX = (width - 2 * padding) / rangeX;
   const scaleY = (height - 2 * padding) / rangeY;
   const scale = Math.min(scaleX, scaleY);
@@ -175,9 +180,6 @@ function convertTrack(csv, viewWidth = 200, viewHeight = 130) {
     sectors: buildSectorPaths(scaled),
   };
 }
-
-// Track CSV data embedded directly
-const trackCSVs = {};
 
 // Track files to load from disk (if available in data/ directory)
 const tracks = [

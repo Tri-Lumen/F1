@@ -1,5 +1,11 @@
 services:
   delta-dashboard:
+    # Tracks the rolling :latest tag by default. Every image is also published
+    # under a short git-sha tag (e.g. ghcr.io/tri-lumen/f1:sha-abc1234) — if a
+    # bad :latest build ships, roll back by pinning this line to a known-good
+    # sha tag from a prior successful run of .github/workflows/docker-publish.yml
+    # (visible in the Actions run summary or `docker manifest inspect`), then
+    # `docker compose up -d` to redeploy it.
     image: ghcr.io/tri-lumen/f1:latest
     container_name: delta-dashboard
     ports:

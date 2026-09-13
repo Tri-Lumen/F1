@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+# Quick local dev entry point: run from inside an already-cloned repo
+# checkout to start the Next.js dev server (npm run dev, no production
+# build). For a fresh curl|bash install into a standalone directory with a
+# production build, use install.sh instead.
+
 echo "================================"
 echo "  Delta Dashboard - 2026 Season"
 echo "================================"
