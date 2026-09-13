@@ -7,7 +7,7 @@ import {
   getDriverStandings,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
@@ -31,7 +31,7 @@ async function GapContent() {
   if (completedRaces.length === 0) {
     return (
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -285,7 +285,7 @@ export default function GapPage() {
             CHAMPIONSHIP GAP
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · Points deficit to the leader after each round
+            {getCurrentYear()} Season · Points deficit to the leader after each round
           </div>
         </div>
         <RefreshButton />

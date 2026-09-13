@@ -125,13 +125,22 @@ export async function POST(req: Request) {
       branch = "main";
       steps.push({ step: "init", output: "Initialized repository from remote" });
     }
+    // Compare HEAD before/after rather than matching git's (locale-dependent)
+    // "Already up to date" message, which only appears in English and would
+    // never match on a host with a different LANG/LC_ALL.
+    const beforeSha = (
+      await run(["git", "-c", `safe.directory=${cwd}`, "rev-parse", "HEAD"], cwd)
+    ).stdout.trim();
     const pull = await run(
       ["git", "-c", `safe.directory=${cwd}`, "pull", "--ff-only", "origin", branch],
       cwd
     );
     steps.push({ step: "git pull", output: pull.stdout.trim() || pull.stderr.trim() });
+    const afterSha = (
+      await run(["git", "-c", `safe.directory=${cwd}`, "rev-parse", "HEAD"], cwd)
+    ).stdout.trim();
 
-    const alreadyUpToDate = pull.stdout.includes("Already up to date");
+    const alreadyUpToDate = beforeSha === afterSha;
 
     if (!alreadyUpToDate) {
       // 2. Install any new/changed dependencies. Must include devDependencies

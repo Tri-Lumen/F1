@@ -15,7 +15,7 @@ import {
   getTeamColor,
   getCountryFlag,
   getRaceDate,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
@@ -205,7 +205,7 @@ async function DriversContent() {
           <SectionHeading variant="label" title="Championship Status" />
           {clinchInfo.clinched ? (
             <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "var(--color-f1-accent)" }}>
-              🏆 {clinchInfo.leaderName} has clinched the {CURRENT_YEAR} World Championship!
+              🏆 {clinchInfo.leaderName} has clinched the {getCurrentYear()} World Championship!
             </p>
           ) : (
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 24px" }}>
@@ -529,7 +529,7 @@ export default function DriversPage() {
     <>
       <PageHeader
         title="Drivers Championship"
-        subtitle={`${CURRENT_YEAR} Season · Full driver stats and standings`}
+        subtitle={`${getCurrentYear()} Season · Full driver stats and standings`}
       />
 
       <Suspense

@@ -17,7 +17,7 @@ import {
   getOpenF1SessionKeyForRace,
   getOpenF1PitStops,
   getLiveDrivers,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";

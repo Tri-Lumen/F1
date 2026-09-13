@@ -10,7 +10,7 @@ import {
   getPitStops,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
@@ -398,7 +398,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
       {/* Race-by-Race Table */}
       <div className="rounded-xl border border-f1-border bg-f1-card">
         <div className="border-b border-f1-border px-5 py-4">
-          <h2 className="font-bold text-lg">{CURRENT_YEAR} Race Results</h2>
+          <h2 className="font-bold text-lg">{getCurrentYear()} Race Results</h2>
         </div>
 
         {raceRows.length === 0 ? (

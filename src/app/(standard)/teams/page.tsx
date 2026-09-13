@@ -14,7 +14,7 @@ import {
   getAllSeasonResults,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
 import RefreshButton from "@/components/RefreshButton";
@@ -305,7 +305,7 @@ export default function TeamsPage() {
     <div>
       <PageHeader
         title="Constructors Championship"
-        subtitle={`${CURRENT_YEAR} Season · Full team stats and standings`}
+        subtitle={`${getCurrentYear()} Season · Full team stats and standings`}
         actions={<RefreshButton />}
       />
 

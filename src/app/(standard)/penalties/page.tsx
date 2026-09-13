@@ -8,7 +8,7 @@ import {
   getTeamColor,
   getCountryFlag,
   getCountryFlagByCountry,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
@@ -65,7 +65,7 @@ async function PenaltiesContent() {
   if (completedRaces.length === 0) {
     return (
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -300,7 +300,7 @@ export default function PenaltiesPage() {
             INCIDENTS & DNFs
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · Retirements, collisions, and mechanical failures
+            {getCurrentYear()} Season · Retirements, collisions, and mechanical failures
           </div>
         </div>
         <RefreshButton />

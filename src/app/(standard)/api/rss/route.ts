@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { RssArticle } from "@/lib/types";
+import { DEFAULT_RSS_FEEDS } from "@/lib/rssFeeds";
 
 const FETCH_TIMEOUT_MS = 8_000;
+/** Cap on how many response bytes we'll read from any single feed. */
+const MAX_FEED_BYTES = 4 * 1024 * 1024; // 4 MB
+/** Cap on how many <item>/<entry> elements we'll parse out of one feed. */
+const MAX_ITEMS_PER_FEED = 200;
+/** Feed URLs are never taken from the client — only its known id is used to
+ * look up the real URL here, so a request can't be used to make this server
+ * fetch an arbitrary attacker-chosen address. */
+const FEED_URL_BY_ID = new Map(DEFAULT_RSS_FEEDS.map((f) => [f.id, f.url]));
 
 /** Block requests to private/internal IP ranges and non-HTTP(S) schemes. */
 function isAllowedUrl(raw: string): boolean {
@@ -180,8 +189,9 @@ async function fetchOgImage(articleUrl: string): Promise<string | undefined> {
     });
     if (!res.ok) return undefined;
     // Read just the <head> — og:image lives there and pulling the whole body
-    // wastes bandwidth on long-form articles.
-    const text = await res.text();
+    // wastes bandwidth on long-form articles. Bounded read also protects
+    // against a misbehaving/huge response before this slice ever applies.
+    const text = await readBoundedText(res, MAX_FEED_BYTES);
     const head = text.slice(0, 64_000);
 
     const patterns = [
@@ -271,7 +281,7 @@ function parseRssFeed(xml: string, sourceName: string, sourceId: string): RssArt
   // RSS 2.0 items
   const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
   let match;
-  while ((match = itemRegex.exec(xml)) !== null) {
+  while (articles.length < MAX_ITEMS_PER_FEED && (match = itemRegex.exec(xml)) !== null) {
     const article = parseItem(match[1], sourceName, sourceId);
     if (article) articles.push(article);
   }
@@ -279,13 +289,34 @@ function parseRssFeed(xml: string, sourceName: string, sourceId: string): RssArt
   // Atom entries (if no RSS items found)
   if (articles.length === 0) {
     const entryRegex = /<entry[\s>]([\s\S]*?)<\/entry>/gi;
-    while ((match = entryRegex.exec(xml)) !== null) {
+    while (articles.length < MAX_ITEMS_PER_FEED && (match = entryRegex.exec(xml)) !== null) {
       const article = parseItem(match[1], sourceName, sourceId);
       if (article) articles.push(article);
     }
   }
 
   return articles;
+}
+
+/** Read a response body as text, aborting once it exceeds `maxBytes` — a
+ * malicious or misbehaving feed shouldn't be able to make this endpoint
+ * buffer an unbounded response before any size check happens. */
+async function readBoundedText(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return res.text();
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      break;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks.map((c) => Buffer.from(c))).toString("utf-8");
 }
 
 export async function GET(request: NextRequest) {
@@ -296,7 +327,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ articles: [] });
   }
 
-  // Expect JSON array of { id, name, url }
+  // Expect JSON array of { id, name, url } — `url` is accepted for backward
+  // compatibility but ignored; only `id` is trusted, resolved against this
+  // server's own known feed list, so a request can never make this endpoint
+  // fetch an arbitrary client-chosen URL.
   let feedList: { id: string; name: string; url: string }[];
   try {
     const parsed = JSON.parse(feedUrls);
@@ -308,13 +342,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid feeds parameter" }, { status: 400 });
   }
 
+  // Cap fan-out regardless of what the client asks for.
+  feedList = feedList.slice(0, DEFAULT_RSS_FEEDS.length);
+
   const results = await Promise.allSettled(
     feedList.map(async (feed) => {
+      const url = FEED_URL_BY_ID.get(feed.id);
+      if (!url || !isAllowedUrl(url)) return [];
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-      if (!isAllowedUrl(feed.url)) return [];
       try {
-        const res = await fetch(feed.url, {
+        const res = await fetch(url, {
           signal: controller.signal,
           headers: {
             "User-Agent": "F1Dashboard/1.0",
@@ -323,7 +361,7 @@ export async function GET(request: NextRequest) {
           next: { revalidate: 300 }, // 5 min cache
         });
         if (!res.ok) return [];
-        const xml = await res.text();
+        const xml = await readBoundedText(res, MAX_FEED_BYTES);
         return parseRssFeed(xml, feed.name, feed.id);
       } catch {
         return [];

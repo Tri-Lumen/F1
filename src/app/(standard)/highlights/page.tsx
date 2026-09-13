@@ -9,7 +9,7 @@ import {
   getTeamColor,
   getCountryFlag,
   getCountryFlagByCountry,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
@@ -46,7 +46,7 @@ async function HighlightsContent() {
   if (completedRaces.length === 0) {
     return (
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -358,7 +358,7 @@ export default function HighlightsPage() {
             SEASON HIGHLIGHTS
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · First wins, poles, fastest laps, and notable DNFs
+            {getCurrentYear()} Season · First wins, poles, fastest laps, and notable DNFs
           </div>
         </div>
         <RefreshButton />

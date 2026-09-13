@@ -30,11 +30,14 @@ const OPENF1_BASE = "https://api.openf1.org/v1";
 /**
  * Derive the current season from the real calendar year, but never dip below
  * 2026 — we don't have an earlier live-timing model and a clock skew before
- * that would break the homepage.  This keeps the app working on Jan 1 of a
- * new year without a manual bump.
+ * that would break the homepage. Computed per call (not cached at module
+ * load) so a long-running server actually rolls over on Jan 1 without
+ * needing a restart.
  */
 const SEASON_FLOOR = 2026;
-const CURRENT_SEASON = String(Math.max(SEASON_FLOOR, new Date().getFullYear()));
+function getCurrentSeason(): string {
+  return String(Math.max(SEASON_FLOOR, new Date().getFullYear()));
+}
 
 /** Historical seasons available in the archive section */
 export const ARCHIVE_SEASONS = [
@@ -128,8 +131,8 @@ async function fetchAllRaceResults(
 export async function getDriverStandings(): Promise<DriverStanding[]> {
   // Fetch standings and driver list in parallel to avoid waterfall on pre-season fallback
   const [data, driversData] = await Promise.all([
-    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/driverstandings/?limit=100`),
-    fetchErgast<ErgastResponse<DriverTableData>>(`/${CURRENT_SEASON}/drivers/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${getCurrentSeason()}/driverstandings/?limit=100`),
+    fetchErgast<ErgastResponse<DriverTableData>>(`/${getCurrentSeason()}/drivers/?limit=100`),
   ]);
   const standings: DriverStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
@@ -155,8 +158,8 @@ export async function getDriverStandings(): Promise<DriverStanding[]> {
 export async function getConstructorStandings(): Promise<ConstructorStanding[]> {
   // Fetch standings and constructor list in parallel to avoid waterfall on pre-season fallback
   const [data, ctorData] = await Promise.all([
-    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`),
-    fetchErgast<ErgastResponse<ConstructorTableData>>(`/${CURRENT_SEASON}/constructors/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${getCurrentSeason()}/constructorstandings/?limit=100`),
+    fetchErgast<ErgastResponse<ConstructorTableData>>(`/${getCurrentSeason()}/constructors/?limit=100`),
   ]);
   const standings: ConstructorStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
@@ -179,12 +182,12 @@ export async function getConstructorStandings(): Promise<ConstructorStanding[]> 
 }
 
 export async function getRaceSchedule(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getRaceResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/${round}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races?.[0]?.Results ?? [];
 }
 
@@ -207,7 +210,7 @@ export async function getRaceWithResults(round: string): Promise<Race | null> {
     raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
   );
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/results/?limit=30`,
+    `/${getCurrentSeason()}/${round}/results/?limit=30`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0] ?? null;
@@ -221,35 +224,35 @@ export async function getQualifyingResults(round: string): Promise<QualifyingRes
     raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
   );
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/qualifying/?limit=30`,
+    `/${getCurrentSeason()}/${round}/qualifying/?limit=30`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults ?? [];
 }
 
 export async function getDriverResults(driverId: string): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/drivers/${driverId}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/drivers/${driverId}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getConstructorResults(constructorId: string): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/constructors/${constructorId}/results/?limit=50`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/constructors/${constructorId}/results/?limit=50`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getAllSeasonResults(): Promise<Race[]> {
-  return fetchAllRaceResults(`/${CURRENT_SEASON}/results/`, (p) =>
+  return fetchAllRaceResults(`/${getCurrentSeason()}/results/`, (p) =>
     fetchErgast<ErgastResponse<RaceTableData>>(p)
   );
 }
 
 export async function getSprintResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/${round}/sprint/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
 }
 
 export async function getAllSprintResults(): Promise<Race[]> {
-  return fetchAllRaceResults(`/${CURRENT_SEASON}/sprint/`, (p) =>
+  return fetchAllRaceResults(`/${getCurrentSeason()}/sprint/`, (p) =>
     fetchErgast<ErgastResponse<RaceTableData>>(p)
   );
 }
@@ -261,7 +264,7 @@ export async function getPitStops(round: string): Promise<PitStop[]> {
     raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
   );
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/pitstops/?limit=100`,
+    `/${getCurrentSeason()}/${round}/pitstops/?limit=100`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
@@ -290,7 +293,13 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
     let retryable = false;
     try {
       const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
-      if (res.ok) return (await res.json()) as T[];
+      if (res.ok) {
+        const body: unknown = await res.json();
+        // Guard against a malformed/non-array response (error envelope, HTML
+        // error page served with a JSON content-type, etc.) — callers chain
+        // .filter/.find/.sort directly on the result with no other check.
+        return Array.isArray(body) ? (body as T[]) : [];
+      }
       // 429 (rate limit) and 5xx are transient; 4xx (bad request) is not.
       retryable = res.status === 429 || res.status >= 500;
     } catch {
@@ -306,7 +315,7 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
 }
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
-  return fetchOpenF1<LiveSession>(`/sessions?year=${CURRENT_SEASON}`);
+  return fetchOpenF1<LiveSession>(`/sessions?year=${getCurrentSeason()}`);
 }
 
 /**
@@ -457,6 +466,46 @@ export interface ScheduledSession {
   round: string;
 }
 
+/** The session slots that make up a race weekend, in schedule order. */
+const SESSION_SLOTS: Array<{
+  type: string;
+  get: (race: Race) => { date: string; time: string } | undefined;
+}> = [
+  { type: "Practice 1", get: (r) => r.FirstPractice },
+  { type: "Practice 2", get: (r) => r.SecondPractice },
+  { type: "Practice 3", get: (r) => r.ThirdPractice },
+  { type: "Sprint Qualifying", get: (r) => r.SprintQualifying },
+  { type: "Sprint", get: (r) => r.Sprint },
+  { type: "Qualifying", get: (r) => r.Qualifying },
+  { type: "Race", get: (r) => (r.time ? { date: r.date, time: r.time } : undefined) },
+];
+
+/** Enumerate every scheduled session slot across a set of races, resolved to a Date. */
+function* enumerateSessionSlots(races: Race[]): Generator<{ type: string; race: Race; date: Date }> {
+  for (const race of races) {
+    for (const { type, get } of SESSION_SLOTS) {
+      const s = get(race);
+      if (!s) continue;
+      // Ergast times are UTC (include Z suffix)
+      const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+      yield { type, race, date: new Date(`${s.date}T${timeStr}`) };
+    }
+  }
+}
+
+function toScheduledSession(type: string, race: Race, date: Date): ScheduledSession {
+  return {
+    type,
+    raceName: race.raceName,
+    circuitId: race.Circuit.circuitId,
+    circuitName: race.Circuit.circuitName,
+    country: race.Circuit.Location.country,
+    locality: race.Circuit.Location.locality,
+    date,
+    round: race.round,
+  };
+}
+
 export async function getNextScheduledSession(): Promise<ScheduledSession | null> {
   let races: Race[] = [];
   try {
@@ -467,49 +516,8 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
 
   const now = new Date();
   const upcoming: ScheduledSession[] = [];
-
-  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    // Ergast times are UTC (include Z suffix)
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
-    if (d > now) {
-      upcoming.push({
-        type,
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
-    }
-  }
-
-  for (const race of races) {
-    push("Practice 1", race, race.FirstPractice);
-    push("Practice 2", race, race.SecondPractice);
-    push("Practice 3", race, race.ThirdPractice);
-    push("Sprint Qualifying", race, race.SprintQualifying);
-    push("Sprint", race, race.Sprint);
-    push("Qualifying", race, race.Qualifying);
-    if (race.time) {
-      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
-      const d = new Date(`${race.date}T${timeStr}`);
-      if (d > now) {
-        upcoming.push({
-          type: "Race",
-          raceName: race.raceName,
-          circuitId: race.Circuit.circuitId,
-          circuitName: race.Circuit.circuitName,
-          country: race.Circuit.Location.country,
-          locality: race.Circuit.Location.locality,
-          date: d,
-          round: race.round,
-        });
-      }
-    }
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date > now) upcoming.push(toScheduledSession(type, race, date));
   }
 
   if (!upcoming.length) return null;
@@ -544,35 +552,10 @@ export async function getOngoingScheduledSession(): Promise<ScheduledSession | n
   };
 
   const ongoing: ScheduledSession[] = [];
-
-  function check(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
     const window = windowMs[type] ?? 2 * 60 * 60 * 1000;
-    if (d <= now && now <= new Date(d.getTime() + window)) {
-      ongoing.push({
-        type,
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
-    }
-  }
-
-  for (const race of races) {
-    check("Practice 1", race, race.FirstPractice);
-    check("Practice 2", race, race.SecondPractice);
-    check("Practice 3", race, race.ThirdPractice);
-    check("Sprint Qualifying", race, race.SprintQualifying);
-    check("Sprint", race, race.Sprint);
-    check("Qualifying", race, race.Qualifying);
-    if (race.time) {
-      check("Race", race, { date: race.date, time: race.time });
+    if (date <= now && now <= new Date(date.getTime() + window)) {
+      ongoing.push(toScheduledSession(type, race, date));
     }
   }
 
@@ -686,7 +669,10 @@ export function isSessionLive(session: LiveSession): boolean {
   return now >= start && now <= new Date(endRaw.getTime() + graceMs);
 }
 
-export const CURRENT_YEAR = CURRENT_SEASON;
+/** Display-only current season year; computed per call, same as getCurrentSeason(). */
+export function getCurrentYear(): string {
+  return getCurrentSeason();
+}
 
 /** All sessions from the race schedule that start today (UTC date match). */
 export async function getTodaySessions(): Promise<ScheduledSession[]> {
@@ -699,44 +685,9 @@ export async function getTodaySessions(): Promise<ScheduledSession[]> {
 
   const todayUTC = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const sessions: ScheduledSession[] = [];
-
-  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    if (s.date !== todayUTC) return;
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
-    sessions.push({
-      type,
-      raceName: race.raceName,
-      circuitId: race.Circuit.circuitId,
-      circuitName: race.Circuit.circuitName,
-      country: race.Circuit.Location.country,
-      locality: race.Circuit.Location.locality,
-      date: d,
-      round: race.round,
-    });
-  }
-
-  for (const race of races) {
-    push("Practice 1", race, race.FirstPractice);
-    push("Practice 2", race, race.SecondPractice);
-    push("Practice 3", race, race.ThirdPractice);
-    push("Sprint Qualifying", race, race.SprintQualifying);
-    push("Sprint", race, race.Sprint);
-    push("Qualifying", race, race.Qualifying);
-    if (race.time && race.date === todayUTC) {
-      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
-      const d = new Date(`${race.date}T${timeStr}`);
-      sessions.push({
-        type: "Race",
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date.toISOString().slice(0, 10) === todayUTC) {
+      sessions.push(toScheduledSession(type, race, date));
     }
   }
 

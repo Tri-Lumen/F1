@@ -242,10 +242,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setPermission(result);
         if (result !== "granted") return;
       }
-      localStorage.setItem(LS_ENABLED, "true");
+      try { localStorage.setItem(LS_ENABLED, "true"); } catch {}
       setEnabled(true);
     } else {
-      localStorage.setItem(LS_ENABLED, "false");
+      try { localStorage.setItem(LS_ENABLED, "false"); } catch {}
       setEnabled(false);
       // Clear all pending timers
       for (const [id, cancel] of timersRef.current.entries()) {
@@ -257,7 +257,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const setLeadMinutes = useCallback((m: number) => {
     setLeadMinutesState(m);
-    localStorage.setItem(LS_LEAD, String(m));
+    try { localStorage.setItem(LS_LEAD, String(m)); } catch {}
     // Re-schedule all pending notifications with new lead time, dropping any
     // entries whose sessionDate parsed to NaN (corrupt storage / bad ISO).
     setScheduled((prev) =>
@@ -271,7 +271,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const setAutoSubscribeWeekend = useCallback((v: boolean) => {
     setAutoSubscribeWeekendState(v);
-    localStorage.setItem(LS_AUTO_WEEKEND, String(v));
+    try { localStorage.setItem(LS_AUTO_WEEKEND, String(v)); } catch {}
   }, []);
 
   const schedule = useCallback((sessionType: string, raceName: string, sessionDate: string) => {

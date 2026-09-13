@@ -8,7 +8,7 @@ import {
   getAllSeasonResults,
   getQualifyingResults,
   getRaceDate,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { QualifyingResult, Race, RaceResult } from "@/lib/types";
 import PredictionsClient, { type RoundInfo } from "./PredictionsClient";
@@ -86,7 +86,7 @@ async function PredictionsContent() {
     <PredictionsClient
       rounds={rounds}
       drivers={driverStandings}
-      season={CURRENT_YEAR}
+      season={getCurrentYear()}
     />
   );
 }
@@ -115,7 +115,7 @@ export default function PredictionsPage() {
           }}
         >
           Predict pole, podium, and fastest lap. Scored locally against the
-          official {CURRENT_YEAR} results.
+          official {getCurrentYear()} results.
         </p>
       </div>
       <Suspense

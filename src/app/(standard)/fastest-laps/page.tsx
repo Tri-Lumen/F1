@@ -7,7 +7,7 @@ import {
   getAllSeasonResults,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import RefreshButton from "@/components/RefreshButton";
 
@@ -88,7 +88,7 @@ async function FastestLapsContent() {
   if (completedRaces.length === 0) {
     return (
       <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -410,7 +410,7 @@ export default function FastestLapsPage() {
             FASTEST LAPS
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · Purple lap records race by race
+            {getCurrentYear()} Season · Purple lap records race by race
           </div>
         </div>
         <RefreshButton />
