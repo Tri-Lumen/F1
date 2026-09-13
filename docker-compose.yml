@@ -16,6 +16,14 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      # Required: protects the in-app self-update endpoint (/api/update) —
+      # without it, anyone who can reach the mapped port can trigger a
+      # git pull + npm ci + npm run build (resource exhaustion at minimum).
+      # docker-install.sh auto-generates this into a .env file next to this
+      # compose file on first run. Running `docker compose` directly instead?
+      # Set UPDATE_SECRET yourself (e.g. `echo UPDATE_SECRET=$(openssl rand
+      # -hex 32) > .env`) — compose refuses to start otherwise.
+      - UPDATE_SECRET=${UPDATE_SECRET:?set UPDATE_SECRET before starting (see comment above) to secure the self-update endpoint}
     # Allow the in-app git pull to reach the host's git server
     extra_hosts:
       - "host.docker.internal:host-gateway"

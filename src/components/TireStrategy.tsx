@@ -18,10 +18,13 @@ export default function TireStrategy({
   stints,
   drivers,
   latestPositions,
+  currentLap,
 }: {
   stints: LiveStint[];
   drivers: LiveTimingDriver[];
   latestPositions: Map<number, number>;
+  /** Actual current race lap, when known — falls back to a stint-based guess. */
+  currentLap?: number | null;
 }) {
   // Group stints by driver
   const stintsByDriver = new Map<number, LiveStint[]>();
@@ -46,11 +49,11 @@ export default function TireStrategy({
     );
   }
 
-  // Find max lap for proportional width. For in-progress stints (no lap_end)
-  // use the highest lap_start seen across all drivers as a proxy for the
-  // current race lap — previously a magic `+5` could push bars past the
-  // actual race distance on short sessions.
-  const currentRaceLap = stints.reduce((m, s) => Math.max(m, s.lap_start), 0);
+  // Find max lap for proportional width. Prefer the actual current race lap
+  // (from live lap data); before the first pit stop every stint still has
+  // lap_start = 1, so falling back to "highest lap_start seen" would pin the
+  // denominator at 1 and collapse every bar to its minimum width.
+  const currentRaceLap = currentLap ?? stints.reduce((m, s) => Math.max(m, s.lap_start), 0);
   const maxLap = Math.max(
     ...stints.map((s) => s.lap_end ?? currentRaceLap),
     1

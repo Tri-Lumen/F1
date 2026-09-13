@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getCompletedSessions, getCountryFlagByCountry, CURRENT_YEAR } from "@/lib/api";
 import type { LiveSession } from "@/lib/types";
+import { LocalDate, LocalTime } from "@/components/LocalDateTime";
 
 export const metadata: Metadata = {
   title: "Session Replay — F1 2026",
@@ -20,24 +21,6 @@ const cardStyle: React.CSSProperties = {
   border: "1px solid var(--color-f1-border)",
   background: "var(--color-f1-dark)",
 };
-
-function formatLocalDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatLocalTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
 
 /** Group sessions by meeting_key so all five sessions of a weekend cluster. */
 function groupByMeeting(sessions: LiveSession[]): LiveSession[][] {
@@ -114,7 +97,7 @@ async function ReplayContent() {
                     marginTop: 2,
                   }}
                 >
-                  {headline.circuit_short_name} · {formatLocalDate(headline.date_start)}
+                  {headline.circuit_short_name} · <LocalDate iso={headline.date_start} />
                 </div>
               </div>
               <span
@@ -167,7 +150,7 @@ async function ReplayContent() {
                         color: "var(--color-f1-text-muted)",
                       }}
                     >
-                      {formatLocalDate(s.date_start)} · {formatLocalTime(s.date_start)}
+                      <LocalDate iso={s.date_start} /> · <LocalTime iso={s.date_start} />
                     </span>
                   </Link>
                 </li>

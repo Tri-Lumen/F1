@@ -124,8 +124,10 @@ export async function POST(req: Request) {
     const alreadyUpToDate = pull.stdout.includes("Already up to date");
 
     if (!alreadyUpToDate) {
-      // 2. Install any new/changed dependencies
-      const install = await run(["npm", "ci", "--omit=dev"], cwd);
+      // 2. Install any new/changed dependencies. Must include devDependencies
+      // (notably `typescript`) — the next step runs `next build`, which
+      // type-checks the project and needs them present.
+      const install = await run(["npm", "ci"], cwd);
       steps.push({ step: "npm install", output: install.stdout.trim().slice(-500) });
 
       // 3. Rebuild the app

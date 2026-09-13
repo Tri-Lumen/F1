@@ -23,6 +23,7 @@ import StudioRaceCard from "@/components/StudioRaceCard";
 import type { StudioRaceCardData } from "@/components/StudioRaceCard";
 import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
+import { LocalTime } from "@/components/LocalDateTime";
 import PageHeader from "@/components/PageHeader";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
@@ -128,7 +129,8 @@ async function DashboardContent() {
               >
                 <span style={{ fontWeight: 700 }}>{s.type}</span>
                 <span style={{ color: "var(--color-f1-text-muted)", marginLeft: 6 }}>
-                  {getCountryFlagByCountry(s.country)} {s.raceName.replace(" Grand Prix", " GP")} · {s.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}
+                  {getCountryFlagByCountry(s.country)} {s.raceName.replace(" Grand Prix", " GP")} ·{" "}
+                  <LocalTime iso={s.date.toISOString()} withZone />
                 </span>
               </div>
             ))}

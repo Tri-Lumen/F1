@@ -605,6 +605,7 @@ async function LiveContent() {
               stints={stints}
               drivers={drivers}
               latestPositions={latestPositions}
+              currentLap={currentLap}
             />
           </div>
         </div>

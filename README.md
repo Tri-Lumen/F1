@@ -129,8 +129,11 @@ Grab a specific build from the [Releases page](https://github.com/Tri-Lumen/F1/r
 ## ▍ QUICK START · DOCKER
 
 ```bash
+echo "UPDATE_SECRET=$(openssl rand -hex 32)" > .env
 docker compose up -d
 ```
+
+`UPDATE_SECRET` protects the in-app self-update endpoint (`/api/update`) — without it, anyone who can reach the mapped port could trigger a rebuild. `docker-compose.yml` refuses to start without it set (via `.env` or your shell environment); the one-line installers above generate this automatically.
 
 The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev/watchtower/) for automatic hourly image updates — when a new image is pushed to `ghcr.io/tri-lumen/f1:latest`, your container restarts on the new build with no manual action.
 
@@ -138,7 +141,7 @@ The included `docker-compose.yml` ships with [Watchtower](https://containrrr.dev
 
 ```bash
 docker build -t delta-dashboard .
-docker run -p 3000:3000 delta-dashboard
+docker run -p 3000:3000 -e UPDATE_SECRET=$(openssl rand -hex 32) delta-dashboard
 ```
 
 #### Portainer
@@ -155,6 +158,7 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      - UPDATE_SECRET=your-own-random-secret-here
 ```
 
 **From Git** — Stacks → Add stack → Repository, set the URL to `https://github.com/Tri-Lumen/F1.git` and the compose path to `docker-compose.yml`.

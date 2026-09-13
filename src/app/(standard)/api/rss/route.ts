@@ -72,7 +72,12 @@ function decodeEntities(text: string): string {
 
 /** Strip HTML tags from a string */
 function stripHtml(html: string): string {
-  return decodeEntities(html.replace(/<[^>]*>/g, "")).trim();
+  // Unwrap CDATA sections before stripping tags — the generic tag regex
+  // below has no CDATA awareness, so `<![CDATA[text]]>` (the standard
+  // wrapping for <title>/<description> in most RSS feeds) would otherwise
+  // match as a single "tag" and get deleted entirely.
+  const withoutCData = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1");
+  return decodeEntities(withoutCData.replace(/<[^>]*>/g, "")).trim();
 }
 
 /** Tracking-pixel and 1x1 sentinel domains/paths to drop. */

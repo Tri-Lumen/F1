@@ -114,6 +114,15 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
       .map((r) => r.item);
   }, [items, query]);
 
+  const showRecent = !query && recentSearches.length > 0;
+  // Single flat list backing keyboard nav — must match render order exactly
+  // (recent searches first, then the results list) so `active` always
+  // indexes the item actually highlighted on screen.
+  const visibleItems = useMemo(
+    () => (showRecent ? [...recentSearches, ...results] : results),
+    [showRecent, recentSearches, results]
+  );
+
   // Keep active index in range when results change
   useEffect(() => {
     setActive(0);
@@ -135,13 +144,13 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
       close();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, results.length - 1));
+      setActive((a) => Math.min(a + 1, visibleItems.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      go(results[active]);
+      go(visibleItems[active]);
     }
   }
 
@@ -196,7 +205,7 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
 
         <div ref={listRef} className="max-h-[55vh] overflow-y-auto py-1.5">
           {/* Recent searches shown when query is empty */}
-          {!query && recentSearches.length > 0 && (
+          {showRecent && (
             <div>
               <p className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-f1-text-muted/50 font-semibold">
                 Recent
@@ -239,7 +248,7 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
             </p>
           ) : (
             results.map((item, i) => {
-              const idx = (!query && recentSearches.length > 0) ? i + recentSearches.length + 1 : i;
+              const idx = showRecent ? i + recentSearches.length : i;
               return (
                 <button
                   key={`${item.kind}-${item.href}`}

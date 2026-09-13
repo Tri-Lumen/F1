@@ -86,6 +86,45 @@ async function fetchErgastArchive<T>(path: string): Promise<T | null> {
   }
 }
 
+/**
+ * Fetch every page of a Races-shaped Ergast endpoint, merging `Results`
+ * across pages by round. Ergast paginates by result *row*, not by race, so a
+ * single race's rows can straddle a page boundary. A flat `limit` with no
+ * pagination silently drops the tail of a season once total rows exceed it
+ * (a full 22-car, 24-race season is ~530 rows).
+ */
+async function fetchAllRaceResults(
+  basePath: string,
+  fetchPage: (path: string) => Promise<ErgastResponse<RaceTableData> | null>
+): Promise<Race[]> {
+  const PAGE_SIZE = 100;
+  const byRound = new Map<string, Race>();
+  let offset = 0;
+  let total = Infinity;
+
+  while (offset < total) {
+    const sep = basePath.includes("?") ? "&" : "?";
+    const data = await fetchPage(`${basePath}${sep}limit=${PAGE_SIZE}&offset=${offset}`);
+    const races = data?.MRData?.RaceTable?.Races ?? [];
+    if (races.length === 0) break;
+
+    total = data?.MRData?.total ? parseInt(data.MRData.total, 10) : races.length;
+
+    for (const race of races) {
+      const existing = byRound.get(race.round);
+      if (existing) {
+        existing.Results = [...(existing.Results ?? []), ...(race.Results ?? [])];
+      } else {
+        byRound.set(race.round, { ...race });
+      }
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  return [...byRound.values()];
+}
+
 export async function getDriverStandings(): Promise<DriverStanding[]> {
   // Fetch standings and driver list in parallel to avoid waterfall on pre-season fallback
   const [data, driversData] = await Promise.all([
@@ -199,8 +238,9 @@ export async function getConstructorResults(constructorId: string): Promise<Race
 }
 
 export async function getAllSeasonResults(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/results/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${CURRENT_SEASON}/results/`, (p) =>
+    fetchErgast<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 export async function getSprintResults(round: string): Promise<RaceResult[]> {
@@ -209,8 +249,9 @@ export async function getSprintResults(round: string): Promise<RaceResult[]> {
 }
 
 export async function getAllSprintResults(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/sprint/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${CURRENT_SEASON}/sprint/`, (p) =>
+    fetchErgast<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 export async function getPitStops(round: string): Promise<PitStop[]> {
@@ -397,8 +438,9 @@ export async function getSeasonSchedule(season: string): Promise<Race[]> {
 }
 
 export async function getSeasonRaceResults(season: string): Promise<Race[]> {
-  const data = await fetchErgastArchive<ErgastResponse<RaceTableData>>(`/${season}/results/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${season}/results/`, (p) =>
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 // --- Next scheduled session (from Ergast calendar) ---
@@ -711,28 +753,30 @@ export async function getDriverCareerWins(driverId: string): Promise<{
   races: number;
   championships: number;
 }> {
-  const [winsData, polesData, racesData, podiumsData, flData, champsData] = await Promise.all([
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1&status=1`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/?limit=1`),
+  // Ergast/Jolpica only supports single finishing-position filters as path
+  // segments (e.g. /results/1/), not query params — so wins/podiums/poles/
+  // fastest laps are each derived from the `total` count of a position-
+  // filtered query, never by fetching and counting rows (which would be
+  // truncated by a fixed `limit` for long careers).
+  const [winsData, position2Data, position3Data, polesData, racesData, flData, champsData] = await Promise.all([
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/1/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/2/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/3/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/1/?limit=1`),
     fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=500`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/1/?limit=1`),
     fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/drivers/${driverId}/driverstandings/1/?limit=100`),
   ]);
 
-  const wins = parseInt(winsData?.MRData?.RaceTable ? String((winsData.MRData as { total?: string; RaceTable: unknown }).total ?? "0") : "0", 10);
-  const races = parseInt(racesData?.MRData ? String((racesData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const poles = parseInt(polesData?.MRData ? String((polesData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const fl = parseInt(flData?.MRData ? String((flData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
+  const totalOf = (d: { MRData?: { total?: string } } | null): number =>
+    parseInt(d?.MRData?.total ?? "0", 10);
 
-  // Count podiums from the results
-  let podiums = 0;
-  for (const race of podiumsData?.MRData?.RaceTable?.Races ?? []) {
-    for (const r of race.Results ?? []) {
-      if (parseInt(r.position) <= 3) podiums++;
-    }
-  }
+  const wins = totalOf(winsData);
+  const races = totalOf(racesData);
+  const poles = totalOf(polesData);
+  const fl = totalOf(flData);
+  const podiums = wins + totalOf(position2Data) + totalOf(position3Data);
+  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
 
   return { wins, podiums, poles, fastestLaps: fl, races, championships };
 }

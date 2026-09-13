@@ -115,7 +115,7 @@
       "hardenedRuntime": true,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
-      "notarize": false,
+      "notarize": true,
       "artifactName": "Delta-Dashboard-${arch}-mac.${ext}"
     },
     "dmg": {
