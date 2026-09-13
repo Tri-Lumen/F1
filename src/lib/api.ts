@@ -764,7 +764,9 @@ export async function getDriverCareerWins(driverId: string): Promise<{
     fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/3/?limit=1`),
     fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/1/?limit=1`),
     fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/1/?limit=1`),
+    // Ergast/Jolpica requires the trailing /results/ segment for the
+    // fastest-lap-rank filter — /fastest/1/ alone 404s.
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/1/results/?limit=1`),
     fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/drivers/${driverId}/driverstandings/1/?limit=100`),
   ]);
 

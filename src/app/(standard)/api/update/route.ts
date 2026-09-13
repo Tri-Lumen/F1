@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { execFile } from "child_process";
 import { timingSafeEqual } from "crypto";
+import { rm } from "fs/promises";
+import path from "path";
 
 /**
  * When UPDATE_SECRET is set, POSTs must include a matching bearer token.
@@ -22,11 +24,19 @@ function isAuthorized(req: Request): boolean {
 }
 
 function run(args: string[], cwd: string): Promise<{ stdout: string; stderr: string }> {
+  // This route runs inside the standalone server, which stamps
+  // __NEXT_PRIVATE_STANDALONE_CONFIG onto its own process.env so Next's
+  // runtime knows it's serving from a standalone build. Spreading
+  // process.env verbatim into `npm ci`/`npm run build` leaks that marker
+  // into the child `next build`, which reads it expecting a standalone
+  // *runtime* context and fails (it's meant for server.js, not a build).
+  const { __NEXT_PRIVATE_STANDALONE_CONFIG: _standaloneConfig, ...safeEnv } = process.env;
+  const env = { ...safeEnv, GIT_TERMINAL_PROMPT: "0" };
   return new Promise((resolve, reject) => {
     execFile(args[0], args.slice(1), {
       cwd,
       timeout: 120_000,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+      env,
     }, (err, stdout, stderr) => {
       if (err) reject({ ...err, stdout, stderr });
       else resolve({ stdout, stderr });
@@ -126,13 +136,32 @@ export async function POST(req: Request) {
     if (!alreadyUpToDate) {
       // 2. Install any new/changed dependencies. Must include devDependencies
       // (notably `typescript`) — the next step runs `next build`, which
-      // type-checks the project and needs them present.
-      const install = await run(["npm", "ci"], cwd);
+      // type-checks the project and needs them present. The container sets
+      // NODE_ENV=production, which makes plain `npm ci` silently skip
+      // devDependencies regardless of this flag's absence; --include=dev
+      // overrides that without having to touch NODE_ENV (which next build
+      // itself needs left at "production").
+      const install = await run(["npm", "ci", "--include=dev"], cwd);
       steps.push({ step: "npm install", output: install.stdout.trim().slice(-500) });
 
-      // 3. Rebuild the app
+      // 3. Rebuild the app. The image's initial `.next` (copied in from the
+      // builder's `.next/standalone` + `.next/static` output) has a
+      // structurally different layout from a normal `next build` output —
+      // rebuilding directly on top of it fails (Turbopack's persistent
+      // cache/manifests reference the standalone layout). Clear it first so
+      // `next build` always starts from a clean slate.
+      await rm(path.join(cwd, ".next"), { recursive: true, force: true });
       const build = await run(["npm", "run", "build"], cwd);
       steps.push({ step: "npm build", output: build.stdout.trim().slice(-500) });
+
+      // The freshly rebuilt .next/ is now on disk, but this still-running
+      // process already has the old build loaded in memory and has no way
+      // to hot-swap it — without a restart, the rebuild would silently have
+      // no effect on what's actually being served. Docker's
+      // `restart: unless-stopped` policy brings the container straight
+      // back up with the new build, so exit once the response below has
+      // had a moment to flush to the client.
+      setTimeout(() => process.exit(0), 1000);
     }
 
     return NextResponse.json({
