@@ -7,8 +7,9 @@ import {
   getAllSeasonResults,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
+import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
 
 const BC = "'Barlow Condensed', sans-serif";
@@ -50,8 +51,8 @@ async function FastestLapsContent() {
       driverName: `${fl.Driver.givenName} ${fl.Driver.familyName}`,
       driverId: fl.Driver.driverId,
       nationality: fl.Driver.nationality,
-      team: fl.Constructor.name,
-      constructorId: fl.Constructor.constructorId,
+      team: getDriverConstructorName(fl.Driver.driverId, fl.Constructor.name) ?? fl.Constructor.name,
+      constructorId: getDriverConstructorId(fl.Driver.driverId, fl.Constructor.constructorId) ?? fl.Constructor.constructorId,
       lapTime: fl.FastestLap?.Time.time ?? "",
       lap: fl.FastestLap?.lap ?? "",
       avgSpeed: fl.FastestLap?.AverageSpeed?.speed
@@ -88,7 +89,7 @@ async function FastestLapsContent() {
   if (completedRaces.length === 0) {
     return (
       <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -410,7 +411,7 @@ export default function FastestLapsPage() {
             FASTEST LAPS
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · Purple lap records race by race
+            {getCurrentYear()} Season · Purple lap records race by race
           </div>
         </div>
         <RefreshButton />

@@ -3,6 +3,7 @@
 import { useCountUp, useBarWidth, useFadeIn } from "@/lib/hooks";
 import { getTeamColor } from "@/lib/api";
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
+import { MEDAL_COLORS } from "@/lib/medalColors";
 import SparkLine from "@/components/SparkLine";
 import type { DriverStanding } from "@/lib/types";
 import { memo, useState } from "react";
@@ -11,8 +12,7 @@ const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
 
 function PosPill({ pos }: { pos: number }) {
-  const gold: Record<number, string> = { 1: "#FFD700", 2: "#A8A9AD", 3: "#CD7F32" };
-  const c = gold[pos];
+  const c = pos === 1 || pos === 2 || pos === 3 ? MEDAL_COLORS[pos] : undefined;
   return (
     <span
       style={{
@@ -47,12 +47,16 @@ interface Props {
 function StudioDriverRowImpl({ standing, rank, form, leaderPts, delay = 0 }: Props) {
   const [hovered, setHovered] = useState(false);
 
+  // `form` holds finishing POSITIONS (lower = better), not points-per-race —
+  // confirmed at the call site (home page pushes `parseInt(result.position)`
+  // per race). So a lower last-race position than the recent average is
+  // improving form ("up"), not the other way around.
   const trend: "up" | "down" | "stable" = (() => {
     if (form.length < 2) return "stable";
     const last = form[form.length - 1];
     const avg = form.slice(0, -1).reduce((a, b) => a + b, 0) / (form.length - 1);
-    if (last > avg + 1) return "up";
-    if (last < avg - 1) return "down";
+    if (last < avg - 1) return "up";
+    if (last > avg + 1) return "down";
     return "stable";
   })();
 

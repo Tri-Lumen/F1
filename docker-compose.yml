@@ -1,5 +1,11 @@
 services:
   delta-dashboard:
+    # Tracks the rolling :latest tag by default. Every image is also published
+    # under a short git-sha tag (e.g. ghcr.io/tri-lumen/f1:sha-abc1234) — if a
+    # bad :latest build ships, roll back by pinning this line to a known-good
+    # sha tag from a prior successful run of .github/workflows/docker-publish.yml
+    # (visible in the Actions run summary or `docker manifest inspect`), then
+    # `docker compose up -d` to redeploy it.
     image: ghcr.io/tri-lumen/f1:latest
     container_name: delta-dashboard
     ports:
@@ -16,6 +22,14 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      # Required: protects the in-app self-update endpoint (/api/update) —
+      # without it, anyone who can reach the mapped port can trigger a
+      # git pull + npm ci + npm run build (resource exhaustion at minimum).
+      # docker-install.sh auto-generates this into a .env file next to this
+      # compose file on first run. Running `docker compose` directly instead?
+      # Set UPDATE_SECRET yourself (e.g. `echo UPDATE_SECRET=$(openssl rand
+      # -hex 32) > .env`) — compose refuses to start otherwise.
+      - UPDATE_SECRET=${UPDATE_SECRET:?set UPDATE_SECRET before starting (see comment above) to secure the self-update endpoint}
     # Allow the in-app git pull to reach the host's git server
     extra_hosts:
       - "host.docker.internal:host-gateway"

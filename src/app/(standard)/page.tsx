@@ -10,6 +10,7 @@ import {
   getNextScheduledSession,
   getTodaySessions,
   getRaceDate,
+  getMaxPointsForRound,
   getTeamColor,
   getCountryFlagByCountry,
 } from "@/lib/api";
@@ -23,6 +24,7 @@ import StudioRaceCard from "@/components/StudioRaceCard";
 import type { StudioRaceCardData } from "@/components/StudioRaceCard";
 import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
+import { LocalTime } from "@/components/LocalDateTime";
 import PageHeader from "@/components/PageHeader";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
@@ -128,7 +130,8 @@ async function DashboardContent() {
               >
                 <span style={{ fontWeight: 700 }}>{s.type}</span>
                 <span style={{ color: "var(--color-f1-text-muted)", marginLeft: 6 }}>
-                  {getCountryFlagByCountry(s.country)} {s.raceName.replace(" Grand Prix", " GP")} · {s.date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}
+                  {getCountryFlagByCountry(s.country)} {s.raceName.replace(" Grand Prix", " GP")} ·{" "}
+                  <LocalTime iso={s.date.toISOString()} withZone />
                 </span>
               </div>
             ))}
@@ -193,7 +196,9 @@ async function DashboardContent() {
         const p1Pts = parseFloat(p1.points);
         const p2Pts = parseFloat(p2.points);
         const gap = p1Pts - p2Pts;
-        const totalRemaining = (races.length - completedCount) * 26;
+        const totalRemaining = races
+          .filter((r) => getRaceDate(r) > now)
+          .reduce((sum, r) => sum + getMaxPointsForRound(!!r.Sprint), 0);
         const p1Cid = getDriverConstructorId(p1.Driver.driverId, p1.Constructors[0]?.constructorId) ?? "";
         const p2Cid = getDriverConstructorId(p2.Driver.driverId, p2.Constructors[0]?.constructorId) ?? "";
         const p1Color = getTeamColor(p1Cid);

@@ -55,9 +55,20 @@ fi
 ok "Docker Compose detected ($COMPOSE)"
 
 # ---- Ensure we have a docker-compose.yml ------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}" 2>/dev/null)" && pwd 2>/dev/null || true)"
+# Only trust BASH_SOURCE-derived location when the script was actually
+# invoked as a real file (e.g. `git clone && ./docker-install.sh`). When
+# piped via `curl | bash` (the documented usage above), BASH_SOURCE[0] is
+# empty, and `dirname ""` silently falls back to ".", i.e. the caller's
+# current working directory — so an unrelated docker-compose.yml sitting in
+# whatever directory the user happened to run the one-liner from would be
+# picked up as this project's own. Skip the inference entirely in that case
+# and fall through to the fixed INSTALL_DIR convention below instead.
+SCRIPT_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 
-if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
+if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
   COMPOSE_DIR="$SCRIPT_DIR"
 elif [ -f "$INSTALL_DIR/docker-compose.yml" ]; then
   COMPOSE_DIR="$INSTALL_DIR"
@@ -73,6 +84,22 @@ else
 fi
 
 cd "$COMPOSE_DIR"
+
+# ---- Ensure UPDATE_SECRET is configured --------------------------------------
+# docker-compose.yml requires UPDATE_SECRET to be set (shell env or a .env
+# file here) before the stack will start, to keep the in-app self-update
+# endpoint (/api/update) from being unauthenticated by default. Generate one
+# automatically on a fresh install so the documented install path is secure
+# without any extra steps; leave it alone if it's already configured.
+info "Checking UPDATE_SECRET configuration..."
+if [ -n "${UPDATE_SECRET:-}" ] || grep -q '^UPDATE_SECRET=' "$COMPOSE_DIR/.env" 2>/dev/null; then
+  ok "UPDATE_SECRET already configured"
+else
+  warn "UPDATE_SECRET not set — generating one to secure the self-update endpoint"
+  GENERATED_SECRET="$(openssl rand -hex 32 2>/dev/null || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+  echo "UPDATE_SECRET=${GENERATED_SECRET}" >> "$COMPOSE_DIR/.env"
+  ok "UPDATE_SECRET generated and saved to $COMPOSE_DIR/.env"
+fi
 
 # ---- Authenticate with GitHub Container Registry ----------------------------
 ghcr_login() {

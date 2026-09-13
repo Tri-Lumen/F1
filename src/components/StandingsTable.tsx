@@ -5,12 +5,11 @@ import {
   getDriverConstructorId,
   getDriverConstructorName,
 } from "@/lib/driverOverrides";
+import { MEDAL_COLORS } from "@/lib/medalColors";
 
 function formDotColor(pos: number, isDnf: boolean): string {
   if (isDnf) return "#ef4444";
-  if (pos === 1) return "#FFD700";
-  if (pos === 2) return "#A8A9AD";
-  if (pos === 3) return "#CD7F32";
+  if (pos === 1 || pos === 2 || pos === 3) return MEDAL_COLORS[pos];
   if (pos <= 10) return "#22c55e";
   return "#374151";
 }
@@ -107,13 +106,16 @@ export default function StandingsTable({
                     <div className="flex items-center justify-center gap-1">
                       {(recentForm.get(s.Driver.driverId) ?? []).map((r, i) => {
                         const isDnf = r.status !== "Finished" && !r.status.startsWith("+");
+                        const resultLabel = isDnf ? "DNF" : `P${r.pos}`;
                         return (
                           <span
                             key={i}
-                            title={isDnf ? "DNF" : `P${r.pos}`}
+                            title={resultLabel}
                             className="w-4 h-4 rounded-full inline-block"
                             style={{ backgroundColor: formDotColor(r.pos, isDnf) }}
-                          />
+                          >
+                            <span className="sr-only">{resultLabel}</span>
+                          </span>
                         );
                       })}
                     </div>

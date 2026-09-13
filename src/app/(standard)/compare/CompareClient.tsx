@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import type { DriverStanding, Race } from "@/lib/types";
 import { getTeamColor, getCountryFlag } from "@/lib/api";
+import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 
 interface DriverStats {
   position: number;
@@ -213,10 +214,14 @@ export default function CompareClient({
   );
 
   const teamColorA = getTeamColor(
-    standingA?.Constructors[0]?.constructorId ?? ""
+    standingA
+      ? getDriverConstructorId(standingA.Driver.driverId, standingA.Constructors[0]?.constructorId) ?? ""
+      : ""
   );
   const teamColorB = getTeamColor(
-    standingB?.Constructors[0]?.constructorId ?? ""
+    standingB
+      ? getDriverConstructorId(standingB.Driver.driverId, standingB.Constructors[0]?.constructorId) ?? ""
+      : ""
   );
 
   // Head-to-head race results
@@ -244,7 +249,7 @@ export default function CompareClient({
   const teammatePairs = useMemo(() => {
     const teamMap = new Map<string, DriverStanding[]>();
     for (const s of standings) {
-      const teamId = s.Constructors[0]?.constructorId;
+      const teamId = getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId);
       if (!teamId) continue;
       const arr = teamMap.get(teamId) ?? [];
       arr.push(s);
@@ -254,7 +259,7 @@ export default function CompareClient({
       .filter(([, drivers]) => drivers.length >= 2)
       .map(([teamId, drivers]) => ({
         teamId,
-        teamName: drivers[0].Constructors[0]?.name ?? teamId,
+        teamName: getDriverConstructorName(drivers[0].Driver.driverId, drivers[0].Constructors[0]?.name) ?? teamId,
         driverA: drivers[0].Driver.driverId,
         driverB: drivers[1].Driver.driverId,
         nameA: drivers[0].Driver.familyName,
@@ -316,7 +321,7 @@ export default function CompareClient({
             {standings.map((s) => (
               <option key={s.Driver.driverId} value={s.Driver.driverId}>
                 {s.Driver.givenName} {s.Driver.familyName} (
-                {s.Constructors[0]?.name})
+                {getDriverConstructorName(s.Driver.driverId, s.Constructors[0]?.name)})
               </option>
             ))}
           </select>
@@ -332,7 +337,7 @@ export default function CompareClient({
                   {standingA.Driver.familyName}
                 </p>
                 <p className="text-xs text-f1-text-muted">
-                  {standingA.Constructors[0]?.name} &middot; P
+                  {getDriverConstructorName(standingA.Driver.driverId, standingA.Constructors[0]?.name)} &middot; P
                   {standingA.position} &middot; {standingA.points} pts
                 </p>
               </div>
@@ -352,7 +357,7 @@ export default function CompareClient({
             {standings.map((s) => (
               <option key={s.Driver.driverId} value={s.Driver.driverId}>
                 {s.Driver.givenName} {s.Driver.familyName} (
-                {s.Constructors[0]?.name})
+                {getDriverConstructorName(s.Driver.driverId, s.Constructors[0]?.name)})
               </option>
             ))}
           </select>
@@ -368,7 +373,7 @@ export default function CompareClient({
                   {standingB.Driver.familyName}
                 </p>
                 <p className="text-xs text-f1-text-muted">
-                  {standingB.Constructors[0]?.name} &middot; P
+                  {getDriverConstructorName(standingB.Driver.driverId, standingB.Constructors[0]?.name)} &middot; P
                   {standingB.position} &middot; {standingB.points} pts
                 </p>
               </div>
@@ -384,7 +389,7 @@ export default function CompareClient({
             {[
               { label: "Wins", a: statsA.wins, b: statsB.wins },
               { label: "Podiums", a: statsA.podiums, b: statsB.podiums },
-              { label: "Poles", a: statsA.poles, b: statsB.poles },
+              { label: "Grid P1s", a: statsA.poles, b: statsB.poles },
               { label: "DNFs", a: statsA.dnfs, b: statsB.dnfs, lowerBetter: true },
               { label: "Points", a: statsA.points, b: statsB.points },
             ].map(({ label, a, b, lowerBetter }) => {
@@ -437,7 +442,7 @@ export default function CompareClient({
               <StatBar label="Points" valA={statsA.points} valB={statsB.points} colorA={teamColorA} colorB={teamColorB} />
               <StatBar label="Wins" valA={statsA.wins} valB={statsB.wins} colorA={teamColorA} colorB={teamColorB} />
               <StatBar label="Podiums" valA={statsA.podiums} valB={statsB.podiums} colorA={teamColorA} colorB={teamColorB} />
-              <StatBar label="Poles" valA={statsA.poles} valB={statsB.poles} colorA={teamColorA} colorB={teamColorB} />
+              <StatBar label="Grid P1s" valA={statsA.poles} valB={statsB.poles} colorA={teamColorA} colorB={teamColorB} />
               <StatBar
                 label="Fastest Laps"
                 valA={statsA.fastestLaps}

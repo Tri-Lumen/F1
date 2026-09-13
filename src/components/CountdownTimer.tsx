@@ -1,25 +1,7 @@
 "use client";
 
 import { memo, useEffect, useState } from "react";
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  total: number;
-}
-
-function calcTimeLeft(target: Date): TimeLeft {
-  const total = Math.max(0, target.getTime() - Date.now());
-  return {
-    total,
-    days: Math.floor(total / 86400000),
-    hours: Math.floor(total / 3600000) % 24,
-    minutes: Math.floor(total / 60000) % 60,
-    seconds: Math.floor(total / 1000) % 60,
-  };
-}
+import { calcTimeLeft, type TimeLeft } from "@/lib/countdown";
 
 interface Props {
   /** ISO date string for the countdown target */
@@ -75,11 +57,15 @@ function CountdownTimer({ target, compact = false }: Props) {
     return <span>{time.seconds}s</span>;
   }
 
+  // Above 1h remaining, tick() only fires every 60s (seconds don't matter at
+  // that scale) — a "Sec" tile would just sit visibly frozen for up to a
+  // minute at a time, so drop it entirely rather than show stale-looking data.
+  const showSeconds = time.total <= 3_600_000;
   const segments = [
     { value: time.days, label: "Days" },
     { value: time.hours, label: "Hrs" },
     { value: time.minutes, label: "Min" },
-    { value: time.seconds, label: "Sec" },
+    ...(showSeconds ? [{ value: time.seconds, label: "Sec" }] : []),
   ];
 
   return (

@@ -55,7 +55,7 @@ export function RssFeedProvider({ children }: { children: React.ReactNode }) {
       const savedFilter = localStorage.getItem(STORAGE_KEY_DRIVER_FILTER);
       if (savedFilter) {
         const parsed = JSON.parse(savedFilter);
-        if (Array.isArray(parsed)) setDriverFilter(parsed);
+        if (Array.isArray(parsed)) setDriverFilter(parsed.filter((s): s is string => typeof s === "string"));
       }
     } catch {}
     setMounted(true);

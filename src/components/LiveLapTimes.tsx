@@ -2,8 +2,13 @@ import type { LiveLap, LiveTimingDriver } from "@/lib/types";
 
 function formatLapTime(seconds: number | null): string {
   if (seconds == null || seconds <= 0) return "—";
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  // Round to whole milliseconds first, then derive minutes/seconds from that
+  // integer — flooring minutes and independently rounding seconds (via
+  // toFixed) can disagree at a minute boundary (e.g. 119.9999997 -> "1:60.000"
+  // instead of "2:00.000").
+  const totalMs = Math.round(seconds * 1000);
+  const m = Math.floor(totalMs / 60000);
+  const s = (totalMs % 60000) / 1000;
   return `${m}:${s.toFixed(3).padStart(6, "0")}`;
 }
 

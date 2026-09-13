@@ -1,10 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { RssArticle } from "@/lib/types";
+import { DEFAULT_RSS_FEEDS } from "@/lib/rssFeeds";
 
 const FETCH_TIMEOUT_MS = 8_000;
+/** Cap on how many response bytes we'll read from any single feed. */
+const MAX_FEED_BYTES = 4 * 1024 * 1024; // 4 MB
+/** Cap on how many <item>/<entry> elements we'll parse out of one feed. */
+const MAX_ITEMS_PER_FEED = 200;
+/** Feed URLs are never taken from the client — only its known id is used to
+ * look up the real URL here, so a request can't be used to make this server
+ * fetch an arbitrary attacker-chosen address. */
+const FEED_URL_BY_ID = new Map(DEFAULT_RSS_FEEDS.map((f) => [f.id, f.url]));
+
+function isPrivateIpv4Octets(a: number, b: number): boolean {
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254) ||
+    a === 0
+  );
+}
+
+/**
+ * Expand a bracket-stripped, lowercase IPv6 literal (as `URL` normalizes it,
+ * e.g. "::ffff:a9fe:a9fe") into its 16 bytes, or null if it doesn't parse as
+ * exactly 8 groups (with at most one "::" compression).
+ */
+function parseIpv6Bytes(host: string): number[] | null {
+  const parts = host.split("::");
+  if (parts.length > 2) return null;
+  const head = parts[0] ? parts[0].split(":") : [];
+  const tail = parts.length === 2 && parts[1] ? parts[1].split(":") : [];
+  const missing = 8 - (head.length + tail.length);
+  if (parts.length === 1 && head.length !== 8) return null;
+  if (parts.length === 2 && missing < 0) return null;
+  const groups = [...head, ...Array(parts.length === 2 ? missing : 0).fill("0"), ...tail];
+  if (groups.length !== 8) return null;
+  const bytes: number[] = [];
+  for (const g of groups) {
+    if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
+    const v = parseInt(g, 16);
+    bytes.push((v >> 8) & 0xff, v & 0xff);
+  }
+  return bytes;
+}
+
+/** True if a normalized (bracket-stripped) IPv6 literal falls in a
+ * loopback/link-local/unique-local range, or embeds a private IPv4 address
+ * (IPv4-mapped `::ffff:a.b.c.d`, the `64:ff9b::/96` NAT64 prefix, or the
+ * deprecated IPv4-compatible `::a.b.c.d` form). */
+function isPrivateIpv6(inner: string): boolean {
+  if (inner === "::1" || inner === "::") return true;
+  const bytes = parseIpv6Bytes(inner);
+  if (!bytes) return false;
+  const first = bytes[0];
+  if (first === 0xfe && (bytes[1] & 0xc0) === 0x80) return true; // fe80::/10 link-local
+  if (first === 0xfc || first === 0xfd) return true; // fc00::/7 unique-local
+  const isV4Mapped = bytes.slice(0, 10).every((b) => b === 0) && bytes[10] === 0xff && bytes[11] === 0xff;
+  const isNat64 =
+    bytes[0] === 0x00 && bytes[1] === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b &&
+    bytes.slice(4, 12).every((b) => b === 0);
+  const isV4Compatible =
+    bytes.slice(0, 12).every((b) => b === 0) && bytes.slice(12).some((b) => b !== 0);
+  if (isV4Mapped || isNat64 || isV4Compatible) {
+    return isPrivateIpv4Octets(bytes[12], bytes[13]);
+  }
+  return false;
+}
 
 /** Block requests to private/internal IP ranges and non-HTTP(S) schemes. */
-function isAllowedUrl(raw: string): boolean {
+export function isAllowedUrl(raw: string): boolean {
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -12,38 +79,34 @@ function isAllowedUrl(raw: string): boolean {
     return false;
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+  // `URL` already normalizes alternate IP encodings (decimal/octal/hex
+  // octets, short forms like "127.1", a trailing-dot FQDN) to a canonical
+  // form before `hostname` is read here, so the checks below see that
+  // canonical value rather than the attacker-supplied spelling.
   const host = parsed.hostname;
-  // Block loopback, link-local, and private ranges
   if (
     host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "[::1]" ||
     host === "0.0.0.0" ||
     host.endsWith(".local") ||
     host === "metadata.google.internal"
   ) {
     return false;
   }
+  if (host.startsWith("[") && host.endsWith("]")) {
+    if (isPrivateIpv6(host.slice(1, -1))) return false;
+    return true;
+  }
   // Block private IPv4 ranges
   const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
   if (ipv4) {
     const [, a, b] = ipv4.map(Number);
-    if (
-      a === 10 ||
-      a === 127 ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      (a === 169 && b === 254) ||
-      a === 0
-    ) {
-      return false;
-    }
+    if (isPrivateIpv4Octets(a, b)) return false;
   }
   return true;
 }
 
 /** Unescape HTML entities commonly found in RSS feeds */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -71,8 +134,13 @@ function decodeEntities(text: string): string {
 }
 
 /** Strip HTML tags from a string */
-function stripHtml(html: string): string {
-  return decodeEntities(html.replace(/<[^>]*>/g, "")).trim();
+export function stripHtml(html: string): string {
+  // Unwrap CDATA sections before stripping tags — the generic tag regex
+  // below has no CDATA awareness, so `<![CDATA[text]]>` (the standard
+  // wrapping for <title>/<description> in most RSS feeds) would otherwise
+  // match as a single "tag" and get deleted entirely.
+  const withoutCData = html.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1");
+  return decodeEntities(withoutCData.replace(/<[^>]*>/g, "")).trim();
 }
 
 /** Tracking-pixel and 1x1 sentinel domains/paths to drop. */
@@ -175,8 +243,9 @@ async function fetchOgImage(articleUrl: string): Promise<string | undefined> {
     });
     if (!res.ok) return undefined;
     // Read just the <head> — og:image lives there and pulling the whole body
-    // wastes bandwidth on long-form articles.
-    const text = await res.text();
+    // wastes bandwidth on long-form articles. Bounded read also protects
+    // against a misbehaving/huge response before this slice ever applies.
+    const text = await readBoundedText(res, MAX_FEED_BYTES);
     const head = text.slice(0, 64_000);
 
     const patterns = [
@@ -221,7 +290,7 @@ async function backfillOgImages(articles: RssArticle[], concurrency = 8): Promis
 }
 
 /** Parse a single RSS/Atom item/entry element */
-function parseItem(itemXml: string, sourceName: string, sourceId: string): RssArticle | null {
+export function parseItem(itemXml: string, sourceName: string, sourceId: string): RssArticle | null {
   const titleMatch = itemXml.match(/<title[^>]*>([\s\S]*?)<\/title>/);
   const linkMatch =
     itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/) ||
@@ -266,7 +335,7 @@ function parseRssFeed(xml: string, sourceName: string, sourceId: string): RssArt
   // RSS 2.0 items
   const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
   let match;
-  while ((match = itemRegex.exec(xml)) !== null) {
+  while (articles.length < MAX_ITEMS_PER_FEED && (match = itemRegex.exec(xml)) !== null) {
     const article = parseItem(match[1], sourceName, sourceId);
     if (article) articles.push(article);
   }
@@ -274,13 +343,34 @@ function parseRssFeed(xml: string, sourceName: string, sourceId: string): RssArt
   // Atom entries (if no RSS items found)
   if (articles.length === 0) {
     const entryRegex = /<entry[\s>]([\s\S]*?)<\/entry>/gi;
-    while ((match = entryRegex.exec(xml)) !== null) {
+    while (articles.length < MAX_ITEMS_PER_FEED && (match = entryRegex.exec(xml)) !== null) {
       const article = parseItem(match[1], sourceName, sourceId);
       if (article) articles.push(article);
     }
   }
 
   return articles;
+}
+
+/** Read a response body as text, aborting once it exceeds `maxBytes` — a
+ * malicious or misbehaving feed shouldn't be able to make this endpoint
+ * buffer an unbounded response before any size check happens. */
+async function readBoundedText(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return res.text();
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      break;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks.map((c) => Buffer.from(c))).toString("utf-8");
 }
 
 export async function GET(request: NextRequest) {
@@ -291,7 +381,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ articles: [] });
   }
 
-  // Expect JSON array of { id, name, url }
+  // Expect JSON array of { id, name, url } — `url` is accepted for backward
+  // compatibility but ignored; only `id` is trusted, resolved against this
+  // server's own known feed list, so a request can never make this endpoint
+  // fetch an arbitrary client-chosen URL.
   let feedList: { id: string; name: string; url: string }[];
   try {
     const parsed = JSON.parse(feedUrls);
@@ -303,13 +396,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid feeds parameter" }, { status: 400 });
   }
 
+  // Cap fan-out regardless of what the client asks for.
+  feedList = feedList.slice(0, DEFAULT_RSS_FEEDS.length);
+
   const results = await Promise.allSettled(
     feedList.map(async (feed) => {
+      const url = FEED_URL_BY_ID.get(feed.id);
+      if (!url || !isAllowedUrl(url)) return [];
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-      if (!isAllowedUrl(feed.url)) return [];
       try {
-        const res = await fetch(feed.url, {
+        const res = await fetch(url, {
           signal: controller.signal,
           headers: {
             "User-Agent": "F1Dashboard/1.0",
@@ -318,7 +415,7 @@ export async function GET(request: NextRequest) {
           next: { revalidate: 300 }, // 5 min cache
         });
         if (!res.ok) return [];
-        const xml = await res.text();
+        const xml = await readBoundedText(res, MAX_FEED_BYTES);
         return parseRssFeed(xml, feed.name, feed.id);
       } catch {
         return [];

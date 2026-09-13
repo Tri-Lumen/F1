@@ -8,7 +8,7 @@ import {
   getAllSeasonResults,
   getQualifyingResults,
   getRaceDate,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { QualifyingResult, Race, RaceResult } from "@/lib/types";
 import PredictionsClient, { type RoundInfo } from "./PredictionsClient";
@@ -67,9 +67,12 @@ async function PredictionsContent() {
       polePosition = quali?.find((q) => q.position === "1")?.Driver.driverId;
     }
     const raceDate = getRaceDate(race);
-    const qualiDate = race.Qualifying
-      ? new Date(`${race.Qualifying.date}T${(race.Qualifying.time ?? "00:00:00Z").endsWith("Z") ? race.Qualifying.time ?? "00:00:00Z" : `${race.Qualifying.time}Z`}`)
-      : raceDate;
+    let qualiDate = raceDate;
+    if (race.Qualifying) {
+      const qualiTime = race.Qualifying.time ?? "00:00:00Z";
+      const qualiTimeStr = qualiTime.endsWith("Z") ? qualiTime : `${qualiTime}Z`;
+      qualiDate = new Date(`${race.Qualifying.date}T${qualiTimeStr}`);
+    }
 
     return {
       round: race.round,
@@ -86,7 +89,7 @@ async function PredictionsContent() {
     <PredictionsClient
       rounds={rounds}
       drivers={driverStandings}
-      season={CURRENT_YEAR}
+      season={getCurrentYear()}
     />
   );
 }
@@ -115,7 +118,7 @@ export default function PredictionsPage() {
           }}
         >
           Predict pole, podium, and fastest lap. Scored locally against the
-          official {CURRENT_YEAR} results.
+          official {getCurrentYear()} results.
         </p>
       </div>
       <Suspense

@@ -1,0 +1,27 @@
+name: Build and publish Electron app (tagged release)
+
+# Always use lowercase v prefix (e.g. v1.2.3) to ensure electron-updater can
+# parse the tag.
+#
+# Deliberately kept as its own trigger with NO paths/paths-ignore filter:
+# path filters and tag pushes interact unreliably in GitHub Actions — a
+# release tag pushed against a commit whose diff happens to only touch
+# paths ignored by electron-publish.yml's branch trigger could otherwise
+# silently skip the entire release build matrix. Tag pushes must always run
+# the full build unconditionally.
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+# Never cancel a tag build mid-flight, even if the tag is re-pushed.
+concurrency:
+  group: electron-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/electron-build.yml
+    permissions:
+      contents: write
+    secrets: inherit

@@ -6,7 +6,7 @@ import {
   getRaceSchedule,
   getAllSeasonResults,
   getRaceDate,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import { buildStudioRaceCardData } from "@/lib/raceCards";
 
@@ -130,7 +130,7 @@ export default function RacesPage() {
     <>
       <PageHeader
         title="Race Calendar"
-        subtitle={`${CURRENT_YEAR} Season · Full schedule with results`}
+        subtitle={`${getCurrentYear()} Season · Full schedule with results`}
       />
 
       <Suspense

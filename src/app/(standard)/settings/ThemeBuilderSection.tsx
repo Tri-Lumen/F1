@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTheme, type AccentTheme, type CustomTheme } from "@/lib/ThemeContext";
 import { CURRENT_TEAMS, RETRO_THEMES, TEAM_THEMES, type TeamThemeColors } from "@/lib/teamThemes";
 
@@ -42,16 +42,23 @@ function ColorRow({
   onChange: (v: string) => void;
 }) {
   const [text, setText] = useState(value);
+  const prevValue = useRef(value);
 
   const handleText = (v: string) => {
     setText(v);
     if (/^#[0-9a-fA-F]{6}$/.test(v)) onChange(v);
   };
 
-  // Sync text when value changes externally (e.g. seeding from preset)
-  if (text !== value && /^#[0-9a-fA-F]{6}$/.test(value)) {
-    setText(value);
-  }
+  // Sync text when value changes externally (e.g. seeding from preset or the
+  // native color picker) — gated on the prop actually changing, not on
+  // comparing against local `text`, or every partial/invalid keystroke would
+  // get snapped back to the last valid value before it could ever render.
+  useEffect(() => {
+    if (value !== prevValue.current) {
+      prevValue.current = value;
+      setText(value);
+    }
+  }, [value]);
 
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-f1-border/30 last:border-0">

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import {
   getDriverStandings,
   getAllSeasonResults,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import CompareClient from "./CompareClient";
 
@@ -31,7 +31,7 @@ export default function ComparePage() {
           <span className="text-f1-red">Head-to-Head</span> Comparison
         </h1>
         <p className="mt-1 text-sm text-f1-text-muted">
-          Compare any two {CURRENT_YEAR} drivers side by side
+          Compare any two {getCurrentYear()} drivers side by side
         </p>
       </div>
 

@@ -69,6 +69,8 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
   const [recentSearches, setRecentSearches] = useState<SearchItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -95,14 +97,35 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
     };
   }, []);
 
-  // Focus the input when opened and load recent searches
+  // Focus the input when opened and load recent searches; restore focus to
+  // whatever triggered the palette once it closes.
   useEffect(() => {
     if (open) {
+      previouslyFocused.current = document.activeElement as HTMLElement | null;
       setRecentSearches(loadRecent());
       const t = setTimeout(() => inputRef.current?.focus(), 20);
       return () => clearTimeout(t);
     }
+    previouslyFocused.current?.focus();
   }, [open]);
+
+  // Basic focus trap — keep Tab/Shift+Tab cycling within the dialog while open.
+  function onDialogKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== "Tab") return;
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -113,6 +136,15 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
       .slice(0, 25)
       .map((r) => r.item);
   }, [items, query]);
+
+  const showRecent = !query && recentSearches.length > 0;
+  // Single flat list backing keyboard nav — must match render order exactly
+  // (recent searches first, then the results list) so `active` always
+  // indexes the item actually highlighted on screen.
+  const visibleItems = useMemo(
+    () => (showRecent ? [...recentSearches, ...results] : results),
+    [showRecent, recentSearches, results]
+  );
 
   // Keep active index in range when results change
   useEffect(() => {
@@ -135,13 +167,13 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
       close();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, results.length - 1));
+      setActive((a) => Math.min(a + 1, visibleItems.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      go(results[active]);
+      go(visibleItems[active]);
     }
   }
 
@@ -160,8 +192,10 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
+        ref={dialogRef}
         className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-f1-border bg-f1-card shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
+        onKeyDown={onDialogKeyDown}
         role="dialog"
         aria-modal="true"
         aria-label="Search"
@@ -188,15 +222,19 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
             placeholder="Search drivers, teams, races, pages…"
             className="w-full bg-transparent text-sm text-f1-text placeholder:text-f1-text-muted/60 focus:outline-none"
             style={{ fontFamily: DM }}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="cmdk-listbox"
+            aria-activedescendant={`cmdk-item-${active}`}
           />
           <kbd className="hidden shrink-0 rounded border border-f1-border px-1.5 py-0.5 text-[10px] text-f1-text-muted sm:block">
             ESC
           </kbd>
         </div>
 
-        <div ref={listRef} className="max-h-[55vh] overflow-y-auto py-1.5">
+        <div ref={listRef} id="cmdk-listbox" className="max-h-[55vh] overflow-y-auto py-1.5" role="listbox">
           {/* Recent searches shown when query is empty */}
-          {!query && recentSearches.length > 0 && (
+          {showRecent && (
             <div>
               <p className="px-4 py-1.5 text-[10px] uppercase tracking-widest text-f1-text-muted/50 font-semibold">
                 Recent
@@ -204,7 +242,10 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
               {recentSearches.map((item, i) => (
                 <button
                   key={`recent-${item.href}`}
+                  id={`cmdk-item-${i}`}
                   data-idx={i}
+                  role="option"
+                  aria-selected={i === active}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => go(item)}
                   className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
@@ -239,11 +280,14 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
             </p>
           ) : (
             results.map((item, i) => {
-              const idx = (!query && recentSearches.length > 0) ? i + recentSearches.length + 1 : i;
+              const idx = showRecent ? i + recentSearches.length : i;
               return (
                 <button
                   key={`${item.kind}-${item.href}`}
+                  id={`cmdk-item-${idx}`}
                   data-idx={idx}
+                  role="option"
+                  aria-selected={idx === active}
                   onMouseEnter={() => setActive(idx)}
                   onClick={() => go(item)}
                   className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${

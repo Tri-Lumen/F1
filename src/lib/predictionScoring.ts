@@ -50,14 +50,13 @@ export function scorePrediction(
     if (actual.p2 && actual.p2 === prediction.p2) breakdown.p2 = 7;
     if (actual.p3 && actual.p3 === prediction.p3) breakdown.p3 = 5;
 
-    // Off-slot bonus: picks that landed on the podium but in the wrong slot
-    const slotMatched: Record<string, boolean> = {
-      [prediction.p1]: actual.p1 === prediction.p1,
-      [prediction.p2]: actual.p2 === prediction.p2,
-      [prediction.p3]: actual.p3 === prediction.p3,
-    };
-    for (const pick of [prediction.p1, prediction.p2, prediction.p3]) {
-      if (!slotMatched[pick] && actualPodiumSet.has(pick)) {
+    // Off-slot bonus: picks that landed on the podium but in the wrong slot.
+    // Indexed by slot position (not driverId) so duplicate picks across
+    // slots can't collide and mis-count the bonus.
+    const picks = [prediction.p1, prediction.p2, prediction.p3];
+    const slotMatched = [actual.p1 === prediction.p1, actual.p2 === prediction.p2, actual.p3 === prediction.p3];
+    for (let i = 0; i < picks.length; i++) {
+      if (!slotMatched[i] && actualPodiumSet.has(picks[i])) {
         breakdown.podiumOffSlot += 2;
       }
     }

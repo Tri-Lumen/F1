@@ -56,7 +56,9 @@ export default function PointsProgressionChart({
   // Chart dimensions
   const W = 800;
   const H = 220;
-  const PAD = { top: 12, right: 16, bottom: 32, left: 44 };
+  // `right` is sized to comfortably fit the end-of-line label (a 3-letter
+  // driver code, bold) without it getting clipped by the card's overflow.
+  const PAD = { top: 12, right: 32, bottom: 32, left: 44 };
   const chartW = W - PAD.left - PAD.right;
   const chartH = H - PAD.top - PAD.bottom;
 
@@ -81,6 +83,16 @@ export default function PointsProgressionChart({
   // X-axis labels: show every round if ≤10, else every 5
   const xLabelEvery = numRaces <= 10 ? 1 : 5;
 
+  // Text alternative for screen readers, since the chart itself is a
+  // decorative SVG (aria-hidden below).
+  const chartSummary =
+    `Cumulative drivers' championship points after ${numRaces} race${numRaces === 1 ? "" : "s"}, ` +
+    `from highest to lowest: ` +
+    topDrivers
+      .map((d) => `${d.Driver.code} ${cumulativePoints[d.Driver.driverId]?.at(-1) ?? 0}`)
+      .join(", ") +
+    ".";
+
   return (
     <div className="rounded-xl border border-f1-border bg-f1-card overflow-hidden">
       <div className="border-b border-f1-border px-5 py-4">
@@ -91,6 +103,7 @@ export default function PointsProgressionChart({
       </div>
 
       <div className="p-4">
+        <p className="sr-only">{chartSummary}</p>
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"

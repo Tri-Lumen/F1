@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import { Suspense } from "react";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import {
   getPitStops,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Metadata } from "next";
 import RefreshButton from "@/components/RefreshButton";
@@ -37,7 +37,21 @@ import {
   getDriverImageFallbackUrl,
   getTeamLogoUrl,
 } from "@/lib/profileImages";
-import { getDriverNumber } from "@/lib/driverOverrides";
+import { getDriverNumber, getDriverConstructorId } from "@/lib/driverOverrides";
+import type { RaceResult } from "@/lib/types";
+
+/**
+ * Whether a race result belongs to the given team, resolved through the
+ * per-driver override (upstream `Constructor.constructorId` on a race result
+ * can lag a mid-season rebrand or roster move even after the canonical
+ * constructor standings entry has been updated).
+ */
+function resultBelongsToTeam(r: RaceResult, constructorId: string): boolean {
+  return (
+    (getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ??
+      r.Constructor.constructorId) === constructorId
+  );
+}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -71,7 +85,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   const carImageUrls = getTeamCarImageUrls(constructorId);
   const teamLogoUrl = getTeamLogoUrl(constructorId);
   const drivers = driverStandings.filter(
-    (d) => d.Constructors[0]?.constructorId === constructorId
+    (d) => (getDriverConstructorId(d.Driver.driverId, d.Constructors[0]?.constructorId) ?? d.Constructors[0]?.constructorId) === constructorId
   );
 
   // Compute team stats
@@ -79,13 +93,11 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   let totalPos = 0, resultCount = 0, doublePoints = 0;
 
   const teamRaces = allRaces.filter((race) =>
-    (race.Results ?? []).some((r) => r.Constructor.constructorId === constructorId)
+    (race.Results ?? []).some((r) => resultBelongsToTeam(r, constructorId))
   );
 
   for (const race of teamRaces) {
-    const results = (race.Results ?? []).filter(
-      (r) => r.Constructor.constructorId === constructorId
-    );
+    const results = (race.Results ?? []).filter((r) => resultBelongsToTeam(r, constructorId));
     const positions = results.map((r) => parseInt(r.position));
 
     if (positions.includes(1) && positions.includes(2)) oneTwo++;
@@ -109,7 +121,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
   // Reliability breakdown: categorize DNFs
   const dnfReasons: { driver: string; status: string; raceName: string }[] = [];
   for (const race of teamRaces) {
-    for (const r of (race.Results ?? []).filter((r) => r.Constructor.constructorId === constructorId)) {
+    for (const r of (race.Results ?? []).filter((r) => resultBelongsToTeam(r, constructorId))) {
       if (r.status !== "Finished" && !r.status.startsWith("+")) {
         dnfReasons.push({
           driver: `${r.Driver.givenName} ${r.Driver.familyName}`,
@@ -143,9 +155,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
 
   // Build combined race table: for each race, get both drivers' results
   const raceRows = teamRaces.map((race) => {
-    const results = (race.Results ?? []).filter(
-      (r) => r.Constructor.constructorId === constructorId
-    );
+    const results = (race.Results ?? []).filter((r) => resultBelongsToTeam(r, constructorId));
     // Sort by position
     results.sort((a, b) => parseInt(a.position) - parseInt(b.position));
     return { race, results };
@@ -230,7 +240,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
       <div className="mb-6 grid grid-cols-3 sm:grid-cols-4 gap-3">
         {[
           { label: "PODIUMS", value: podiums },
-          { label: "POLES", value: poles },
+          { label: "GRID P1S", value: poles },
           { label: "1-2 FINISHES", value: oneTwo },
           { label: "FASTEST LAPS", value: fastestLaps },
           { label: "DNFs", value: dnfs },
@@ -398,7 +408,7 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
       {/* Race-by-Race Table */}
       <div className="rounded-xl border border-f1-border bg-f1-card">
         <div className="border-b border-f1-border px-5 py-4">
-          <h2 className="font-bold text-lg">{CURRENT_YEAR} Race Results</h2>
+          <h2 className="font-bold text-lg">{getCurrentYear()} Race Results</h2>
         </div>
 
         {raceRows.length === 0 ? (

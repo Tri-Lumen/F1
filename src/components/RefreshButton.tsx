@@ -10,16 +10,19 @@ function RefreshButton({
 }) {
   const router = useRouter();
 
-  // Read the user's preferred refresh interval from localStorage (set in Settings).
-  // Falls back to the prop, then 30 s.
+  // Read the user's preferred refresh interval from localStorage (set in
+  // Settings) — but only as a fallback. A caller that explicitly passes
+  // `intervalMs` (e.g. the live page wanting a faster 15s cadence) means it
+  // deliberately, so it always wins over the stored default.
   const [intervalMs, setIntervalMs] = useState(intervalMsProp ?? 30000);
   useEffect(() => {
+    if (intervalMsProp != null) return;
     const stored = localStorage.getItem("f1-refresh-interval");
     if (stored) {
       const seconds = parseInt(stored, 10);
       if (seconds > 0) setIntervalMs(seconds * 1000);
     }
-  }, []);
+  }, [intervalMsProp]);
 
   const intervalRef = useRef(intervalMs);
   intervalRef.current = intervalMs;

@@ -38,8 +38,18 @@ export default function OnboardButton({
       resetTimerRef.current = null;
     }, delay);
   }, []);
+
+  // openOnboard's fetches are awaited across several `await` points; guard
+  // every setStatus in there against firing after the component has
+  // unmounted, matching the pattern already used in the connectivity-check
+  // effect below.
+  const isMountedRef = useRef(true);
+  const safeSetStatus = useCallback((s: typeof status) => {
+    if (isMountedRef.current) setStatus(s);
+  }, []);
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
     };
   }, []);
@@ -69,12 +79,12 @@ export default function OnboardButton({
 
   async function openOnboard() {
     if (mvConnected === false) {
-      setStatus("no-mv");
+      safeSetStatus("no-mv");
       resetToIdle(3000);
       return;
     }
 
-    setStatus("loading");
+    safeSetStatus("loading");
     const url = getMultiviewerUrl();
     // OpenF1 live timing can lag mid-season number changes (e.g. Verstappen's
     // switch to #3 for 2026), so route through the override table first.
@@ -124,7 +134,7 @@ export default function OnboardButton({
             if (retryRes.ok) {
               const retryJson = await retryRes.json();
               if (!retryJson.errors?.length) {
-                setStatus("success");
+                safeSetStatus("success");
                 resetToIdle(2000);
                 return;
               }
@@ -132,18 +142,18 @@ export default function OnboardButton({
           } finally {
             clearTimeout(retryTimeout);
           }
-          setStatus("error");
+          safeSetStatus("error");
           resetToIdle(3000);
         } else {
-          setStatus("success");
+          safeSetStatus("success");
           resetToIdle(2000);
         }
       } else {
-        setStatus("error");
+        safeSetStatus("error");
         resetToIdle(3000);
       }
     } catch {
-      setStatus("error");
+      safeSetStatus("error");
       resetToIdle(3000);
     }
   }

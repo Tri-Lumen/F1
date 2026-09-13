@@ -1,5 +1,6 @@
 import type { DriverStanding, Race } from "@/lib/types";
 import { getTeamColor, getCountryFlag } from "@/lib/api";
+import EmptyState from "@/components/EmptyState";
 
 interface H2H {
   constructorId: string;
@@ -117,7 +118,6 @@ export default function TeammateH2H({
   allRaces: Race[];
 }) {
   const data = computeH2H(driverStandings, allRaces);
-  if (data.length === 0) return null;
 
   return (
     <div className="mb-10">
@@ -125,6 +125,9 @@ export default function TeammateH2H({
       <p className="mb-4 text-sm text-f1-text-muted">
         Season record between teammates &mdash; race finishes and qualifying grid positions
       </p>
+      {data.length === 0 ? (
+        <EmptyState title="No teammate head-to-head data yet" />
+      ) : (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data.map((h) => {
           const { driverA: a, driverB: b } = h;
@@ -208,6 +211,7 @@ export default function TeammateH2H({
           );
         })}
       </div>
+      )}
     </div>
   );
 }

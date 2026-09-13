@@ -1,18 +1,9 @@
 import type { QualifyingResult } from "@/lib/types";
 import { getTeamColor } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
+import { parseLapTimeToSeconds as toSeconds } from "@/lib/lapTime";
 
 const BC = "'Barlow Condensed', sans-serif";
-
-function toSeconds(t?: string): number | null {
-  if (!t) return null;
-  const m = t.match(/^(?:(\d+):)?(\d+)(?:\.(\d+))?$/);
-  if (!m) return null;
-  const min = m[1] ? parseInt(m[1], 10) : 0;
-  const sec = parseInt(m[2], 10);
-  const frac = m[3] ? parseInt(m[3], 10) / Math.pow(10, m[3].length) : 0;
-  return min * 60 + sec + frac;
-}
 
 function fmtGap(secs: number): string {
   return `+${secs.toFixed(3)}`;
@@ -31,10 +22,13 @@ function Row({
   q,
   time,
   best,
+  isPoleZone,
 }: {
   q: QualifyingResult;
   time?: string;
   best: number | null;
+  /** True only for the Q3 zone — its fastest time is the actual session pole. */
+  isPoleZone: boolean;
 }) {
   const constructorId =
     getDriverConstructorId(q.Driver.driverId, q.Constructor.constructorId) ?? "";
@@ -67,7 +61,7 @@ function Row({
         )}
         {gap !== null && gap <= 0.0005 && (
           <span className="block font-mono text-[11px] font-bold text-f1-accent">
-            POLE
+            {isPoleZone ? "POLE" : "FASTEST"}
           </span>
         )}
       </span>
@@ -159,6 +153,7 @@ export default function QualifyingProgression({
                   q={q}
                   time={zone.segment(q)}
                   best={best}
+                  isPoleZone={zone.key === "q3"}
                 />
               ))}
             </div>

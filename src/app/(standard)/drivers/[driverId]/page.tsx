@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
@@ -7,7 +7,7 @@ import {
   getDriverResults,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
   getDriverCareerWins,
   getAllSeasonResults,
 } from "@/lib/api";
@@ -178,7 +178,8 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
   const teammateH2H = (() => {
     const teammates = standings.filter(
       (s) =>
-        s.Constructors[0]?.constructorId === constructor?.constructorId &&
+        (getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? "") ===
+          constructorId &&
         s.Driver.driverId !== driverId
     );
     if (teammates.length === 0) return null;
@@ -432,7 +433,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
             </div>
           ))}
         </div>
-        <p className="mt-3 text-xs text-f1-text-muted">Based on available seasons (2003–{CURRENT_YEAR})</p>
+        <p className="mt-3 text-xs text-f1-text-muted">Based on available seasons (2003–{getCurrentYear()})</p>
       </div>
 
       {/* Teammate H2H */}
@@ -472,7 +473,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
       <div className="rounded-xl border border-f1-border bg-f1-card">
         <div className="border-b border-f1-border px-5 py-4">
           <h2 className="font-bold text-lg">
-            {CURRENT_YEAR} Race Results
+            {getCurrentYear()} Race Results
           </h2>
         </div>
 

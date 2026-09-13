@@ -24,7 +24,7 @@ COPY . .
 RUN apk add --no-cache git && \
     export GIT_TERMINAL_PROMPT=0 && \
     if [ ! -d .git ]; then \
-      git init && \
+      git init -b main && \
       git remote add origin "$(node -e "process.stdout.write(require('./package.json').repository.url)")" && \
       git fetch origin main && \
       git reset --mixed origin/main ; \
@@ -53,12 +53,24 @@ RUN chown nextjs:nodejs /app
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy the full source + .git so the update API can git pull & rebuild
+# Copy the pre-built standalone server for normal runtime use...
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/.git ./.git
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/package-lock.json* ./
+
+# ...and also the application source tree, so the self-update API's
+# `npm run build` (= `next build`) has something to build after a `git pull`.
+# `git pull` only materializes the files touched by the incoming diff into
+# the existing working tree — it does not conjure up a working tree that
+# was never populated in the first place. Keep this list to what `next
+# build` actually reads (see next.config.ts / tsconfig.json) rather than
+# copying everything, to avoid bloating the image with build-only files.
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./tsconfig.json
+COPY --from=builder --chown=nextjs:nodejs /app/postcss.config.mjs ./postcss.config.mjs
 
 USER nextjs
 

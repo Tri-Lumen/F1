@@ -2,13 +2,10 @@ import type { Race } from "@/lib/types";
 import { getCountryFlagByCountry } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 import StudioCountdownTiles from "@/components/StudioCountdownTiles";
+import { LocalWeekdayTime24 } from "@/components/LocalDateTime";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
-
-function pad(n: number) {
-  return String(Math.max(0, n)).padStart(2, "0");
-}
 
 function getSessionLabel(key: string): string {
   const labels: Record<string, string> = {
@@ -21,16 +18,6 @@ function getSessionLabel(key: string): string {
     Race: "Race",
   };
   return labels[key] ?? key;
-}
-
-function formatSessionDay(dateStr: string): string {
-  const d = new Date(dateStr + "Z");
-  return d.toLocaleDateString("en-US", { weekday: "short" });
-}
-
-function formatSessionTime(dateStr: string): string {
-  const d = new Date(dateStr + "Z");
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
 }
 
 interface Props {
@@ -200,8 +187,7 @@ export default function StudioNextRaceCard({ race, nextSessionDate }: Props) {
                     letterSpacing: "0.04em",
                   }}
                 >
-                  {formatSessionDay(s.date + "T" + timeStr.replace("Z", ""))} ·{" "}
-                  {formatSessionTime(s.date + "T" + timeStr.replace("Z", ""))}
+                  <LocalWeekdayTime24 iso={fullDate} />
                 </span>
               </div>
             );

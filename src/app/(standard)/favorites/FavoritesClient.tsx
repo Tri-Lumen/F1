@@ -105,7 +105,9 @@ function computeTeamExtras(constructorId: string, sortedRaces: Race[]) {
 
   for (const race of sortedRaces) {
     const teamResults = race.Results?.filter(
-      (r) => r.Constructor.constructorId === constructorId
+      (r) =>
+        (getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ??
+          r.Constructor.constructorId) === constructorId
     ) ?? [];
     if (teamResults.length === 0) continue;
     racesEntered++;
@@ -200,7 +202,9 @@ export default function FavoritesClient({
     for (const race of sortedRaces) {
       const teamResults =
         race.Results?.filter(
-          (r) => r.Constructor.constructorId === constructorId
+          (r) =>
+            (getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ??
+              r.Constructor.constructorId) === constructorId
         ) ?? [];
       if (teamResults.length > 0) {
         const best = teamResults.reduce((a, b) => {
@@ -216,8 +220,10 @@ export default function FavoritesClient({
 
   function getTeamDriverNames(constructorId: string): string[] {
     return driverStandings
-      .filter((s) =>
-        s.Constructors.some((c) => c.constructorId === constructorId)
+      .filter(
+        (s) =>
+          (getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ??
+            s.Constructors[0]?.constructorId) === constructorId
       )
       .map((s) => `${s.Driver.givenName} ${s.Driver.familyName}`);
   }

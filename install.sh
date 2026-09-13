@@ -10,6 +10,11 @@
 #
 #  Or clone & run:
 #    git clone https://github.com/Tri-Lumen/F1.git && cd F1 && ./install.sh
+#
+#  Intended use case: fresh, standalone install (curl|bash into a new
+#  $HOME/Delta-Dashboard checkout) that builds for production and leaves the
+#  app ready for `npm start`. For iterating inside an existing checkout with
+#  the dev server instead, use start.sh.
 # ============================================================================
 set -e
 

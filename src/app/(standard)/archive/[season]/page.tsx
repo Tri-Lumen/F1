@@ -13,7 +13,9 @@ import {
 } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
 
-export const dynamic = "force-dynamic";
+// Historical seasons never change, so cache aggressively rather than
+// rendering fully dynamically on every request.
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,

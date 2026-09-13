@@ -15,7 +15,8 @@ import {
   getTeamColor,
   getCountryFlag,
   getRaceDate,
-  CURRENT_YEAR,
+  getMaxPointsForRound,
+  getCurrentYear,
 } from "@/lib/api";
 import type { Race } from "@/lib/types";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
@@ -99,7 +100,7 @@ async function DriversContent() {
   const remainingSchedule = schedule.filter((r) => getRaceDate(r) > now);
   const remainingRaces = remainingSchedule.length;
   const maxAvailable = remainingSchedule.reduce(
-    (sum, r) => sum + 25 + (r.Sprint ? 8 : 0),
+    (sum, r) => sum + getMaxPointsForRound(!!r.Sprint),
     0
   );
   const leader = standings[0];
@@ -165,7 +166,7 @@ async function DriversContent() {
 
   const highlights = [
     topWins && { label: "Most Wins", value: topWins.count, name: topWins.name, icon: "🏆" },
-    topPoles && { label: "Most Poles", value: topPoles.count, name: topPoles.name, icon: "⚡" },
+    topPoles && { label: "Most Grid P1s", value: topPoles.count, name: topPoles.name, icon: "⚡" },
     topFL && { label: "Fastest Laps", value: topFL.count, name: topFL.name, icon: "🟣" },
     streakCount > 1 && { label: "Win Streak", value: streakCount, name: streakName, icon: "🔥" },
     topDNF && { label: "Most DNFs", value: topDNF.count, name: topDNF.name, icon: "🔧" },
@@ -205,7 +206,7 @@ async function DriversContent() {
           <SectionHeading variant="label" title="Championship Status" />
           {clinchInfo.clinched ? (
             <p style={{ fontFamily: BC, fontWeight: 800, fontSize: 15, color: "var(--color-f1-accent)" }}>
-              🏆 {clinchInfo.leaderName} has clinched the {CURRENT_YEAR} World Championship!
+              🏆 {clinchInfo.leaderName} has clinched the {getCurrentYear()} World Championship!
             </p>
           ) : (
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px 24px" }}>
@@ -436,7 +437,7 @@ async function DriversContent() {
                     ["PTS", s.points],
                     ["WINS", s.wins],
                     ["PODS", stats.podiums],
-                    ["POLES", stats.poles],
+                    ["GRID P1S", stats.poles],
                     ["FL", stats.fastestLaps],
                     ["DNFs", stats.dnfs],
                     ["AVG", stats.avgFinish],
@@ -529,7 +530,7 @@ export default function DriversPage() {
     <>
       <PageHeader
         title="Drivers Championship"
-        subtitle={`${CURRENT_YEAR} Season · Full driver stats and standings`}
+        subtitle={`${getCurrentYear()} Season · Full driver stats and standings`}
       />
 
       <Suspense

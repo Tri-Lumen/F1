@@ -64,6 +64,88 @@ function Find-WindowsAsset {
     return $asset
 }
 
+function Get-ExpectedSha512 {
+    # electron-builder's latest.yml lists each artifact as:
+    #   files:
+    #     - url: Delta-Dashboard-Setup.exe
+    #       sha512: <base64>
+    #       size: <bytes>
+    # Parsed line-by-line (no YAML parser dependency) by tracking the most
+    # recently seen "url:" and pairing it with the "sha512:" line that follows.
+    param(
+        [Parameter(Mandatory)][string]$ManifestPath,
+        [Parameter(Mandatory)][string]$AssetName
+    )
+    $currentUrl = $null
+    foreach ($line in Get-Content -Path $ManifestPath) {
+        if ($line -match '^\s*-?\s*url:\s*(.+?)\s*$') {
+            $currentUrl = $matches[1].Trim('"').Trim("'")
+        }
+        elseif ($line -match '^\s*sha512:\s*(.+?)\s*$') {
+            $sha = $matches[1].Trim('"').Trim("'")
+            if ($currentUrl -eq $AssetName) {
+                return $sha
+            }
+        }
+    }
+    return $null
+}
+
+function Test-AssetChecksum {
+    # Downloads the release's latest.yml manifest and verifies $AssetPath's
+    # SHA-512 matches the entry for $AssetName. Exits the script on any
+    # mismatch or missing data — never install an unverified download.
+    param(
+        [Parameter(Mandatory)]$Release,
+        [Parameter(Mandatory)][string]$AssetPath,
+        [Parameter(Mandatory)][string]$AssetName,
+        [Parameter(Mandatory)][string]$TempDir
+    )
+
+    $manifestAsset = $Release.assets | Where-Object { $_.name -eq 'latest.yml' } | Select-Object -First 1
+    if (-not $manifestAsset) {
+        Write-Host '[ERROR] Release has no latest.yml manifest — cannot verify download integrity. Aborting.' -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host '[INFO]  Verifying checksum against latest.yml...' -ForegroundColor Cyan
+    $manifestPath = Join-Path $TempDir 'latest.yml'
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $manifestAsset.browser_download_url -OutFile $manifestPath -UseBasicParsing
+    }
+    catch {
+        Write-Host "[ERROR] Failed to download latest.yml for checksum verification: $_" -ForegroundColor Red
+        exit 1
+    }
+
+    $expectedSha512 = Get-ExpectedSha512 -ManifestPath $manifestPath -AssetName $AssetName
+    if (-not $expectedSha512) {
+        Write-Host "[ERROR] Could not find a sha512 entry for $AssetName in latest.yml. Aborting — refusing to install an unverified download." -ForegroundColor Red
+        exit 1
+    }
+
+    # Get-FileHash reports hex; electron-builder's manifest uses base64, so
+    # convert before comparing rather than trusting a string-format match.
+    $hexHash = (Get-FileHash -Path $AssetPath -Algorithm SHA512).Hash
+    $bytes = [byte[]]::new($hexHash.Length / 2)
+    for ($i = 0; $i -lt $hexHash.Length; $i += 2) {
+        $bytes[$i / 2] = [Convert]::ToByte($hexHash.Substring($i, 2), 16)
+    }
+    $actualSha512 = [Convert]::ToBase64String($bytes)
+
+    if ($actualSha512 -ne $expectedSha512) {
+        Write-Host "[ERROR] Checksum verification FAILED for $AssetName." -ForegroundColor Red
+        Write-Host "        Expected: $expectedSha512" -ForegroundColor Red
+        Write-Host "        Actual:   $actualSha512" -ForegroundColor Red
+        Write-Host '        The download may be corrupted or tampered with. Aborting.' -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "[OK]    Checksum verified ($AssetName matches latest.yml)" -ForegroundColor Green
+}
+
 function Install-DeltaDashboard {
     Write-Banner
 
@@ -95,6 +177,8 @@ function Install-DeltaDashboard {
         }
 
         Write-Host '[OK]    Download complete' -ForegroundColor Green
+
+        Test-AssetChecksum -Release $release -AssetPath $tempFile -AssetName $asset.name -TempDir $tempDir
 
         Write-Host '[INFO]  Launching installer...' -ForegroundColor Cyan
         $process = Start-Process -FilePath $tempFile -PassThru -Wait

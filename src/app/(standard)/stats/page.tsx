@@ -10,9 +10,11 @@ import {
   getPitStops,
   getTeamColor,
   getCountryFlag,
-  CURRENT_YEAR,
+  getCurrentYear,
 } from "@/lib/api";
+import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
+import ChampionshipEvolutionChart from "@/components/ChampionshipEvolutionChart";
 
 export const metadata: Metadata = {
   title: "Season Stats — F1 2026",
@@ -41,7 +43,7 @@ async function StatsContent() {
   if (completedRaces.length === 0 && completedSprints.length === 0) {
     return (
       <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {CURRENT_YEAR}.</p>
+        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
     );
   }
@@ -71,7 +73,8 @@ async function StatsContent() {
     for (const r of results) {
       const id = r.Driver.driverId;
       const name = `${r.Driver.givenName} ${r.Driver.familyName}`;
-      const cid = r.Constructor.constructorId;
+      const cid = getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId;
+      const cname = getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name;
       const pos = parseInt(r.position);
       const grid = parseInt(r.grid);
       const pts = parseFloat(r.points);
@@ -93,7 +96,7 @@ async function StatsContent() {
 
       // DNFs per team
       if (isDnf) {
-        const t = teamDNFMap.get(cid) ?? { name: r.Constructor.name, constructorId: cid, dnfs: 0 };
+        const t = teamDNFMap.get(cid) ?? { name: cname, constructorId: cid, dnfs: 0 };
         teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
       }
 
@@ -119,7 +122,8 @@ async function StatsContent() {
     for (const r of results) {
       const id = r.Driver.driverId;
       const name = `${r.Driver.givenName} ${r.Driver.familyName}`;
-      const cid = r.Constructor.constructorId;
+      const cid = getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId;
+      const cname = getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name;
       const pos = parseInt(r.position);
       const grid = parseInt(r.grid);
       const pts = parseFloat(r.points);
@@ -136,7 +140,7 @@ async function StatsContent() {
 
       // DNFs from sprint
       if (isDnf) {
-        const t = teamDNFMap.get(cid) ?? { name: r.Constructor.name, constructorId: cid, dnfs: 0 };
+        const t = teamDNFMap.get(cid) ?? { name: cname, constructorId: cid, dnfs: 0 };
         teamDNFMap.set(cid, { ...t, dnfs: t.dnfs + 1 });
       }
 
@@ -170,8 +174,9 @@ async function StatsContent() {
   const driverNameMap = new Map<string, string>();
   for (const race of completedRaces) {
     for (const r of race.Results ?? []) {
-      driverTeamMap.set(r.Driver.driverId, r.Constructor.constructorId);
-      driverNameMap.set(r.Driver.driverId, r.Constructor.name);
+      const id = r.Driver.driverId;
+      driverTeamMap.set(id, getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId);
+      driverNameMap.set(id, getDriverConstructorName(id, r.Constructor.name) ?? r.Constructor.name);
     }
   }
 
@@ -223,7 +228,7 @@ async function StatsContent() {
       if (isDnf) continue; // exclude DNFs from consistency
       const existing = consistencyMap.get(id) ?? {
         name: `${r.Driver.givenName} ${r.Driver.familyName}`,
-        constructorId: r.Constructor.constructorId,
+        constructorId: getDriverConstructorId(id, r.Constructor.constructorId) ?? r.Constructor.constructorId,
         nationality: r.Driver.nationality,
         positions: [],
       };
@@ -255,7 +260,7 @@ async function StatsContent() {
       if (!driverInfoMap.has(r.Driver.driverId)) {
         driverInfoMap.set(r.Driver.driverId, {
           name: `${r.Driver.givenName} ${r.Driver.familyName}`,
-          constructorId: r.Constructor.constructorId,
+          constructorId: getDriverConstructorId(r.Driver.driverId, r.Constructor.constructorId) ?? r.Constructor.constructorId,
         });
       }
     }
@@ -628,142 +633,12 @@ async function StatsContent() {
         </div>
       )}
 
-      {/* Championship Points Evolution */}
+      {/* Championship Points Evolution (absolute points, or gap to leader — formerly the standalone /gap page) */}
       {top8Evolution.length > 0 && numRounds > 1 && (
-        <div id="evolution" className="rounded-xl border border-[#1c1c1c] bg-[#131313] overflow-hidden scroll-mt-16">
-          <div className="border-b border-[#1c1c1c] p-4">
-            <h2 className="text-base" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, letterSpacing: "0.04em" }}>Championship Evolution</h2>
-            <p className="text-xs text-f1-text-muted mt-0.5">
-              Cumulative points for top drivers after each round
-            </p>
-          </div>
-          <div className="p-4">
-            {/* SVG sparkline chart */}
-            {(() => {
-              const W = 800;
-              const H = 220;
-              const PAD = { top: 16, right: 24, bottom: 32, left: 48 };
-              const chartW = W - PAD.left - PAD.right;
-              const chartH = H - PAD.top - PAD.bottom;
-              const maxPts = Math.max(...top8Evolution.map((d) => d.points.at(-1) ?? 0));
-
-              const xScale = (i: number) =>
-                PAD.left + (i / Math.max(numRounds - 1, 1)) * chartW;
-              const yScale = (pts: number) =>
-                PAD.top + chartH - (pts / (maxPts || 1)) * chartH;
-
-              return (
-                <svg
-                  viewBox={`0 0 ${W} ${H}`}
-                  className="w-full"
-                  style={{ maxHeight: 240 }}
-                >
-                  {/* Grid lines */}
-                  {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-                    const y = PAD.top + chartH * (1 - frac);
-                    const pts = Math.round(maxPts * frac);
-                    return (
-                      <g key={frac}>
-                        <line
-                          x1={PAD.left}
-                          x2={W - PAD.right}
-                          y1={y}
-                          y2={y}
-                          stroke="currentColor"
-                          strokeOpacity={0.08}
-                          strokeWidth={1}
-                        />
-                        <text
-                          x={PAD.left - 6}
-                          y={y + 4}
-                          textAnchor="end"
-                          fontSize={10}
-                          fill="currentColor"
-                          opacity={0.4}
-                        >
-                          {pts}
-                        </text>
-                      </g>
-                    );
-                  })}
-
-                  {/* Round labels on x-axis */}
-                  {completedRaces.map((race, i) => {
-                    if (i % Math.max(1, Math.floor(numRounds / 8)) !== 0) return null;
-                    return (
-                      <text
-                        key={race.round}
-                        x={xScale(i)}
-                        y={H - 6}
-                        textAnchor="middle"
-                        fontSize={9}
-                        fill="currentColor"
-                        opacity={0.35}
-                      >
-                        R{race.round}
-                      </text>
-                    );
-                  })}
-
-                  {/* Lines per driver */}
-                  {top8Evolution.map((driver) => {
-                    const color = getTeamColor(driver.constructorId);
-                    const points = driver.points.map((pts, i) => ({
-                      x: xScale(i),
-                      y: yScale(pts),
-                    }));
-                    const d = points
-                      .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
-                      .join(" ");
-                    const last = points.at(-1)!;
-                    const shortName = driver.name.split(" ").pop() ?? driver.name;
-
-                    return (
-                      <g key={driver.driverId}>
-                        <path
-                          d={d}
-                          fill="none"
-                          stroke={color}
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          opacity={0.85}
-                        />
-                        {/* Label at end of line */}
-                        <text
-                          x={last.x + 4}
-                          y={last.y + 4}
-                          fontSize={9}
-                          fill={color}
-                          fontWeight="bold"
-                        >
-                          {shortName}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              );
-            })()}
-
-            {/* Legend */}
-            <div className="mt-2 flex flex-wrap gap-3">
-              {top8Evolution.map((d) => {
-                const color = getTeamColor(d.constructorId);
-                const shortName = d.name.split(" ").pop() ?? d.name;
-                return (
-                  <div key={d.driverId} className="flex items-center gap-1.5">
-                    <span className="h-2 w-4 rounded-full inline-block" style={{ backgroundColor: color }} />
-                    <span className="text-xs text-f1-text-muted">{shortName}</span>
-                    <span className="text-xs font-bold" style={{ color }}>
-                      {d.points.at(-1)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <ChampionshipEvolutionChart
+          evolution={top8Evolution}
+          rounds={completedRaces.map((r) => ({ round: r.round, raceName: r.raceName }))}
+        />
       )}
     </div>
   );
@@ -789,7 +664,7 @@ export default function StatsPage() {
             SEASON STATS
           </div>
           <div style={{ fontFamily: DM, fontSize: 12, color: "#555", marginTop: 4 }}>
-            {CURRENT_YEAR} Season · In-depth statistics and analysis
+            {getCurrentYear()} Season · In-depth statistics and analysis
           </div>
         </div>
         <RefreshButton />

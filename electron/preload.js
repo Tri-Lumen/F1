@@ -49,4 +49,15 @@ contextBridge.exposeInMainWorld('electronApp', {
     ipcRenderer.removeAllListeners('update-downloaded');
     ipcRenderer.once('update-downloaded', (_event, data) => cb(data));
   },
+
+  /**
+   * Register a callback for background auto-update failures (e.g. the
+   * download or check failed). Mirrors the 'update-error' channel that
+   * main.js's autoUpdater 'error' handler sends on.
+   * @param {(err: { message: string }) => void} cb
+   */
+  onUpdateError(cb) {
+    ipcRenderer.removeAllListeners('update-error');
+    ipcRenderer.on('update-error', (_event, data) => cb(data));
+  },
 });

@@ -214,7 +214,11 @@ export interface OpenF1PitStop {
 
 // Ergast API response envelope types
 export interface ErgastResponse<T> {
-  MRData: T;
+  MRData: T & {
+    total?: string;
+    limit?: string;
+    offset?: string;
+  };
 }
 
 export interface StandingsTableData {

@@ -30,6 +30,96 @@ ok()    { printf "${GREEN}[OK]${NC}    %s\n" "$*"; }
 warn()  { printf "${YELLOW}[WARN]${NC}  %s\n" "$*"; }
 error() { printf "${RED}[ERROR]${NC} %s\n" "$*"; exit 1; }
 
+# ---- Checksum verification helpers ------------------------------------------
+# electron-builder publishes latest-linux.yml alongside every release,
+# containing the base64-encoded SHA-512 of every Linux artifact. We verify
+# the downloaded asset against it before installing anything.
+
+# Compute the base64-encoded SHA-512 digest of a file (the same encoding
+# electron-builder uses in latest*.yml — sha512sum/shasum report hex, so
+# their output is converted rather than compared directly).
+sha512_base64() {
+    local file="$1"
+    if command -v openssl &>/dev/null; then
+        openssl dgst -sha512 -binary "$file" | openssl base64 -A
+        return
+    fi
+    local hex=""
+    if command -v sha512sum &>/dev/null; then
+        hex=$(sha512sum "$file" | awk '{print $1}')
+    elif command -v shasum &>/dev/null; then
+        hex=$(shasum -a 512 "$file" | awk '{print $1}')
+    else
+        error "No SHA-512 tool found (openssl, sha512sum, or shasum required) — cannot verify download integrity."
+    fi
+    if command -v xxd &>/dev/null; then
+        echo "$hex" | xxd -r -p | base64 | tr -d '\n'
+    elif command -v python3 &>/dev/null; then
+        python3 -c "import sys,binascii,base64;print(base64.b64encode(binascii.unhexlify(sys.argv[1].strip())).decode())" "$hex"
+    else
+        error "Cannot convert SHA-512 digest to base64 (need openssl, xxd, or python3) — cannot verify download integrity."
+    fi
+}
+
+# Download the release's latest-linux.yml manifest and confirm asset_file's
+# sha512 matches the entry for asset_name. Aborts the script on any mismatch
+# or missing data — never install an unverified download.
+verify_asset_checksum() {
+    local asset_file="$1"
+    local asset_name="$2"
+    local manifest_name="latest-linux.yml"
+
+    local manifest_url
+    manifest_url=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url":"[^"]*"' \
+        | grep -i "/${manifest_name}\"" | head -1 \
+        | sed 's/"browser_download_url":"\([^"]*\)"/\1/')
+
+    if [ -z "$manifest_url" ]; then
+        error "Release $VERSION has no $manifest_name manifest — cannot verify download integrity. Aborting."
+    fi
+
+    info "Verifying checksum against $manifest_name..."
+    local manifest_file="$TEMP_DIR/$manifest_name"
+    if command -v curl &>/dev/null; then
+        curl -fsSL -o "$manifest_file" "$manifest_url" || error "Failed to download $manifest_name for checksum verification"
+    else
+        wget -qO "$manifest_file" "$manifest_url" || error "Failed to download $manifest_name for checksum verification"
+    fi
+
+    local expected_sha512
+    expected_sha512=$(awk -v asset="$asset_name" '
+        /^[[:space:]]*-?[[:space:]]*url:/ {
+            u = $0
+            sub(/^[[:space:]]*-?[[:space:]]*url:[[:space:]]*/, "", u)
+            gsub(/^"|"$/, "", u)
+            gsub(/^[ \t]+|[ \t]+$/, "", u)
+        }
+        /^[[:space:]]*sha512:/ {
+            s = $0
+            sub(/^[[:space:]]*sha512:[[:space:]]*/, "", s)
+            gsub(/^"|"$/, "", s)
+            gsub(/^[ \t]+|[ \t]+$/, "", s)
+            if (u == asset) { print s; exit }
+        }
+    ' "$manifest_file")
+
+    if [ -z "$expected_sha512" ]; then
+        error "Could not find a sha512 entry for $asset_name in $manifest_name. Aborting — refusing to install an unverified download."
+    fi
+
+    local actual_sha512
+    actual_sha512=$(sha512_base64 "$asset_file")
+
+    if [ "$actual_sha512" != "$expected_sha512" ]; then
+        error "Checksum verification FAILED for $asset_name.
+        Expected: $expected_sha512
+        Actual:   $actual_sha512
+        The download may be corrupted or tampered with. Aborting."
+    fi
+
+    ok "Checksum verified ($asset_name matches $manifest_name)"
+}
+
 echo ""
 printf "${BOLD}========================================${NC}\n"
 printf "${BOLD}  Delta Dashboard — Linux Installer${NC}\n"
@@ -101,6 +191,9 @@ else
 fi
 
 ok "Download complete"
+
+# ---- Verify checksum ---------------------------------------------------------
+verify_asset_checksum "$TEMP_DIR/$ASSET_NAME" "$ASSET_NAME"
 
 # ---- Install ----------------------------------------------------------------
 if [ "$ASSET_TYPE" = "deb" ]; then

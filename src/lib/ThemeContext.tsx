@@ -48,6 +48,13 @@ export const TEAM_CSS_VAR_MAP: Record<string, string> = {
   rb:           "--color-team-rb",
   audi:         "--color-team-audi",
   cadillac:     "--color-team-cadillac",
+  // Legacy/alternate constructorIds that resolve to the same team elsewhere
+  // (driverOverrides.ts, teamThemes.ts, profileImages.ts) — without these, a
+  // color override saved under one of these ids is stored but never applied.
+  racing_bulls:      "--color-team-rb",
+  kick_sauber:       "--color-team-audi",
+  sauber:            "--color-team-audi",
+  andretti_cadillac: "--color-team-cadillac",
 };
 
 interface ThemeContextValue {

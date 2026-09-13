@@ -30,11 +30,14 @@ const OPENF1_BASE = "https://api.openf1.org/v1";
 /**
  * Derive the current season from the real calendar year, but never dip below
  * 2026 — we don't have an earlier live-timing model and a clock skew before
- * that would break the homepage.  This keeps the app working on Jan 1 of a
- * new year without a manual bump.
+ * that would break the homepage. Computed per call (not cached at module
+ * load) so a long-running server actually rolls over on Jan 1 without
+ * needing a restart.
  */
 const SEASON_FLOOR = 2026;
-const CURRENT_SEASON = String(Math.max(SEASON_FLOOR, new Date().getFullYear()));
+function getCurrentSeason(): string {
+  return String(Math.max(SEASON_FLOOR, new Date().getFullYear()));
+}
 
 /** Historical seasons available in the archive section */
 export const ARCHIVE_SEASONS = [
@@ -54,43 +57,101 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   return { signal: controller.signal, clear: () => clearTimeout(timer) };
 }
 
-async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
-  try {
-    const fetchOptions = revalidate === false
-      ? { cache: 'no-store' as const, signal }
-      : { next: { revalidate }, signal };
-    const res = await fetch(`${ERGAST_BASE}${path}`, fetchOptions);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error(`[API] fetchErgast failed for ${path}:`, err);
-    return null;
-  } finally {
-    clear();
+const ERGAST_MAX_RETRIES = 2;
+
+/**
+ * Shared Ergast fetch with retry + backoff on transient failures.
+ *
+ * A single-attempt fetch means a transient timeout/429/5xx silently resolves
+ * to `null`, which callers can't distinguish from "this driver/round
+ * genuinely has no data" (e.g. getDriverCareerWins reporting 0 wins) or "no
+ * more pages" (fetchAllRaceResults truncating the rest of a season). Retrying
+ * the transient cases with backoff — same approach as fetchOpenF1 below —
+ * makes a real 0/end-of-data result trustworthy instead of a network hiccup
+ * masquerading as one.
+ */
+async function fetchErgastJson<T>(
+  path: string,
+  buildOptions: (signal: AbortSignal) => RequestInit,
+): Promise<T | null> {
+  for (let attempt = 0; attempt <= ERGAST_MAX_RETRIES; attempt++) {
+    const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
+    let retryable = false;
+    try {
+      const res = await fetch(`${ERGAST_BASE}${path}`, buildOptions(signal));
+      if (res.ok) return await res.json();
+      retryable = res.status === 429 || res.status >= 500;
+    } catch (err) {
+      retryable = true;
+      if (attempt === ERGAST_MAX_RETRIES) {
+        console.error(`[API] fetchErgast failed for ${path}:`, err);
+      }
+    } finally {
+      clear();
+    }
+    if (!retryable || attempt === ERGAST_MAX_RETRIES) return null;
+    await sleep(400 * 2 ** attempt); // 400ms, 800ms
   }
+  return null;
+}
+
+async function fetchErgast<T>(path: string, revalidate: number | false = 300): Promise<T | null> {
+  return fetchErgastJson<T>(path, (signal) =>
+    revalidate === false
+      ? { cache: 'no-store' as const, signal }
+      : { next: { revalidate }, signal }
+  );
 }
 
 /** Historical data fetch — 24 h cache since completed seasons never change */
 async function fetchErgastArchive<T>(path: string): Promise<T | null> {
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(`${ERGAST_BASE}${path}`, { next: { revalidate: 86400 }, signal });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error(`[API] fetchErgastArchive failed for ${path}:`, err);
-    return null;
-  } finally {
-    clear();
+  return fetchErgastJson<T>(path, (signal) => ({ next: { revalidate: 86400 }, signal }));
+}
+
+/**
+ * Fetch every page of a Races-shaped Ergast endpoint, merging `Results`
+ * across pages by round. Ergast paginates by result *row*, not by race, so a
+ * single race's rows can straddle a page boundary. A flat `limit` with no
+ * pagination silently drops the tail of a season once total rows exceed it
+ * (a full 22-car, 24-race season is ~530 rows).
+ */
+async function fetchAllRaceResults(
+  basePath: string,
+  fetchPage: (path: string) => Promise<ErgastResponse<RaceTableData> | null>
+): Promise<Race[]> {
+  const PAGE_SIZE = 100;
+  const byRound = new Map<string, Race>();
+  let offset = 0;
+  let total = Infinity;
+
+  while (offset < total) {
+    const sep = basePath.includes("?") ? "&" : "?";
+    const data = await fetchPage(`${basePath}${sep}limit=${PAGE_SIZE}&offset=${offset}`);
+    const races = data?.MRData?.RaceTable?.Races ?? [];
+    if (races.length === 0) break;
+
+    total = data?.MRData?.total ? parseInt(data.MRData.total, 10) : races.length;
+
+    for (const race of races) {
+      const existing = byRound.get(race.round);
+      if (existing) {
+        existing.Results = [...(existing.Results ?? []), ...(race.Results ?? [])];
+      } else {
+        byRound.set(race.round, { ...race });
+      }
+    }
+
+    offset += PAGE_SIZE;
   }
+
+  return [...byRound.values()];
 }
 
 export async function getDriverStandings(): Promise<DriverStanding[]> {
   // Fetch standings and driver list in parallel to avoid waterfall on pre-season fallback
   const [data, driversData] = await Promise.all([
-    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/driverstandings/?limit=100`),
-    fetchErgast<ErgastResponse<DriverTableData>>(`/${CURRENT_SEASON}/drivers/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${getCurrentSeason()}/driverstandings/?limit=100`),
+    fetchErgast<ErgastResponse<DriverTableData>>(`/${getCurrentSeason()}/drivers/?limit=100`),
   ]);
   const standings: DriverStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings ?? [];
@@ -116,8 +177,8 @@ export async function getDriverStandings(): Promise<DriverStanding[]> {
 export async function getConstructorStandings(): Promise<ConstructorStanding[]> {
   // Fetch standings and constructor list in parallel to avoid waterfall on pre-season fallback
   const [data, ctorData] = await Promise.all([
-    fetchErgast<ErgastResponse<StandingsTableData>>(`/${CURRENT_SEASON}/constructorstandings/?limit=100`),
-    fetchErgast<ErgastResponse<ConstructorTableData>>(`/${CURRENT_SEASON}/constructors/?limit=100`),
+    fetchErgast<ErgastResponse<StandingsTableData>>(`/${getCurrentSeason()}/constructorstandings/?limit=100`),
+    fetchErgast<ErgastResponse<ConstructorTableData>>(`/${getCurrentSeason()}/constructors/?limit=100`),
   ]);
   const standings: ConstructorStanding[] =
     data?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings ?? [];
@@ -140,12 +201,12 @@ export async function getConstructorStandings(): Promise<ConstructorStanding[]> 
 }
 
 export async function getRaceSchedule(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getRaceResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/${round}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races?.[0]?.Results ?? [];
 }
 
@@ -154,9 +215,13 @@ export async function getRaceResults(round: string): Promise<RaceResult[]> {
  * Once a race was more than 2 hours ago we can safely cache it for 24 h;
  * if it's still within the live window we flush every request.
  */
-function raceRevalidate(raceDateISO: string | undefined): number | false {
-  if (!raceDateISO) return false;
-  const raceEnd = new Date(raceDateISO).getTime() + 2 * 60 * 60 * 1000;
+function raceRevalidate(race: Race | undefined): number | false {
+  if (!race) return false;
+  // Reuses getRaceDate() rather than parsing race.time inline, so the same
+  // "assume UTC when the API omits the Z suffix" handling applies here as
+  // everywhere else this data is used — parsing it as local server time
+  // would shift raceEnd and could misclassify a still-live race as ended.
+  const raceEnd = getRaceDate(race).getTime() + 2 * 60 * 60 * 1000;
   return Date.now() > raceEnd ? 86400 : false;
 }
 
@@ -164,11 +229,9 @@ export async function getRaceWithResults(round: string): Promise<Race | null> {
   // First do a cheap schedule fetch (already cached at 5 min) to decide TTL
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/results/?limit=30`,
+    `/${getCurrentSeason()}/${round}/results/?limit=30`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0] ?? null;
@@ -178,49 +241,47 @@ export async function getQualifyingResults(round: string): Promise<QualifyingRes
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
   // Qualifying ends ~2 h before race day; use race date as conservative upper bound
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/qualifying/?limit=30`,
+    `/${getCurrentSeason()}/${round}/qualifying/?limit=30`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0]?.QualifyingResults ?? [];
 }
 
 export async function getDriverResults(driverId: string): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/drivers/${driverId}/results/?limit=30`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/drivers/${driverId}/results/?limit=30`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getConstructorResults(constructorId: string): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/constructors/${constructorId}/results/?limit=50`);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/constructors/${constructorId}/results/?limit=50`);
   return data?.MRData?.RaceTable?.Races ?? [];
 }
 
 export async function getAllSeasonResults(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/results/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${getCurrentSeason()}/results/`, (p) =>
+    fetchErgast<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 export async function getSprintResults(round: string): Promise<RaceResult[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/${round}/sprint/?limit=30`, false);
+  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${getCurrentSeason()}/${round}/sprint/?limit=30`, false);
   return data?.MRData?.RaceTable?.Races?.[0]?.SprintResults ?? [];
 }
 
 export async function getAllSprintResults(): Promise<Race[]> {
-  const data = await fetchErgast<ErgastResponse<RaceTableData>>(`/${CURRENT_SEASON}/sprint/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${getCurrentSeason()}/sprint/`, (p) =>
+    fetchErgast<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 export async function getPitStops(round: string): Promise<PitStop[]> {
   const schedule = await getRaceSchedule();
   const raceEntry = schedule.find((r) => r.round === round);
-  const ttl = raceRevalidate(
-    raceEntry ? `${raceEntry.date}T${raceEntry.time ?? "15:00:00Z"}` : undefined,
-  );
+  const ttl = raceRevalidate(raceEntry);
   const data = await fetchErgast<ErgastResponse<RaceTableData>>(
-    `/${CURRENT_SEASON}/${round}/pitstops/?limit=100`,
+    `/${getCurrentSeason()}/${round}/pitstops/?limit=100`,
     ttl,
   );
   return data?.MRData?.RaceTable?.Races?.[0]?.PitStops ?? [];
@@ -249,7 +310,13 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
     let retryable = false;
     try {
       const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
-      if (res.ok) return (await res.json()) as T[];
+      if (res.ok) {
+        const body: unknown = await res.json();
+        // Guard against a malformed/non-array response (error envelope, HTML
+        // error page served with a JSON content-type, etc.) — callers chain
+        // .filter/.find/.sort directly on the result with no other check.
+        return Array.isArray(body) ? (body as T[]) : [];
+      }
       // 429 (rate limit) and 5xx are transient; 4xx (bad request) is not.
       retryable = res.status === 429 || res.status >= 500;
     } catch {
@@ -265,7 +332,7 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
 }
 
 export async function getLiveSessions(): Promise<LiveSession[]> {
-  return fetchOpenF1<LiveSession>(`/sessions?year=${CURRENT_SEASON}`);
+  return fetchOpenF1<LiveSession>(`/sessions?year=${getCurrentSeason()}`);
 }
 
 /**
@@ -397,8 +464,9 @@ export async function getSeasonSchedule(season: string): Promise<Race[]> {
 }
 
 export async function getSeasonRaceResults(season: string): Promise<Race[]> {
-  const data = await fetchErgastArchive<ErgastResponse<RaceTableData>>(`/${season}/results/?limit=500`);
-  return data?.MRData?.RaceTable?.Races ?? [];
+  return fetchAllRaceResults(`/${season}/results/`, (p) =>
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(p)
+  );
 }
 
 // --- Next scheduled session (from Ergast calendar) ---
@@ -415,6 +483,46 @@ export interface ScheduledSession {
   round: string;
 }
 
+/** The session slots that make up a race weekend, in schedule order. */
+const SESSION_SLOTS: Array<{
+  type: string;
+  get: (race: Race) => { date: string; time: string } | undefined;
+}> = [
+  { type: "Practice 1", get: (r) => r.FirstPractice },
+  { type: "Practice 2", get: (r) => r.SecondPractice },
+  { type: "Practice 3", get: (r) => r.ThirdPractice },
+  { type: "Sprint Qualifying", get: (r) => r.SprintQualifying },
+  { type: "Sprint", get: (r) => r.Sprint },
+  { type: "Qualifying", get: (r) => r.Qualifying },
+  { type: "Race", get: (r) => (r.time ? { date: r.date, time: r.time } : undefined) },
+];
+
+/** Enumerate every scheduled session slot across a set of races, resolved to a Date. */
+function* enumerateSessionSlots(races: Race[]): Generator<{ type: string; race: Race; date: Date }> {
+  for (const race of races) {
+    for (const { type, get } of SESSION_SLOTS) {
+      const s = get(race);
+      if (!s) continue;
+      // Ergast times are UTC (include Z suffix)
+      const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
+      yield { type, race, date: new Date(`${s.date}T${timeStr}`) };
+    }
+  }
+}
+
+function toScheduledSession(type: string, race: Race, date: Date): ScheduledSession {
+  return {
+    type,
+    raceName: race.raceName,
+    circuitId: race.Circuit.circuitId,
+    circuitName: race.Circuit.circuitName,
+    country: race.Circuit.Location.country,
+    locality: race.Circuit.Location.locality,
+    date,
+    round: race.round,
+  };
+}
+
 export async function getNextScheduledSession(): Promise<ScheduledSession | null> {
   let races: Race[] = [];
   try {
@@ -425,54 +533,40 @@ export async function getNextScheduledSession(): Promise<ScheduledSession | null
 
   const now = new Date();
   const upcoming: ScheduledSession[] = [];
-
-  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    // Ergast times are UTC (include Z suffix)
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
-    if (d > now) {
-      upcoming.push({
-        type,
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
-    }
-  }
-
-  for (const race of races) {
-    push("Practice 1", race, race.FirstPractice);
-    push("Practice 2", race, race.SecondPractice);
-    push("Practice 3", race, race.ThirdPractice);
-    push("Sprint Qualifying", race, race.SprintQualifying);
-    push("Sprint", race, race.Sprint);
-    push("Qualifying", race, race.Qualifying);
-    if (race.time) {
-      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
-      const d = new Date(`${race.date}T${timeStr}`);
-      if (d > now) {
-        upcoming.push({
-          type: "Race",
-          raceName: race.raceName,
-          circuitId: race.Circuit.circuitId,
-          circuitName: race.Circuit.circuitName,
-          country: race.Circuit.Location.country,
-          locality: race.Circuit.Location.locality,
-          date: d,
-          round: race.round,
-        });
-      }
-    }
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date > now) upcoming.push(toScheduledSession(type, race, date));
   }
 
   if (!upcoming.length) return null;
   upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
   return upcoming[0];
+}
+
+/**
+ * Returns every not-yet-started session (FP/Sprint/Qualifying/Race) belonging
+ * to the next upcoming race weekend — i.e. the same race as
+ * getNextScheduledSession(), but every remaining slot rather than just the
+ * soonest one. Used to back the "auto-subscribe to all weekend sessions"
+ * notification setting.
+ */
+export async function getUpcomingWeekendSessions(): Promise<ScheduledSession[]> {
+  let races: Race[] = [];
+  try {
+    races = await getRaceSchedule();
+  } catch {
+    return [];
+  }
+
+  const now = new Date();
+  const upcoming: ScheduledSession[] = [];
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date > now) upcoming.push(toScheduledSession(type, race, date));
+  }
+  if (!upcoming.length) return [];
+
+  upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
+  const nextRound = upcoming[0].round;
+  return upcoming.filter((s) => s.round === nextRound);
 }
 
 /**
@@ -502,35 +596,10 @@ export async function getOngoingScheduledSession(): Promise<ScheduledSession | n
   };
 
   const ongoing: ScheduledSession[] = [];
-
-  function check(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
     const window = windowMs[type] ?? 2 * 60 * 60 * 1000;
-    if (d <= now && now <= new Date(d.getTime() + window)) {
-      ongoing.push({
-        type,
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
-    }
-  }
-
-  for (const race of races) {
-    check("Practice 1", race, race.FirstPractice);
-    check("Practice 2", race, race.SecondPractice);
-    check("Practice 3", race, race.ThirdPractice);
-    check("Sprint Qualifying", race, race.SprintQualifying);
-    check("Sprint", race, race.Sprint);
-    check("Qualifying", race, race.Qualifying);
-    if (race.time) {
-      check("Race", race, { date: race.date, time: race.time });
+    if (date <= now && now <= new Date(date.getTime() + window)) {
+      ongoing.push(toScheduledSession(type, race, date));
     }
   }
 
@@ -644,7 +713,21 @@ export function isSessionLive(session: LiveSession): boolean {
   return now >= start && now <= new Date(endRaw.getTime() + graceMs);
 }
 
-export const CURRENT_YEAR = CURRENT_SEASON;
+/** Display-only current season year; computed per call, same as getCurrentSeason(). */
+export function getCurrentYear(): string {
+  return getCurrentSeason();
+}
+
+/**
+ * Max points a driver can score in one round: race win (25) + fastest lap
+ * (1), plus the sprint win (8) on a sprint weekend. Single source of truth
+ * for "championship still alive" math — previously computed two different,
+ * disagreeing ways on the home page (flat 26/round, ignoring sprints) and
+ * the drivers page (25 + sprint bonus, dropping the fastest-lap point).
+ */
+export function getMaxPointsForRound(hasSprint: boolean): number {
+  return hasSprint ? 34 : 26;
+}
 
 /** All sessions from the race schedule that start today (UTC date match). */
 export async function getTodaySessions(): Promise<ScheduledSession[]> {
@@ -657,44 +740,9 @@ export async function getTodaySessions(): Promise<ScheduledSession[]> {
 
   const todayUTC = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const sessions: ScheduledSession[] = [];
-
-  function push(type: string, race: Race, s: { date: string; time: string } | undefined) {
-    if (!s) return;
-    if (s.date !== todayUTC) return;
-    const timeStr = s.time.endsWith("Z") ? s.time : `${s.time}Z`;
-    const d = new Date(`${s.date}T${timeStr}`);
-    sessions.push({
-      type,
-      raceName: race.raceName,
-      circuitId: race.Circuit.circuitId,
-      circuitName: race.Circuit.circuitName,
-      country: race.Circuit.Location.country,
-      locality: race.Circuit.Location.locality,
-      date: d,
-      round: race.round,
-    });
-  }
-
-  for (const race of races) {
-    push("Practice 1", race, race.FirstPractice);
-    push("Practice 2", race, race.SecondPractice);
-    push("Practice 3", race, race.ThirdPractice);
-    push("Sprint Qualifying", race, race.SprintQualifying);
-    push("Sprint", race, race.Sprint);
-    push("Qualifying", race, race.Qualifying);
-    if (race.time && race.date === todayUTC) {
-      const timeStr = race.time.endsWith("Z") ? race.time : `${race.time}Z`;
-      const d = new Date(`${race.date}T${timeStr}`);
-      sessions.push({
-        type: "Race",
-        raceName: race.raceName,
-        circuitId: race.Circuit.circuitId,
-        circuitName: race.Circuit.circuitName,
-        country: race.Circuit.Location.country,
-        locality: race.Circuit.Location.locality,
-        date: d,
-        round: race.round,
-      });
+  for (const { type, race, date } of enumerateSessionSlots(races)) {
+    if (date.toISOString().slice(0, 10) === todayUTC) {
+      sessions.push(toScheduledSession(type, race, date));
     }
   }
 
@@ -711,28 +759,32 @@ export async function getDriverCareerWins(driverId: string): Promise<{
   races: number;
   championships: number;
 }> {
-  const [winsData, polesData, racesData, podiumsData, flData, champsData] = await Promise.all([
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1&status=1`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/?limit=1`),
+  // Ergast/Jolpica only supports single finishing-position filters as path
+  // segments (e.g. /results/1/), not query params — so wins/podiums/poles/
+  // fastest laps are each derived from the `total` count of a position-
+  // filtered query, never by fetching and counting rows (which would be
+  // truncated by a fixed `limit` for long careers).
+  const [winsData, position2Data, position3Data, polesData, racesData, flData, champsData] = await Promise.all([
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/1/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/2/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/3/?limit=1`),
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/qualifying/1/?limit=1`),
     fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=1`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/results/?limit=500`),
-    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/?limit=1`),
+    // Ergast/Jolpica requires the trailing /results/ segment for the
+    // fastest-lap-rank filter — /fastest/1/ alone 404s.
+    fetchErgastArchive<ErgastResponse<RaceTableData>>(`/drivers/${driverId}/fastest/1/results/?limit=1`),
     fetchErgastArchive<ErgastResponse<StandingsTableData>>(`/drivers/${driverId}/driverstandings/1/?limit=100`),
   ]);
 
-  const wins = parseInt(winsData?.MRData?.RaceTable ? String((winsData.MRData as { total?: string; RaceTable: unknown }).total ?? "0") : "0", 10);
-  const races = parseInt(racesData?.MRData ? String((racesData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const poles = parseInt(polesData?.MRData ? String((polesData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const fl = parseInt(flData?.MRData ? String((flData.MRData as { total?: string }).total ?? "0") : "0", 10);
-  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
+  const totalOf = (d: { MRData?: { total?: string } } | null): number =>
+    parseInt(d?.MRData?.total ?? "0", 10);
 
-  // Count podiums from the results
-  let podiums = 0;
-  for (const race of podiumsData?.MRData?.RaceTable?.Races ?? []) {
-    for (const r of race.Results ?? []) {
-      if (parseInt(r.position) <= 3) podiums++;
-    }
-  }
+  const wins = totalOf(winsData);
+  const races = totalOf(racesData);
+  const poles = totalOf(polesData);
+  const fl = totalOf(flData);
+  const podiums = wins + totalOf(position2Data) + totalOf(position3Data);
+  const championships = (champsData?.MRData?.StandingsTable?.StandingsLists?.length ?? 0);
 
   return { wins, podiums, poles, fastestLaps: fl, races, championships };
 }
