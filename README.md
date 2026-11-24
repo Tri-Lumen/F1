@@ -68,6 +68,25 @@ Season-level analytics break down wins, podiums, points-per-race, DNFs by team, 
 
 ---
 
+## ▍ VISUAL STYLES
+
+Settings → Interface → **Visual Style** switches the whole app between two looks. It works in the desktop app and the Docker-hosted site, is saved per browser, and combines with every colour mode, team livery, custom theme and corner style. The desktop app also has **View → Visual style**.
+
+| Style | Look |
+|---|---|
+| **Standard** | Broadcast look: condensed type, rounded cards, ambient glow |
+| **ASCII** | Terminal look: JetBrains Mono, box-drawing frames, `[ LABEL ]` headings, block-segment bars, an ASCII wordmark and block-digit countdowns, plus driver and car images drawn with a Riemersma dither. Dithered images and scanlines can each be turned off |
+
+The dither engine in `src/lib/dither/` is ported from [GRIT](https://github.com/Tri-Lumen/GRIT) and pinned to GRIT's output by a golden test. See `docs/DESIGN_SYSTEM.md` for how the style is built.
+
+---
+
+## ▍ WEEKLY AUDIT
+
+`node scripts/audit.mjs` (or `npm run audit`) sanity-checks the data and assets the site shows: API health and consistency (points, wins, round vs calendar), driver numbers, teams and portraits against the code, local portrait files against what formula1.com lists, and, with `--app http://localhost:3000`, that the running app shows the data the API returns. Add `--fix-assets` to download current portraits and update `src/lib/portraitsLocal.ts`. It exits 1 when any check reports an error. A scheduled task runs it every Monday at midnight US Eastern.
+
+---
+
 ## ▍ ROUTES
 
 | Route | Description |
