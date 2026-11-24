@@ -28,6 +28,36 @@ for free.
 - Layout: `--sidebar-w` (224px; mirrored by `SIDEBAR_WIDTH` in `src/lib/layout.ts`), `--content-max` (1600px)
 - Radius: `--radius-sm … --radius-3xl` (re-mapped by `data-radius` sharp/default/rounded)
 
+## Visual styles
+
+The app has two visual styles, chosen in Settings → Interface (and the Electron View menu).
+`ThemeContext` stores the choice (`f1-visual-style`) and sets `data-style="ascii"` on `<html>`;
+`layout.tsx` sets it before first paint. Standard is the absence of the attribute, so nothing in
+Standard depends on the ASCII layer.
+
+`src/app/ascii.css` is the whole ASCII style, scoped under `html[data-style="ascii"]`. It works
+through the same `--color-f1-*` tokens, so liveries, light mode and custom themes keep working.
+Most pages style themselves inline, so it matches on inline values where it must
+(`[style*="border-radius"]`, `div:empty[style*="width"][style*="%"]` for block bars) and sets
+fonts with `!important`.
+
+Hook classes on shared primitives (add them to new primitives that should get a terminal frame):
+
+| Class | Where | ASCII effect |
+| --- | --- | --- |
+| `f1-box` | `CardShell` | brighter rule |
+| `f1-sh-label` / `f1-sh-card` | `SectionHeading` | `[ TITLE ]` / dashed rule |
+| `f1-page-title` | `PageHeader` | `## ` prefix, uppercase |
+| `f1-hero` | `LeaderHero` | double border |
+| `f1-nav-active` | sidebar links | `>` marker, tinted background |
+| `f1-ascii-only` | `AsciiLogo`, `BigDigits` | rendered only in ASCII |
+| `f1-keep-sr` | text replaced by `BigDigits` | visually hidden, still read aloud |
+
+Images: `DriverImage` and `CarImage` render `DitheredImage` when the style is ASCII and
+"Dithered images" is on. It dithers on a canvas (`src/lib/dither/`, Riemersma, 16 colours
+extracted per image, settings in `preset.ts`) and falls back to the plain image if the canvas is
+tainted. The font is self-hosted in `public/fonts/` because fallback fonts break glyph widths.
+
 ## Breakpoints (Tailwind defaults)
 
 | Prefix | Min width | Typical use |

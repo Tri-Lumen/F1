@@ -30,6 +30,7 @@ export default function LeaderHero({ leader, second, completedRaces, totalRaces 
 
   return (
     <div
+      className="f1-hero"
       style={{
         borderRadius: 13,
         overflow: "hidden",

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/ThemeContext";
+import DitheredImage from "./DitheredImage";
 
 interface DriverImageProps {
   src: string;
@@ -13,6 +15,8 @@ interface DriverImageProps {
 
 /** Driver headshot with a fade-in load, optional secondary URL, and silhouette fallback. */
 export function DriverImage({ src, alt, className, fallbackSrc }: DriverImageProps) {
+  const { visualStyle, asciiDither } = useTheme();
+  const dither = visualStyle === "ascii" && asciiDither;
   const [currentSrc, setCurrentSrc] = useState(src);
   const [triedFallback, setTriedFallback] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -57,6 +61,28 @@ export function DriverImage({ src, alt, className, fallbackSrc }: DriverImagePro
     );
   }
 
+  const handleError = () => {
+    if (fallbackSrc && !triedFallback) {
+      setTriedFallback(true);
+      setCurrentSrc(fallbackSrc);
+      return;
+    }
+    setFailed(true);
+  };
+  const fadeClass = `${className ?? ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`;
+
+  if (dither) {
+    return (
+      <DitheredImage
+        src={currentSrc}
+        alt={alt}
+        className={fadeClass}
+        onLoad={() => setLoaded(true)}
+        onError={handleError}
+      />
+    );
+  }
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -64,16 +90,9 @@ export function DriverImage({ src, alt, className, fallbackSrc }: DriverImagePro
       alt={alt}
       loading="lazy"
       decoding="async"
-      className={`${className ?? ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+      className={fadeClass}
       onLoad={() => setLoaded(true)}
-      onError={() => {
-        if (fallbackSrc && !triedFallback) {
-          setTriedFallback(true);
-          setCurrentSrc(fallbackSrc);
-          return;
-        }
-        setFailed(true);
-      }}
+      onError={handleError}
     />
   );
 }
@@ -134,6 +153,8 @@ interface CarImageProps {
 
 /** Team car cutout with automatic fallback to alternative URLs, then a placeholder. */
 export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
+  const { visualStyle, asciiDither } = useTheme();
+  const dither = visualStyle === "ascii" && asciiDither;
   const [currentSrc, setCurrentSrc] = useState(src);
   const [fallbackIndex, setFallbackIndex] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -166,6 +187,19 @@ export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
     );
   }
 
+  const handleError = () => {
+    if (fallbackUrls && fallbackIndex < fallbackUrls.length) {
+      setCurrentSrc(fallbackUrls[fallbackIndex]);
+      setFallbackIndex((i) => i + 1);
+    } else {
+      setFailed(true);
+    }
+  };
+
+  if (dither) {
+    return <DitheredImage src={currentSrc} alt={alt} className={className} onError={handleError} />;
+  }
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -174,14 +208,7 @@ export function CarImage({ src, fallbackUrls, alt, className }: CarImageProps) {
       className={className}
       loading="lazy"
       decoding="async"
-      onError={() => {
-        if (fallbackUrls && fallbackIndex < fallbackUrls.length) {
-          setCurrentSrc(fallbackUrls[fallbackIndex]);
-          setFallbackIndex((i) => i + 1);
-        } else {
-          setFailed(true);
-        }
-      }}
+      onError={handleError}
     />
   );
 }

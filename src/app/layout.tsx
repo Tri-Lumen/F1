@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./ascii.css";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { FavoritesProvider } from "@/lib/FavoritesContext";
 import { RssFeedProvider } from "@/lib/RssFeedContext";
@@ -38,9 +39,15 @@ export default function RootLayout({
                   var r = localStorage.getItem('f1-border-radius');
                   var rm = localStorage.getItem('f1-reduce-motion');
                   var gi = localStorage.getItem('f1-glow-intensity');
+                  var vs = localStorage.getItem('f1-visual-style');
+                  var asc = localStorage.getItem('f1-ascii-scanlines');
+                  var asd = localStorage.getItem('f1-ascii-dither');
 
                   if (m === 'light' || m === 'dark') el.setAttribute('data-mode', m);
                   else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) el.setAttribute('data-mode', 'light');
+                  if (vs === 'ascii') el.setAttribute('data-style', 'ascii');
+                  el.setAttribute('data-ascii-crt', asc === 'false' ? 'off' : 'on');
+                  el.setAttribute('data-ascii-dither', asd === 'false' ? 'off' : 'on');
                   if (r === 'sharp' || r === 'default' || r === 'rounded') el.setAttribute('data-radius', r);
                   if (rm === 'true') el.setAttribute('data-reduce-motion', 'true');
                   else if (rm === null && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) el.setAttribute('data-reduce-motion', 'true');

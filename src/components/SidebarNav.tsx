@@ -200,7 +200,7 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
           justifyContent: "space-between",
         }}
       >
-        <Link href="/" style={{ display: "flex", alignItems: "baseline", gap: 8, textDecoration: "none" }}>
+        <Link href="/" className="f1-nav-logo" style={{ display: "flex", alignItems: "baseline", gap: 8, textDecoration: "none" }}>
           <span style={{ fontFamily: BC, fontWeight: 900, fontSize: 30, color: ACCENT, lineHeight: 1 }}>
             F1
           </span>
@@ -275,6 +275,7 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
             <Link
               key={link.href}
               href={link.href}
+              className={isActive ? "f1-nav-active" : undefined}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -358,6 +359,7 @@ export default function SidebarNav({ standings, mobileOpen = false, onClose, has
                       <Link
                         key={link.href}
                         href={link.href}
+                        className={isActive ? "f1-nav-active" : undefined}
                         style={{
                           display: "flex",
                           alignItems: "center",

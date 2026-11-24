@@ -135,6 +135,9 @@ const serverScript = path.join(serverRoot, 'server.js');
 let nextServer = null;
 let mainWindow = null;
 let serverPort = null;
+// Mirrors the renderer's "Visual style" setting so the View menu shows the right radio.
+let visualStyle = 'standard';
+const VISUAL_STYLES = ['standard', 'ascii'];
 
 // ---------------------------------------------------------------------------
 // Origin check
@@ -316,6 +319,14 @@ function waitForServer(port, timeout = 30_000) {
 // Application menu
 // ---------------------------------------------------------------------------
 
+/** Ask the renderer to switch style; it persists the choice and reports it back. */
+function setVisualStyle(style) {
+  if (!VISUAL_STYLES.includes(style)) return;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('set-visual-style', style);
+  }
+}
+
 function buildMenu(port) {
   const isMac = process.platform === 'darwin';
   const template = [
@@ -333,6 +344,14 @@ function buildMenu(port) {
         { role: 'zoomOut' },
         { type: 'separator' },
         { role: 'togglefullscreen' },
+        { type: 'separator' },
+        {
+          label: 'Visual style',
+          submenu: [
+            { label: 'Standard', type: 'radio', checked: visualStyle === 'standard', click: () => setVisualStyle('standard') },
+            { label: 'ASCII', type: 'radio', checked: visualStyle === 'ascii', click: () => setVisualStyle('ascii') },
+          ],
+        },
         ...(process.env.NODE_ENV === 'development'
           ? [{ type: 'separator' }, { role: 'toggleDevTools' }]
           : []),
@@ -543,6 +562,12 @@ async function createWindow() {
 // ---------------------------------------------------------------------------
 // IPC handlers
 // ---------------------------------------------------------------------------
+
+ipcMain.on('visual-style-changed', (_event, style) => {
+  if (!VISUAL_STYLES.includes(style) || style === visualStyle) return;
+  visualStyle = style;
+  if (serverPort) buildMenu(serverPort);
+});
 
 ipcMain.handle('check-for-updates', async () => {
   // If the update was already downloaded in this session, report that.

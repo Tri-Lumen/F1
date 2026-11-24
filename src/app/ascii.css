@@ -1,0 +1,216 @@
+/*
+ * ASCII visual style
+ * ------------------
+ * Active when <html data-style="ascii">, set by ThemeContext (and by the inline boot
+ * script in layout.tsx before first paint). Everything here is scoped under that
+ * attribute, so the Standard style is untouched.
+ *
+ * It restyles through the same --color-f1-* tokens, which means team liveries, light
+ * mode and custom themes keep working. Most pages style themselves with inline
+ * `style` props, so a few rules below match on the inline value (for example
+ * [style*="border-radius"]) instead of a class.
+ *
+ * Optional switches, also on <html>:
+ *   data-ascii-crt="on|off"      scanline overlay
+ *   data-ascii-dither="on|off"   read by DitheredImage's callers through ThemeContext
+ */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-700.woff2") format("woff2");
+}
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+html[data-style="ascii"] {
+  --ascii-font: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  /* Box lines: visibly brighter than the Standard border, derived from the active theme. */
+  --ascii-rule: color-mix(in srgb, var(--color-f1-text-muted) 50%, var(--color-f1-black));
+  /* Accent lifted toward the text colour so small accent text keeps its contrast. */
+  --ascii-hi: color-mix(in srgb, var(--color-f1-accent) 78%, var(--color-f1-text));
+  --color-f1-border: var(--ascii-rule);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+}
+
+/* ── Type ───────────────────────────────────────────────────────────────── */
+/* !important is deliberate: most components set fontFamily inline. */
+html[data-style="ascii"] body,
+html[data-style="ascii"] body * {
+  font-family: var(--ascii-font) !important;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+html[data-style="ascii"] h1,
+html[data-style="ascii"] h2,
+html[data-style="ascii"] h3,
+html[data-style="ascii"] th {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ── Shape: square corners, no glass, no shadows ───────────────────────── */
+html[data-style="ascii"] [style*="border-radius"],
+html[data-style="ascii"] [class*="rounded"] {
+  border-radius: 0 !important;
+}
+html[data-style="ascii"] * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-style="ascii"] ::-webkit-scrollbar-thumb {
+  border-radius: 0;
+}
+
+/* ── Backdrop: drop the ambient gradients and noise ─────────────────────── */
+html[data-style="ascii"] body::before {
+  display: none;
+}
+html[data-style="ascii"] body::after {
+  display: none;
+}
+html[data-style="ascii"][data-ascii-crt="on"] body::after {
+  display: block;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.16) 0,
+    rgba(0, 0, 0, 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.32;
+}
+html[data-style="ascii"][data-mode="light"][data-ascii-crt="on"] body::after {
+  opacity: 0.07;
+}
+
+/* ── Frames and headings ────────────────────────────────────────────────── */
+html[data-style="ascii"] .f1-box {
+  border: 1px solid var(--ascii-rule);
+}
+
+/* "[ TITLE ]" section labels */
+html[data-style="ascii"] .f1-sh-label > :first-child::before {
+  content: "[ ";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-sh-label > :first-child::after {
+  content: " ]";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-sh-card {
+  border-bottom: 1px dashed var(--ascii-rule);
+}
+html[data-style="ascii"] .f1-sh-card > :first-child {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* "## TITLE" page headings */
+html[data-style="ascii"] .f1-page-title::before {
+  content: "## ";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+
+/* Hero panels get a double rule, like ╔═╗ */
+html[data-style="ascii"] .f1-hero {
+  border: 4px double var(--ascii-rule) !important;
+}
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+html[data-style="ascii"] .f1-nav-active {
+  background: color-mix(in srgb, var(--color-f1-accent) 18%, transparent) !important;
+  color: var(--ascii-hi) !important;
+  box-shadow: inset 2px 0 0 var(--color-f1-accent) !important;
+}
+html[data-style="ascii"] .f1-nav-active::before {
+  content: ">";
+  margin-right: 8px;
+}
+html[data-style="ascii"] .f1-nav-logo > span:first-child::after {
+  content: "//";
+  color: var(--ascii-rule);
+}
+
+/* ── Bars: every empty percentage-width div becomes a row of blocks ─────── */
+html[data-style="ascii"] div:empty[style*="width"][style*="%"] {
+  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0, #000 6px, transparent 6px, transparent 8px);
+  mask-image: repeating-linear-gradient(90deg, #000 0, #000 6px, transparent 6px, transparent 8px);
+}
+
+/* ── Images ─────────────────────────────────────────────────────────────── */
+canvas.f1-dither {
+  image-rendering: pixelated;
+}
+
+/* ── ASCII-only elements (logo, block digits) ───────────────────────────── */
+.f1-ascii-only {
+  display: none;
+}
+html[data-style="ascii"] .f1-ascii-only {
+  display: block;
+}
+/* Keep the real text for screen readers while the block digits show. */
+html[data-style="ascii"] .f1-keep-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.f1-ascii-logo,
+.f1-big-digits {
+  margin: 0;
+  white-space: pre;
+  overflow: hidden;
+  user-select: none;
+}
+.f1-ascii-logo {
+  font-size: 12px;
+  line-height: 1.15;
+  max-width: 100%;
+}
+.f1-logo-solid {
+  color: var(--ascii-hi);
+}
+.f1-logo-shade {
+  color: var(--ascii-rule);
+}
+.f1-big-digits {
+  font-size: 8px;
+  line-height: 1.1;
+  color: var(--ascii-hi);
+  text-align: center;
+  display: none;
+}
+html[data-style="ascii"] .f1-big-digits {
+  display: block;
+  width: max-content;
+  margin: 0 auto;
+}

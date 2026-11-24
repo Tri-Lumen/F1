@@ -32,7 +32,7 @@ export default function PageHeader({
           </p>
         )}
         <h1
-          className="text-3xl font-black tracking-tight leading-none"
+          className="f1-page-title text-3xl font-black tracking-tight leading-none"
           style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
         >
           {title}
