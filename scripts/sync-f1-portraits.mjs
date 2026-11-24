@@ -17,6 +17,7 @@
 import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { DRIVER_CODE_TO_ID, TEAM_SLUG_TO_ID, parseDrivers, parseTeams } from "./lib/portraitParse.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_PATH = resolve(__dirname, "..", "src", "lib", "portraitsManifest.generated.ts");
@@ -29,73 +30,16 @@ const DRIVERS_URL = "https://www.formula1.com/en/drivers";
 const TEAMS_URL = "https://www.formula1.com/en/teams";
 
 /**
- * Maps the display name F1.com prints under each driver card to the
- * Ergast/Jolpica driverId we use internally. Keep this in sync with the keys
- * in DRIVER_IMAGES / DRIVER_OVERRIDES_2026.
+ * Sanity floors. If F1.com changes its markup again we'd rather fail loudly
+ * and keep the committed manifest than overwrite it with a near-empty one.
+ * The 2026 grid is 22 drivers / 11 teams.
  */
-const DRIVER_NAME_TO_ID = {
-  "Max Verstappen": "max_verstappen",
-  "Lewis Hamilton": "hamilton",
-  "Charles Leclerc": "leclerc",
-  "Lando Norris": "norris",
-  "Oscar Piastri": "piastri",
-  "George Russell": "russell",
-  "Kimi Antonelli": "antonelli",
-  "Andrea Kimi Antonelli": "antonelli",
-  "Fernando Alonso": "alonso",
-  "Lance Stroll": "stroll",
-  "Pierre Gasly": "gasly",
-  "Alexander Albon": "albon",
-  "Alex Albon": "albon",
-  "Carlos Sainz": "sainz",
-  "Franco Colapinto": "colapinto",
-  "Esteban Ocon": "ocon",
-  "Oliver Bearman": "bearman",
-  "Nico Hulkenberg": "hulkenberg",
-  "Nico Hülkenberg": "hulkenberg",
-  "Gabriel Bortoleto": "bortoleto",
-  "Isack Hadjar": "hadjar",
-  "Liam Lawson": "lawson",
-  "Arvid Lindblad": "lindblad",
-  "Valtteri Bottas": "bottas",
-  "Sergio Perez": "perez",
-  "Sergio Pérez": "perez",
-};
+const MIN_DRIVERS = 18;
+const MIN_TEAMS = 10;
 
-/** F1.com team display name → Ergast constructorId */
-const TEAM_NAME_TO_ID = {
-  "Red Bull Racing": "red_bull",
-  "Oracle Red Bull Racing": "red_bull",
-  "Ferrari": "ferrari",
-  "Scuderia Ferrari": "ferrari",
-  "Scuderia Ferrari HP": "ferrari",
-  "McLaren": "mclaren",
-  "McLaren Formula 1 Team": "mclaren",
-  "Mercedes": "mercedes",
-  "Mercedes-AMG Petronas F1 Team": "mercedes",
-  "Aston Martin": "aston_martin",
-  "Aston Martin Aramco F1 Team": "aston_martin",
-  "Alpine": "alpine",
-  "BWT Alpine F1 Team": "alpine",
-  "Williams": "williams",
-  "Williams Racing": "williams",
-  "Haas": "haas",
-  "MoneyGram Haas F1 Team": "haas",
-  "TGR Haas F1 Team": "haas",
-  "Racing Bulls": "rb",
-  "Visa Cash App RB": "rb",
-  "Visa Cash App Racing Bulls": "rb",
-  "Audi": "audi",
-  "Audi F1 Team": "audi",
-  "Kick Sauber": "audi",
-  "Stake F1 Team Kick Sauber": "audi",
-  "Cadillac": "cadillac",
-  "Cadillac F1 Team": "cadillac",
-};
-
-/** Drivers we require to be present — exit non-zero if any are missing. */
-const REQUIRED_DRIVERS = Array.from(new Set(Object.values(DRIVER_NAME_TO_ID)));
-const REQUIRED_TEAMS = Array.from(new Set(Object.values(TEAM_NAME_TO_ID)));
+/** Drivers/teams we expect to see. Missing ones only warn — drivers leave. */
+const EXPECTED_DRIVERS = Array.from(new Set(Object.values(DRIVER_CODE_TO_ID)));
+const EXPECTED_TEAMS = Array.from(new Set(Object.values(TEAM_SLUG_TO_ID)));
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
@@ -111,114 +55,6 @@ async function fetchHtml(url) {
     );
   }
   return await res.text();
-}
-
-/**
- * Extract every `<img src=…>` and `<img srcset=…>` URL on the page, along with
- * the alt text and a window of surrounding HTML (so we can associate the
- * image with a driver/team name).
- */
-function extractImages(html) {
-  const out = [];
-  const tag = /<img\b[^>]*>/gi;
-  let m;
-  while ((m = tag.exec(html))) {
-    const blob = m[0];
-    const src = blob.match(/\bsrc=["']([^"']+)["']/i)?.[1];
-    const srcset = blob.match(/\bsrcset=["']([^"']+)["']/i)?.[1];
-    const alt = blob.match(/\balt=["']([^"']*)["']/i)?.[1] ?? "";
-    // pick highest-resolution candidate from srcset if present
-    let bestSrc = src;
-    if (srcset) {
-      const candidates = srcset
-        .split(",")
-        .map((s) => s.trim())
-        .map((s) => {
-          const [u, w] = s.split(/\s+/);
-          return { url: u, w: parseInt(w ?? "0", 10) || 0 };
-        })
-        .sort((a, b) => b.w - a.w);
-      if (candidates[0]?.url) bestSrc = candidates[0].url;
-    }
-    if (!bestSrc) continue;
-    // Look ±400 chars around the tag for the driver/team name
-    const start = Math.max(0, m.index - 400);
-    const end = Math.min(html.length, m.index + blob.length + 400);
-    const context = html.slice(start, end);
-    out.push({ src: absolutise(bestSrc), alt, context });
-  }
-  return out;
-}
-
-function absolutise(url) {
-  if (!url) return url;
-  if (url.startsWith("//")) return "https:" + url;
-  if (url.startsWith("/")) return "https://www.formula1.com" + url;
-  return url;
-}
-
-/** Classify a CDN URL by its path so we know which manifest field it belongs in. */
-function classifyDriverUrl(url) {
-  const u = url.toLowerCase();
-  if (u.includes("/number-logos/") || u.includes("number_logo")) return "number";
-  if (u.includes("helmet")) return "helmet";
-  if (u.includes("/headshot") || u.includes("face")) return "headshot";
-  // Default: full-body card portrait (the dominant asset on /en/drivers tiles)
-  if (u.includes("/drivers/") || u.includes("_driver")) return "card";
-  return null;
-}
-
-function classifyTeamUrl(url) {
-  const u = url.toLowerCase();
-  if (u.includes("logo") || u.includes("badge")) return "logo";
-  if (u.includes("backplate") || u.includes("background") || u.includes("gradient"))
-    return "backplate";
-  if (u.includes("/teams/") || u.includes("_car") || u.includes("car-")) return "car";
-  return null;
-}
-
-/** Build a manifest from the array of {src, alt, context} entries. */
-function buildDriverManifest(images) {
-  const manifest = {};
-  for (const img of images) {
-    // Find which driver this image belongs to by scanning the surrounding HTML
-    // for a known display name. Longest match wins to handle "Andrea Kimi
-    // Antonelli" vs "Kimi Antonelli".
-    let matchedName = null;
-    for (const name of Object.keys(DRIVER_NAME_TO_ID)) {
-      if (img.context.includes(name) || img.alt.includes(name)) {
-        if (!matchedName || name.length > matchedName.length) matchedName = name;
-      }
-    }
-    if (!matchedName) continue;
-    const id = DRIVER_NAME_TO_ID[matchedName];
-    const kind = classifyDriverUrl(img.src);
-    if (!kind) continue;
-    manifest[id] ??= {};
-    // First-write wins for each kind so we don't trample a higher-quality
-    // hero image with a thumbnail later in the page.
-    if (!manifest[id][kind]) manifest[id][kind] = img.src;
-  }
-  return manifest;
-}
-
-function buildTeamManifest(images) {
-  const manifest = {};
-  for (const img of images) {
-    let matchedName = null;
-    for (const name of Object.keys(TEAM_NAME_TO_ID)) {
-      if (img.context.includes(name) || img.alt.includes(name)) {
-        if (!matchedName || name.length > matchedName.length) matchedName = name;
-      }
-    }
-    if (!matchedName) continue;
-    const id = TEAM_NAME_TO_ID[matchedName];
-    const kind = classifyTeamUrl(img.src);
-    if (!kind) continue;
-    manifest[id] ??= {};
-    if (!manifest[id][kind]) manifest[id][kind] = img.src;
-  }
-  return manifest;
 }
 
 function serialise(driverManifest, teamManifest) {
@@ -270,32 +106,32 @@ async function main() {
   console.log("Fetching", TEAMS_URL);
   const teamsHtml = await fetchHtml(TEAMS_URL);
 
-  const driverImages = extractImages(driversHtml);
-  const teamImages = extractImages(teamsHtml);
-  console.log(
-    `Found ${driverImages.length} <img> tags on /drivers, ${teamImages.length} on /teams`,
-  );
+  const drivers = parseDrivers(driversHtml);
+  const teams = parseTeams(teamsHtml);
+  const driverCount = Object.keys(drivers.manifest).length;
+  const teamCount = Object.keys(teams.manifest).length;
 
-  const driverManifest = buildDriverManifest(driverImages);
-  const teamManifest = buildTeamManifest(teamImages);
+  console.log(`Matched ${driverCount} drivers, ${teamCount} teams.`);
+  const missingDrivers = EXPECTED_DRIVERS.filter((id) => !drivers.manifest[id]);
+  const missingTeams = EXPECTED_TEAMS.filter((id) => !teams.manifest[id]);
+  if (missingDrivers.length)
+    console.warn("Warning: not listed on /drivers (left the grid?):", missingDrivers.join(", "));
+  if (missingTeams.length) console.warn("Warning: not listed on /teams:", missingTeams.join(", "));
+  if (drivers.unmapped.length)
+    console.warn("Warning: driver assets with unknown code (add to DRIVER_CODE_TO_ID):", drivers.unmapped.join(", "));
+  if (teams.unmapped.length)
+    console.warn("Warning: team assets with unknown slug (add to TEAM_SLUG_TO_ID):", teams.unmapped.join(", "));
 
-  const missingDrivers = REQUIRED_DRIVERS.filter((id) => !driverManifest[id]);
-  const missingTeams = REQUIRED_TEAMS.filter((id) => !teamManifest[id]);
-
-  console.log(
-    `Matched ${Object.keys(driverManifest).length}/${REQUIRED_DRIVERS.length} drivers, ` +
-      `${Object.keys(teamManifest).length}/${REQUIRED_TEAMS.length} teams.`,
-  );
-  if (missingDrivers.length) console.warn("Missing drivers:", missingDrivers.join(", "));
-  if (missingTeams.length) console.warn("Missing teams:", missingTeams.join(", "));
-
-  const out = serialise(driverManifest, teamManifest);
-  await writeFile(OUT_PATH, out, "utf8");
-  console.log("Wrote", OUT_PATH);
-
-  if (missingDrivers.length || missingTeams.length) {
-    process.exitCode = 1;
+  if (driverCount < MIN_DRIVERS || teamCount < MIN_TEAMS) {
+    console.error(
+      `Refusing to write manifest: matched ${driverCount} drivers (min ${MIN_DRIVERS}) and ` +
+        `${teamCount} teams (min ${MIN_TEAMS}). formula1.com markup has probably changed again.`,
+    );
+    process.exit(1);
   }
+
+  await writeFile(OUT_PATH, serialise(drivers.manifest, teams.manifest), "utf8");
+  console.log("Wrote", OUT_PATH);
 }
 
 main().catch((err) => {
