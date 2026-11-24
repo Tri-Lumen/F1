@@ -47,6 +47,10 @@ export const LOCAL_DRIVER_PORTRAITS: Record<string, LocalDriverPortrait> = {
   bearman:        { card: `${D}/2026haasf1teamolibea01right.webp` },
   bottas:         { card: `${D}/2026cadillacvalbot01right.webp` },
   perez:          { card: `${D}/2026cadillacserper01right.webp` },
+  camara:         { card: `${D}/2026haasf1teamrafcam01right.webp` },
+  // Not on formula1.com/en/drivers; fetched directly from the media CDN.
+  tsunoda:        { card: `${D}/2026redbullracingyuktsu01right.webp` },
+  hirakawa:       { card: `${D}/2026haasf1teamryohir01right.webp` },
 };
 
 export const LOCAL_TEAM_PORTRAITS: Record<string, LocalTeamPortrait> = {

@@ -38,6 +38,8 @@ export const DRIVER_CODE_TO_ID = {
   arvlin: "lindblad",
   valbot: "bottas",
   serper: "perez",
+  yuktsu: "tsunoda",
+  ryohir: "hirakawa",
 };
 
 /** Team slug as used in F1.com asset basenames → Ergast constructorId. */
