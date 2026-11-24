@@ -60,6 +60,14 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
 const ERGAST_MAX_RETRIES = 2;
 
 /**
+ * Jolpica answers `403 User agent not allowed` to requests that carry Node's default
+ * User-Agent ("node"), but only when its edge cache misses, so the failure looks
+ * intermittent: the standings load while the schedule or a driver's results come back
+ * empty. A descriptive UA avoids it. Same value the RSS route already sends.
+ */
+const API_USER_AGENT = "F1Dashboard/1.0";
+
+/**
  * Shared Ergast fetch with retry + backoff on transient failures.
  *
  * A single-attempt fetch means a transient timeout/429/5xx silently resolves
@@ -78,9 +86,17 @@ async function fetchErgastJson<T>(
     const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS);
     let retryable = false;
     try {
-      const res = await fetch(`${ERGAST_BASE}${path}`, buildOptions(signal));
+      const opts = buildOptions(signal);
+      const res = await fetch(`${ERGAST_BASE}${path}`, {
+        ...opts,
+        headers: { ...(opts.headers as Record<string, string> | undefined), "User-Agent": API_USER_AGENT },
+      });
       if (res.ok) return await res.json();
       retryable = res.status === 429 || res.status >= 500;
+      // A non-retryable or final failure used to vanish silently and render as "no data".
+      if (!retryable || attempt === ERGAST_MAX_RETRIES) {
+        console.error(`[API] fetchErgast ${path} -> HTTP ${res.status}`);
+      }
     } catch (err) {
       retryable = true;
       if (attempt === ERGAST_MAX_RETRIES) {
@@ -309,7 +325,11 @@ async function fetchOpenF1<T>(path: string): Promise<T[]> {
     const { signal, clear } = withTimeout(LIVE_FETCH_TIMEOUT_MS);
     let retryable = false;
     try {
-      const res = await fetch(`${OPENF1_BASE}${path}`, { cache: "no-store", signal });
+      const res = await fetch(`${OPENF1_BASE}${path}`, {
+        cache: "no-store",
+        signal,
+        headers: { "User-Agent": API_USER_AGENT },
+      });
       if (res.ok) {
         const body: unknown = await res.json();
         // Guard against a malformed/non-array response (error envelope, HTML

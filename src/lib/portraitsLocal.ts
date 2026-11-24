@@ -27,7 +27,7 @@ const T = "/portraits/teams";
 export const LOCAL_DRIVER_PORTRAITS: Record<string, LocalDriverPortrait> = {
   max_verstappen: { card: `${D}/2026redbullracingmaxver01right.webp` },
   hadjar:         { card: `${D}/2026redbullracingisahad01right.webp` },
-  lindblad:       { card: `${D}/2026racingbullsarvlin01right.webp` },
+  arvid_lindblad: { card: `${D}/2026racingbullsarvlin01right.webp` },
   lawson:         { card: `${D}/2026racingbullslialaw01right.webp` },
   leclerc:        { card: `${D}/2026ferrarichalec01right.webp` },
   hamilton:       { card: `${D}/2026ferrarilewham01right.webp` },
@@ -45,6 +45,7 @@ export const LOCAL_DRIVER_PORTRAITS: Record<string, LocalDriverPortrait> = {
   hulkenberg:     { card: `${D}/2026audinichul01right.webp` },
   ocon:           { card: `${D}/2026haasf1teamestoco01right.webp` },
   bearman:        { card: `${D}/2026haasf1teamolibea01right.webp` },
+  rafael_camara:  { card: `${D}/2026haasf1teamrafcam01right.webp` },
   bottas:         { card: `${D}/2026cadillacvalbot01right.webp` },
   perez:          { card: `${D}/2026cadillacserper01right.webp` },
 };

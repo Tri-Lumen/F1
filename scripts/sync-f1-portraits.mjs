@@ -56,7 +56,7 @@ const DRIVER_NAME_TO_ID = {
   "Gabriel Bortoleto": "bortoleto",
   "Isack Hadjar": "hadjar",
   "Liam Lawson": "lawson",
-  "Arvid Lindblad": "lindblad",
+  "Arvid Lindblad": "arvid_lindblad",
   "Valtteri Bottas": "bottas",
   "Sergio Perez": "perez",
   "Sergio Pérez": "perez",

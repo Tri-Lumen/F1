@@ -34,8 +34,9 @@ export interface DriverOverride {
 /**
  * 2026 season driver overrides.
  *
- * Numbers: Verstappen carries #3 for 2026 after losing the 2025 WDC;
- * Kimi Antonelli locked in #12; Lindblad takes Perez's old #11 slot at Red Bull.
+ * Numbers: Verstappen carries #3 for 2026 after losing the 2025 WDC; Norris runs #1 as
+ * the reigning champion; Kimi Antonelli locked in #12. Arvid Lindblad is #41 (no override
+ * needed) and Perez keeps #11 at Cadillac.
  *
  * Team rebrand: Sauber → Audi works team.  Bortoleto and Hulkenberg carry over
  * but their portraits are re-shot in Audi overalls — we bump the asset code
@@ -48,7 +49,7 @@ export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
   },
   leclerc: { number: "16" },
   hamilton: { number: "44" },
-  norris: { number: "4" },
+  norris: { number: "1" },
   piastri: { number: "81" },
   russell: { number: "63" },
   antonelli: { number: "12" },
@@ -81,12 +82,6 @@ export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
   },
   hadjar: { number: "6" },
   lawson: { number: "30" },
-  // Arvid Lindblad promoted to Red Bull for 2026, inherits an available number.
-  lindblad: {
-    number: "11",
-    constructorId: "red_bull",
-    constructorName: "Red Bull Racing",
-  },
   // Cadillac debut season — both drivers in fresh overalls.
   bottas: {
     number: "77",
@@ -98,9 +93,7 @@ export const DRIVER_OVERRIDES_2026: Record<string, DriverOverride> = {
     assetFamily: "Bottas",
   },
   perez: {
-    // Lindblad inherits #11 at Red Bull for 2026, so Perez takes his earlier
-    // career number at Cadillac rather than colliding on the grid.
-    number: "2",
+    number: "11",
     constructorId: "cadillac",
     constructorName: "Cadillac F1 Team",
     assetCode: "SERPER02",
@@ -154,7 +147,7 @@ export const ACRONYM_TO_DRIVER_ID: Record<string, string> = {
   HUL: "hulkenberg",
   HAD: "hadjar",
   LAW: "lawson",
-  LIN: "lindblad",
+  LIN: "arvid_lindblad",
   BOT: "bottas",
   PER: "perez",
 };
