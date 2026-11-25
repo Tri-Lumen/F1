@@ -1,0 +1,160 @@
+/* ── ASCII Race detail page (components/ascii/views/RaceDetailView.tsx) ─────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, bars, the muted and
+ * accent colours, .f1-a-hide-s, .f1-a-head) come from src/app/ascii.css.
+ */
+
+/* Prev/next and back links above the header */
+html[data-style="ascii"] .f1-ascii-race .rd-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  color: var(--color-f1-text-muted);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-nav a { color: inherit; text-decoration: none; }
+html[data-style="ascii"] .f1-ascii-race .rd-nav a:hover { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-race .rd-nav-mid { display: flex; gap: 16px; margin-left: auto; }
+
+/* Event details: label/value pairs in two columns */
+html[data-style="ascii"] .f1-ascii-race .rd-info {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-info dt { color: var(--color-f1-text-muted); font-size: 11px; letter-spacing: 0.06em; padding-top: 2px; }
+html[data-style="ascii"] .f1-ascii-race .rd-info dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+html[data-style="ascii"] .f1-ascii-race .rd-links { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-links a { text-decoration: none; }
+html[data-style="ascii"] .f1-ascii-race .rd-links a:hover { color: var(--color-f1-text); }
+html[data-style="ascii"] .f1-ascii-race .rd-note { margin-bottom: 10px; }
+html[data-style="ascii"] .f1-ascii-race .rd-note + .rd-tbl { margin-top: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-info + .rd-note { margin-top: 12px; margin-bottom: 0; }
+
+/* Shared helpers */
+html[data-style="ascii"] .f1-ascii-race .rd-red { color: #f87171; }
+html[data-style="ascii"] .f1-ascii-race .rd-mono { font-family: var(--ascii-font); font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-ascii-race .rd-num { text-align: right; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-race .rd-pos { text-align: right; font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-race .rd-pts { text-align: right; font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-race .rd-ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-cap { text-transform: capitalize; }
+html[data-style="ascii"] .f1-ascii-race .rd-box { color: var(--ascii-hi); font-size: 11px; margin-left: 4px; }
+
+/* Driver cell: swatch then name, clipped */
+html[data-style="ascii"] .f1-ascii-race .rd-driver {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-driver .f1-a-swatch { flex: 0 0 auto; }
+html[data-style="ascii"] .f1-ascii-race .rd-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-name strong { font-weight: 700; text-transform: uppercase; }
+
+/* Tables: a grid per table so columns line up, dashed dividers between rows */
+html[data-style="ascii"] .f1-ascii-race .rd-tbl { font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-ascii-race .rd-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-dnf { opacity: 0.7; }
+html[data-style="ascii"] .f1-ascii-race .rd-fl {
+  background: color-mix(in srgb, var(--ascii-hi) 8%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-race .rd-sub {
+  grid-column: 1 / -1;
+  color: color-mix(in srgb, #f87171 75%, var(--color-f1-text-muted));
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 0 4px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-delta { margin-left: 6px; color: var(--color-f1-text-muted); }
+
+/* Column templates, desktop */
+html[data-style="ascii"] .f1-ascii-race .rd-cls .rd-row {
+  grid-template-columns: 38px minmax(0, 1.5fr) minmax(0, 1.1fr) 72px 52px minmax(0, 1.3fr) 44px 84px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-spr .rd-row {
+  grid-template-columns: 38px minmax(0, 1.5fr) minmax(0, 1.1fr) 72px 52px minmax(0, 1.3fr) 44px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-qual .rd-row {
+  grid-template-columns: 38px minmax(0, 1.5fr) minmax(0, 1.1fr) 76px 76px 76px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-pit .rd-row {
+  grid-template-columns: minmax(0, 1.6fr) 56px 110px 72px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-tl .rd-row {
+  grid-template-columns: 56px minmax(0, 1.5fr) 56px 110px 90px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-pace .rd-row {
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1.4fr) 92px 72px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-podium { list-style: none; margin: 0; padding: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-pod-row {
+  display: grid;
+  grid-template-columns: 40px 8px minmax(0, 1fr) minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-pod-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-pod-row .rd-pos { font-size: 15px; }
+html[data-style="ascii"] .f1-ascii-race .rd-pod-row .rd-time { text-align: right; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-race .rd-time { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* Phone width: keep position, driver, time and points; drop team, grid, laps, FL and the
+ * secondary qualifying and timeline columns (the f1-a-hide-s class does the hiding). */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-race .rd-cls .rd-row,
+  html[data-style="ascii"] .f1-ascii-race .rd-spr .rd-row {
+    grid-template-columns: 34px minmax(0, 1fr) auto 40px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-qual .rd-row {
+    grid-template-columns: 34px minmax(0, 1fr) 72px 72px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-pit .rd-row {
+    grid-template-columns: minmax(0, 1fr) 48px 100px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-tl .rd-row {
+    grid-template-columns: 48px minmax(0, 1fr) 96px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-pace .rd-row {
+    grid-template-columns: 24px minmax(0, 1fr) 84px 64px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-pod-row {
+    grid-template-columns: 34px 8px minmax(0, 1fr) 84px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-info { grid-template-columns: 72px minmax(0, 1fr); }
+}
