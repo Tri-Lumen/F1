@@ -13,6 +13,12 @@ import {
 } from "@/lib/api";
 import { getDriverConstructorId } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
+import HighlightsView, {
+  HighlightsEmpty,
+  type HlDnfRow,
+  type HlHighlightRow,
+  type HlIncidentRow,
+} from "@/components/ascii/views/HighlightsView";
 
 export const metadata: Metadata = {
   title: "Highlights & Incidents — F1 2026",
@@ -78,9 +84,14 @@ async function HighlightsIncidentsContent() {
 
   if (completedRaces.length === 0) {
     return (
+      <>
+      <div className="f1-std-only">
       <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
         <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
       </div>
+      </div>
+      <HighlightsEmpty year={getCurrentYear()} />
+      </>
     );
   }
 
@@ -253,7 +264,51 @@ async function HighlightsIncidentsContent() {
     milestone:    { emoji: "🌟", label: "Milestone",    color: "var(--color-f1-accent)" },
   };
 
+  // ASCII view rows: the same timeline, incident log and DNF table as below, as plain data.
+  const asciiHighlights: HlHighlightRow[] = highlights.map((h, i) => ({
+    key: `${i}`,
+    type: h.type,
+    round: h.round,
+    raceName: h.raceName,
+    driverName: h.driverName,
+    constructorName: h.constructorName,
+    teamColor: getTeamColor(h.constructorId),
+    detail: h.detail,
+    isFirst: h.isFirst === true,
+  }));
+  const asciiIncidents: HlIncidentRow[] = incidents.map((inc, i) => ({
+    key: `${i}`,
+    round: inc.round,
+    raceName: inc.raceName,
+    driverName: inc.driverName,
+    constructorName: inc.constructorName,
+    teamColor: getTeamColor(inc.constructorId),
+    position: inc.position,
+    status: inc.status,
+    category: inc.category,
+  }));
+  const asciiDnfs: HlDnfRow[] = [...dnfCountByDriver.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([id, count]) => {
+      const standing = driverStandings.find((s) => s.Driver.driverId === id);
+      const cid = standing ? (getDriverConstructorId(id, standing.Constructors[0]?.constructorId) ?? "") : "";
+      const racesEntered = completedRaces.filter((r) =>
+        (r.Results ?? []).some((res) => res.Driver.driverId === id)
+      ).length;
+      return {
+        key: id,
+        name: standing
+          ? `${standing.Driver.givenName} ${standing.Driver.familyName}`
+          : id.replace(/_/g, " "),
+        teamColor: getTeamColor(cid),
+        count,
+        reliability: racesEntered > 0 ? Math.round(((racesEntered - count) / racesEntered) * 100) : 100,
+      };
+    });
+
   return (
+    <>
+    <div className="f1-std-only">
     <div className="space-y-6">
       {/* Section nav */}
       <nav className="sticky top-0 z-10 -mx-4 mb-2 overflow-x-auto bg-f1-black/90 px-4 py-2 backdrop-blur flex gap-2 border-b border-f1-border/40">
@@ -524,13 +579,28 @@ async function HighlightsIncidentsContent() {
         )}
       </div>
     </div>
+    </div>
+    <HighlightsView
+      year={getCurrentYear()}
+      racesComplete={completedRaces.length}
+      uniqueWinners={uniqueWinners}
+      uniquePolesitters={uniquePolesitters}
+      totalDNFs={totalDNFs}
+      collisions={collisionDNFs}
+      mechanical={mechDNFs}
+      other={otherDNFs}
+      highlights={asciiHighlights}
+      incidents={asciiIncidents}
+      dnfs={asciiDnfs}
+    />
+    </>
   );
 }
 
 export default function HighlightsPage() {
   return (
     <div>
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="f1-std-only"><div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <div style={{ fontFamily: BC, fontWeight: 900, fontSize: 28, letterSpacing: "0.02em", lineHeight: 1 }}>
             HIGHLIGHTS &amp; INCIDENTS
@@ -540,11 +610,11 @@ export default function HighlightsPage() {
           </div>
         </div>
         <RefreshButton />
-      </div>
+      </div></div>
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="f1-std-only space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-32 rounded-xl bg-f1-card animate-pulse" />
             ))}

@@ -26,7 +26,7 @@ async function CompareContent() {
 export default function ComparePage() {
   return (
     <div>
-      <div className="mb-6">
+      <div className="f1-std-only mb-6">
         <h1 className="text-3xl font-black tracking-tight">
           <span className="text-f1-red">Head-to-Head</span> Comparison
         </h1>
@@ -37,10 +37,15 @@ export default function ComparePage() {
 
       <Suspense
         fallback={
-          <div className="space-y-4">
-            <div className="h-16 rounded-xl bg-f1-card animate-pulse" />
-            <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
-          </div>
+          <>
+            <div className="f1-std-only space-y-4">
+              <div className="h-16 rounded-xl bg-f1-card animate-pulse" />
+              <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
+            </div>
+            <div className="f1-ascii-dash">
+              <p className="f1-a-muted">Loading head-to-head…</p>
+            </div>
+          </>
         }
       >
         <CompareContent />

@@ -12,6 +12,7 @@ import {
   getF1TVRaceUrl,
 } from "@/lib/api";
 import CircuitMap from "@/components/CircuitMap";
+import ArchiveSeasonView from "@/components/ascii/views/ArchiveSeasonView";
 
 // Historical seasons never change, so cache aggressively rather than
 // rendering fully dynamically on every request.
@@ -66,7 +67,53 @@ export default async function ArchiveSeasonPage({
     }
   }
 
+  // ASCII view data: the same standings and calendar as the standard markup, as plain values.
+  const leader = driverStandings[0];
+  const asciiChampion = leader
+    ? {
+        name: `${leader.Driver.givenName} ${leader.Driver.familyName}`,
+        team: leader.Constructors[0]?.name ?? "",
+        points: String(leader.points),
+        wins: String(leader.wins),
+        color: getTeamColor(leader.Constructors[0]?.constructorId ?? ""),
+      }
+    : null;
+  const asciiDrivers = driverStandings.slice(0, 10).map((s) => ({
+    id: s.Driver.driverId,
+    position: s.position,
+    name: `${s.Driver.givenName} ${s.Driver.familyName}`,
+    team: s.Constructors[0]?.name ?? "—",
+    points: String(s.points),
+    color: getTeamColor(s.Constructors[0]?.constructorId ?? ""),
+  }));
+  const asciiConstructors = constructorStandings.map((s) => ({
+    id: s.Constructor.constructorId,
+    position: s.position,
+    name: s.Constructor.name,
+    wins: String(s.wins),
+    points: String(s.points),
+    color: getTeamColor(s.Constructor.constructorId),
+  }));
+  const asciiRaces = races.map((race) => {
+    const w = winnerMap.get(race.round);
+    return {
+      round: race.round,
+      name: race.raceName,
+      country: race.Circuit.Location.country,
+      date: race.date,
+      winner: w
+        ? {
+            surname: w.name.split(" ").pop()?.toUpperCase() ?? "",
+            color: getTeamColor(w.constructorId),
+            time: w.time,
+          }
+        : null,
+    };
+  });
+
   return (
+    <>
+    <div className="f1-std-only">
     <div>
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-f1-text-muted">
@@ -269,5 +316,16 @@ export default async function ArchiveSeasonPage({
         </div>
       )}
     </div>
+    </div>
+    <ArchiveSeasonView
+      season={season}
+      raceCount={races.length}
+      champion={asciiChampion}
+      drivers={asciiDrivers}
+      driversMore={Math.max(0, driverStandings.length - 10)}
+      constructors={asciiConstructors}
+      races={asciiRaces}
+    />
+    </>
   );
 }

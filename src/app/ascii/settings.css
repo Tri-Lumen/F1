@@ -1,0 +1,259 @@
+/*
+ * ASCII visual style for /settings
+ * --------------------------------
+ * Scoped under html[data-style="ascii"] and the .f1-settings root (SettingsClient).
+ * Standard style never loads these rules into effect. Sections become single-line
+ * frames with a [ LABEL ] set into the top rule; controls become square terminal
+ * controls. Accent colour marks the active state. Focus outlines are kept.
+ */
+
+/* ── Page header: "## SETTINGS" ─────────────────────────────────────────── */
+html[data-style="ascii"] .f1-settings {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[data-style="ascii"] .f1-settings > h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: 18px 0 4px;
+}
+html[data-style="ascii"] .f1-settings > h1::before {
+  content: "## ";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-settings > p {
+  color: var(--color-f1-text-muted);
+  margin-bottom: 18px !important;
+}
+
+/* ── Sections as framed panels with the title in the top rule ───────────── */
+html[data-style="ascii"] .f1-settings > section {
+  position: relative;
+  border: 1px solid var(--ascii-rule);
+  padding: 24px 16px 16px;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-settings > section > h2:first-child {
+  position: absolute;
+  top: -0.65em;
+  left: 12px;
+  margin: 0 !important;
+  background: var(--bg, var(--color-f1-black));
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+  white-space: pre;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+html[data-style="ascii"] .f1-settings > section > h2:first-child::before {
+  content: "[ ";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-settings > section > h2:first-child::after {
+  content: " ]";
+  color: var(--ascii-rule);
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-settings > section > h2:first-child + p {
+  margin-top: 6px;
+}
+
+/* Sub-headings and small caps labels stay quiet, terminal-style */
+html[data-style="ascii"] .f1-settings h3,
+html[data-style="ascii"] .f1-settings p.uppercase {
+  letter-spacing: 0.04em;
+}
+html[data-style="ascii"] .f1-settings code {
+  border: 1px solid var(--ascii-rule);
+  border-radius: 0;
+  padding: 0 3px;
+  background: transparent;
+}
+
+/* ── Cards and option tiles: square, single rule, no fill ──────────────── */
+html[data-style="ascii"] .f1-settings button[class*="border-2"],
+html[data-style="ascii"] .f1-settings button[class*="rounded-lg"],
+html[data-style="ascii"] .f1-settings label[class*="rounded-xl"],
+html[data-style="ascii"] .f1-settings div[class*="rounded-xl"],
+html[data-style="ascii"] .f1-settings div[class*="rounded-lg"] {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--ascii-rule);
+  background-color: transparent;
+}
+html[data-style="ascii"] .f1-settings button[class*="rounded-lg"],
+html[data-style="ascii"] .f1-settings button[class*="rounded-xl"] {
+  transition: none;
+}
+/* Active tiles, options and buttons: accent rule and accent text */
+html[data-style="ascii"] .f1-settings [class*="border-f1-accent"],
+html[data-style="ascii"] .f1-settings [class*="border-f1-red"]:not(button[class*="bg-f1-red"]) {
+  border-color: var(--color-f1-accent) !important;
+}
+html[data-style="ascii"] .f1-settings [class*="bg-f1-accent/"] {
+  background-color: color-mix(in srgb, var(--color-f1-accent) 14%, transparent) !important;
+}
+html[data-style="ascii"] .f1-settings [class*="text-f1-accent"] {
+  color: var(--ascii-hi);
+}
+/* Solid accent action buttons keep their fill but lose the rounding */
+html[data-style="ascii"] .f1-settings button[class*="bg-f1-red"],
+html[data-style="ascii"] .f1-settings button[class*="bg-green-"],
+html[data-style="ascii"] .f1-settings button[class*="bg-red-"] {
+  border: 1px solid var(--color-f1-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+}
+/* Hover: the rule brightens to the text colour, not a fill */
+html[data-style="ascii"] .f1-settings button:hover:not(:disabled):not([class*="bg-f1-red"]):not([class*="border-f1-accent"]) {
+  border-color: var(--color-f1-text-muted) !important;
+  color: var(--color-f1-text);
+}
+html[data-style="ascii"] .f1-settings button:disabled,
+html[data-style="ascii"] .f1-settings button[class*="cursor-not-allowed"] {
+  opacity: 0.4;
+}
+
+/* Badges and chips (0/3, 0/2, counts) become bracketed text */
+html[data-style="ascii"] .f1-settings span[class*="rounded-full"][class*="px-2"] {
+  border: 1px solid var(--ascii-rule);
+  background: transparent !important;
+  color: var(--color-f1-text) !important;
+  padding: 0 6px !important;
+  font-weight: 700;
+}
+
+/* Check marks: plain accent glyph in place of the filled dot */
+html[data-style="ascii"] .f1-settings button:not([role="switch"]) span[class*="rounded-full"][class*="h-5"] {
+  width: auto !important;
+  height: auto !important;
+  background: transparent !important;
+  color: var(--color-f1-accent) !important;
+  font-weight: 700;
+  line-height: 1;
+}
+html[data-style="ascii"] .f1-settings button:not([role="switch"]) span[class*="rounded-full"][class*="h-5"] svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Colour dots and swatches keep their colour; they are content, not chrome */
+html[data-style="ascii"] .f1-settings span[class*="rounded-full"][class*="h-2"] {
+  border-radius: 0 !important;
+}
+
+/* ── Toggles: square track with a block knob ───────────────────────────── */
+html[data-style="ascii"] .f1-settings button[role="switch"] {
+  width: 44px;
+  height: 22px;
+  border: 1px solid var(--ascii-rule);
+  background: transparent;
+  flex-shrink: 0;
+}
+html[data-style="ascii"] .f1-settings button[role="switch"][aria-checked="true"] {
+  border-color: var(--color-f1-accent);
+}
+html[data-style="ascii"] .f1-settings button[role="switch"] > span {
+  top: 2px !important;
+  left: 2px !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--ascii-rule) !important;
+  border-radius: 0 !important;
+}
+html[data-style="ascii"] .f1-settings button[role="switch"][aria-checked="true"] > span {
+  background: var(--color-f1-accent) !important;
+  transform: translateX(20px) !important;
+}
+
+/* Native checkbox and range read as terminal controls too */
+html[data-style="ascii"] .f1-settings input[type="checkbox"] {
+  border-radius: 0;
+}
+html[data-style="ascii"] .f1-settings input[type="range"] {
+  height: 8px !important;
+  border: 1px solid var(--ascii-rule);
+  background-clip: content-box;
+}
+html[data-style="ascii"] .f1-settings input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 16px;
+  background: var(--color-f1-accent);
+  border: 0;
+  border-radius: 0;
+}
+html[data-style="ascii"] .f1-settings input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  background: var(--color-f1-accent);
+  border: 0;
+  border-radius: 0;
+}
+
+/* Text fields and selects: a single rule, monospace, square */
+html[data-style="ascii"] .f1-settings input[type="text"],
+html[data-style="ascii"] .f1-settings select {
+  border: 1px solid var(--ascii-rule);
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--color-f1-text);
+  font-family: var(--ascii-font) !important;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-settings input[type="text"] {
+  width: min(16rem, 100%) !important;
+  flex: 1 1 12rem;
+}
+html[data-style="ascii"] .f1-settings select option {
+  background: var(--bg, var(--color-f1-black));
+  color: var(--color-f1-text);
+}
+html[data-style="ascii"] .f1-settings input[type="text"]:focus,
+html[data-style="ascii"] .f1-settings select:focus {
+  border-color: var(--color-f1-accent);
+}
+
+/* Rows wrap instead of overflowing on phones */
+html[data-style="ascii"] .f1-settings [class*="flex"] {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-settings [class*="flex"] > * {
+  min-width: 0;
+}
+
+/* Progress bar: the block mask from ascii.css already draws it; drop the pill */
+html[data-style="ascii"] .f1-settings [class*="h-2"][class*="overflow-hidden"] {
+  background: transparent !important;
+  border: 1px solid var(--ascii-rule);
+  height: 1em !important;
+}
+
+/* ── Keyboard: keep a visible focus ring on every control ──────────────── */
+html[data-style="ascii"] .f1-settings :focus-visible {
+  outline: 1px solid var(--color-f1-accent);
+  outline-offset: 2px;
+}
+
+/* ── Phones: no horizontal scroll, tiles stack at full width ───────────── */
+@media (max-width: 640px) {
+  html[data-style="ascii"] .f1-settings > section {
+    padding: 22px 12px 14px;
+  }
+  html[data-style="ascii"] .f1-settings button[class*="border-2"],
+  html[data-style="ascii"] .f1-settings button[class*="rounded-xl"] {
+    max-width: 100%;
+  }
+  html[data-style="ascii"] .f1-settings img,
+  html[data-style="ascii"] .f1-settings pre {
+    max-width: 100%;
+  }
+}

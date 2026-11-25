@@ -14,6 +14,7 @@ import {
   getWeatherSeries,
 } from "@/lib/api";
 import ReplayClient from "./ReplayClient";
+import ReplayDetailView from "@/components/ascii/views/ReplayDetailView";
 
 interface PageProps {
   params: Promise<{ sessionKey: string }>;
@@ -60,16 +61,29 @@ export default async function ReplayPage({ params }: PageProps) {
     ]);
 
   return (
-    <ReplayClient
-      session={session}
-      drivers={drivers}
-      positions={positions}
-      intervals={intervals}
-      stints={stints}
-      radio={radio}
-      raceControl={raceControl}
-      laps={laps}
-      weatherSeries={weatherSeries}
-    />
+    <>
+      <div className="f1-std-only">
+        <ReplayClient
+          session={session}
+          drivers={drivers}
+          positions={positions}
+          intervals={intervals}
+          stints={stints}
+          radio={radio}
+          raceControl={raceControl}
+          laps={laps}
+          weatherSeries={weatherSeries}
+        />
+      </div>
+      <ReplayDetailView
+        session={session}
+        drivers={drivers}
+        laps={laps}
+        stints={stints}
+        radioCount={radio.length}
+        raceControlCount={raceControl.length}
+        weatherCount={weatherSeries.length}
+      />
+    </>
   );
 }

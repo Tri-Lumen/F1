@@ -1,0 +1,106 @@
+/* ── ASCII Fastest Laps page (components/ascii/views/FastestLapsView.tsx) ──
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, bars, the two-up grid,
+ * the header row, muted/accent colours, .f1-a-hide-s) come from src/app/ascii.css.
+ */
+
+/* Ranked bar rows: name row, then a bar indented under the name */
+html[data-style="ascii"] .f1-ascii-fastest .fl-item {
+  padding: 6px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-list .fl-item:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-item-top {
+  display: grid;
+  grid-template-columns: 24px 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-item-top.fl-item-plain {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-left: 0;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-rank { text-align: right; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-noswatch { width: 8px; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-sub-line {
+  display: block;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--color-f1-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-val {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-bar { padding-left: 42px; margin-top: 3px; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-item-top.fl-item-plain + .fl-bar { padding-left: 0; }
+
+/* Race-by-race table: a grid per row so the columns line up */
+html[data-style="ascii"] .f1-ascii-fastest .fl-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.9fr) 84px 44px 96px 48px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-best { background: color-mix(in srgb, var(--color-f1-accent) 8%, transparent); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-rd { text-align: right; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-gp {
+  display: grid;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-gp a { color: inherit; text-decoration: none; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-gp a:hover { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-sub-d { display: none; font-weight: 400; font-size: 12px; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-driver {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-fastest .fl-team { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-time { font-weight: 700; white-space: nowrap; text-align: right; }
+html[data-style="ascii"] .f1-ascii-fastest .fl-best .fl-time { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-fastest .fl-pos { text-align: right; font-weight: 700; }
+
+/* Mid widths: lap, average speed and position drop; team and driver stay */
+@media (max-width: 1100px) {
+  html[data-style="ascii"] .f1-ascii-fastest .fl-hide-m { display: none !important; }
+  html[data-style="ascii"] .f1-ascii-fastest .fl-row {
+    grid-template-columns: 30px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 0.9fr) 84px;
+  }
+}
+
+/* Phone width: race and time only, with the driver under the race name */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-fastest .fl-row {
+    grid-template-columns: 28px minmax(0, 1fr) 84px;
+  }
+  html[data-style="ascii"] .f1-ascii-fastest .fl-sub-d { display: block; }
+}

@@ -1,0 +1,58 @@
+/* ── ASCII Replay session (components/ascii/views/ReplayDetailView.tsx) ─────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. .f1-a-hide-s (ascii.css) drops columns on phones.
+ */
+
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-meta { margin: 4px 0 0; }
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1.2fr) 52px 96px minmax(0, 0.9fr);
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-row:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-pos { text-align: right; }
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-name {
+  font-weight: 700;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-sub {
+  display: none;
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 6px;
+}
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-best { font-weight: 700; color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-replay-detail .rd-cell {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Phone: position, driver (full name under it), laps and best lap */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-replay-detail .rd-row { grid-template-columns: 24px minmax(0, 1fr) 46px 80px; }
+  html[data-style="ascii"] .f1-ascii-replay-detail .rd-sub { display: block; margin-left: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}

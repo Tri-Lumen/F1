@@ -1,0 +1,38 @@
+/* ── ASCII Session Replay list (components/ascii/views/ReplayView.tsx) ──────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Panels and muted/accent colours come from
+ * src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-replay .rp-meta { margin-bottom: 6px; }
+html[data-style="ascii"] .f1-ascii-replay .rp-list { list-style: none; margin: 0; padding: 0; }
+html[data-style="ascii"] .f1-ascii-replay .rp-list li { border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent); }
+html[data-style="ascii"] .f1-ascii-replay .rp-list li:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-ascii-replay .rp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 6px 0;
+  color: var(--color-f1-text);
+  text-decoration: none;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-replay a.rp-row:hover .rp-name { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-replay .rp-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-style="ascii"] .f1-ascii-replay .rp-when { white-space: nowrap; font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-ascii-replay .rp-link { color: var(--ascii-hi); }
+
+/* Phone: session name, then the date and time under it */
+@media (max-width: 560px) {
+  html[data-style="ascii"] .f1-ascii-replay .rp-row { flex-direction: column; gap: 0; }
+  html[data-style="ascii"] .f1-ascii-replay .rp-name { max-width: 100%; }
+}

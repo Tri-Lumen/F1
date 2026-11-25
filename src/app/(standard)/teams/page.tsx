@@ -21,6 +21,8 @@ import RefreshButton from "@/components/RefreshButton";
 import PageHeader from "@/components/PageHeader";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
+import TeamsView, { type AsciiTeamEntry } from "@/components/ascii/views/TeamsView";
+import type { PointsGridData } from "@/components/ascii/views/PointsGrid";
 import { getDriverNumber, getDriverConstructorId } from "@/lib/driverOverrides";
 import { getTeamLogoUrl } from "@/lib/profileImages";
 
@@ -115,8 +117,47 @@ async function TeamsContent() {
     }
   }
 
+  // Plain data for the ASCII view (same derivations as the cards above).
+  const asciiTeams: AsciiTeamEntry[] = constructorStandings.map((s) => {
+    const constructorId = s.Constructor.constructorId;
+    return {
+      constructorId,
+      position: s.position,
+      name: s.Constructor.name,
+      url: s.Constructor.url,
+      color: getTeamColor(constructorId),
+      points: parseFloat(s.points),
+      drivers: (teamDrivers.get(constructorId) ?? []).map((d) => ({
+        driverId: d.Driver.driverId,
+        givenName: d.Driver.givenName,
+        familyName: d.Driver.familyName,
+        number: getDriverNumber(d.Driver.driverId, d.Driver.permanentNumber),
+        pts: parseFloat(d.points),
+        pos: d.position,
+      })),
+    };
+  });
+
+  // Same series as the ConstructorPointsChart: cumulative points per constructor after each race.
+  const asciiCompleted = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
+  const asciiProgression: PointsGridData = {
+    rounds: asciiCompleted.map((r) => r.round),
+    series: constructorStandings.map((s) => {
+      const cid = s.Constructor.constructorId;
+      let total = 0;
+      const values = asciiCompleted.map((race) => {
+        total += (race.Results ?? [])
+          .filter((r) => r.Constructor.constructorId === cid)
+          .reduce((sum, r) => sum + parseFloat(r.points), 0);
+        return total;
+      });
+      return { id: cid, label: s.Constructor.name, color: getTeamColor(cid), values };
+    }),
+  };
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Team Cards */}
       <div className="grid gap-6 mb-10">
         {constructorStandings.map((s) => {
@@ -298,6 +339,10 @@ async function TeamsContent() {
 
       {/* Teammate H2H */}
       <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
+      </div>
+
+      {/* ASCII view (the points progression is drawn as a grid in ASCII) */}
+      <TeamsView data={{ subtitle: `${getCurrentYear()} Season · Full team stats and standings`, teams: asciiTeams, progression: asciiProgression }} />
     </>
   );
 }
@@ -305,15 +350,17 @@ async function TeamsContent() {
 export default function TeamsPage() {
   return (
     <div>
-      <PageHeader
-        title="Constructors Championship"
-        subtitle={`${getCurrentYear()} Season · Full team stats and standings`}
-        actions={<RefreshButton />}
-      />
+      <div className="f1-std-only">
+        <PageHeader
+          title="Constructors Championship"
+          subtitle={`${getCurrentYear()} Season · Full team stats and standings`}
+          actions={<RefreshButton />}
+        />
+      </div>
 
       <Suspense
         fallback={
-          <div className="space-y-3">
+          <div className="f1-std-only space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}

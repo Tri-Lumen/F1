@@ -1,0 +1,88 @@
+/*
+ * ASCII view of /teams (components/ascii/views/TeamsView.tsx).
+ * Every selector is scoped under html[data-style="ascii"], so Standard is unaffected.
+ * Shared panel, label, bar and muted/accent helpers come from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-teams .f1-t-link {
+  color: var(--color-f1-text);
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-link:hover {
+  color: var(--ascii-hi);
+  text-decoration: underline;
+}
+
+/* Standings + driver rows: fixed grid columns so bars and points line up */
+html[data-style="ascii"] .f1-ascii-teams .f1-t-row {
+  display: grid;
+  grid-template-columns: 24px 10px minmax(120px, 1.2fr) 52px minmax(80px, 1fr) minmax(120px, 1.4fr);
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-row > span:first-child { text-align: right; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-head > span:first-child { text-align: right; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-team {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-driver-names {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Per-team panels: two-up on desktop, stacked on phones */
+html[data-style="ascii"] .f1-ascii-teams .f1-a-two { margin-top: 4px; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-panel-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-driver-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 72px minmax(60px, 1fr) 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-driver-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-driver-row > .f1-a-driver {
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-teams .f1-t-share { min-width: 0; }
+html[data-style="ascii"] .f1-ascii-teams .f1-t-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-teams .f1-t-hide-s { display: none !important; }
+  html[data-style="ascii"] .f1-ascii-teams .f1-t-row {
+    grid-template-columns: 22px 10px minmax(0, 1fr) 56px;
+  }
+  html[data-style="ascii"] .f1-ascii-teams .f1-t-driver-row {
+    grid-template-columns: 40px minmax(0, 1fr) 64px;
+  }
+  html[data-style="ascii"] .f1-ascii-teams .f1-t-share { display: none; }
+}

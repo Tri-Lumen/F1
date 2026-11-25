@@ -1,0 +1,168 @@
+/*
+ * ASCII Head-to-Head page (components/ascii/views/CompareView.tsx).
+ * Everything is scoped under html[data-style="ascii"], so Standard is unaffected.
+ * Shared panel, bar, row and label styles live in ascii.css; only compare-specific rules here.
+ */
+
+/* Driver/teammate controls */
+html[data-style="ascii"] .f1-cmp-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--ascii-rule);
+  border-radius: 0;
+  background: var(--color-f1-black);
+  color: var(--color-f1-text);
+  font: inherit;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+html[data-style="ascii"] .f1-cmp-select:focus {
+  outline: 1px solid var(--ascii-hi);
+  outline-offset: 0;
+}
+html[data-style="ascii"] .f1-cmp-pick-id {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 12px;
+}
+html[data-style="ascii"] .f1-cmp-pick-id .f1-a-swatch { height: auto; min-height: 2.6em; width: 6px; }
+html[data-style="ascii"] .f1-cmp-pick-id > div { min-width: 0; }
+
+html[data-style="ascii"] .f1-cmp-pairs { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+html[data-style="ascii"] .f1-cmp-opt {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--color-f1-text-muted);
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-cmp-opt:hover { color: var(--color-f1-text); }
+html[data-style="ascii"] .f1-cmp-opt-on { color: var(--color-f1-accent); font-weight: 700; }
+html[data-style="ascii"] .f1-cmp-opt:focus-visible {
+  outline: 1px solid var(--ascii-hi);
+  outline-offset: 2px;
+}
+
+/* Stat rows: values + label on one line, a bar per driver underneath */
+html[data-style="ascii"] .f1-cmp-stat {
+  padding: 6px 0 8px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-cmp-stat:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-cmp-stat-head {
+  display: grid;
+  grid-template-columns: minmax(48px, 1fr) auto minmax(48px, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+html[data-style="ascii"] .f1-cmp-stat-title {
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+html[data-style="ascii"] .f1-cmp-stat-label { text-align: center; font-size: 11px; letter-spacing: 0.06em; }
+html[data-style="ascii"] .f1-cmp-val { color: var(--color-f1-text-muted); font-weight: 700; }
+html[data-style="ascii"] .f1-cmp-val-on { color: var(--color-f1-text); }
+html[data-style="ascii"] .f1-cmp-val-r { text-align: right; }
+html[data-style="ascii"] .f1-cmp-bars { display: grid; gap: 2px; }
+
+/* Race-by-race table */
+html[data-style="ascii"] .f1-cmp-race { font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-cmp-race-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) 48px 44px 48px 44px 52px 52px 64px;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-cmp-race-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-cmp-race-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-cmp-race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-style="ascii"] .f1-cmp-pos { font-weight: 700; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-cmp-result { font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-cmp-up { color: var(--ascii-hi); margin-left: 2px; }
+
+/* Chart blocks: points progression and qualifying gap as round-by-round grids */
+html[data-style="ascii"] .f1-cmp-chart-note { font-size: 12px; margin-bottom: 8px; }
+html[data-style="ascii"] .f1-cmp-spark {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+  overflow: hidden;
+}
+html[data-style="ascii"] .f1-cmp-chart-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-cmp-chart-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-cmp-chart-row.f1-cmp-race-head {
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-cmp-pts-row {
+  grid-template-columns: 40px 40px minmax(0, 1fr) 40px;
+}
+html[data-style="ascii"] .f1-cmp-pts-row .f1-cmp-bars,
+html[data-style="ascii"] .f1-cmp-qual-row .f1-cmp-bars {
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-cmp-qual-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) 72px;
+}
+html[data-style="ascii"] .f1-cmp-qual-row .f1-cmp-race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-style="ascii"] .f1-cmp-chart-row .f1-a-r { white-space: nowrap; }
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-cmp-qual-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) 56px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-cmp-pts-row {
+    grid-template-columns: 32px 32px minmax(0, 1fr) 32px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-cmp-race-row {
+    grid-template-columns: minmax(0, 1fr) 44px 44px 52px;
+  }
+  html[data-style="ascii"] .f1-cmp-stat-head { gap: 8px; }
+}
+
+/* Split stat bar: driver 1 grows left from the centre line, driver 2 grows right */
+html[data-style="ascii"] .f1-cmp-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 0;
+}
+html[data-style="ascii"] .f1-cmp-bars > .f1-a-bar {
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-cmp-bars > .f1-a-bar:first-child {
+  border-right: 1px solid var(--ascii-rule);
+}

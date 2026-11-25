@@ -26,7 +26,7 @@ import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
 import { LocalTime } from "@/components/LocalDateTime";
 import PageHeader from "@/components/PageHeader";
-import AsciiLogo from "@/components/ascii/AsciiLogo";
+import AsciiDashboard, { type AsciiDashData } from "@/components/ascii/AsciiDashboard";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
 import EmptyState from "@/components/EmptyState";
@@ -89,6 +89,67 @@ async function DashboardContent() {
   const leaderPts = leader ? parseFloat(leader.points) : 0;
   const nextSessionISO = nextSession?.date.toISOString() ?? "";
 
+  // Plain data for the ASCII dashboard (shown only under data-style="ascii").
+  const teamColorById = Object.fromEntries(
+    constructorStandings.map((s) => [s.Constructor.constructorId, getTeamColor(s.Constructor.constructorId)]),
+  );
+  const toIso = (s?: { date: string; time: string }) =>
+    s ? `${s.date}T${s.time.endsWith("Z") ? s.time : `${s.time}Z`}` : null;
+  const nextSlots: Array<[string, string | null]> = nextRace
+    ? [
+        ["FP1", toIso(nextRace.FirstPractice)],
+        ["FP2", toIso(nextRace.SecondPractice)],
+        ["FP3", toIso(nextRace.ThirdPractice)],
+        ["SPRINT QUALI", toIso(nextRace.SprintQualifying)],
+        ["SPRINT", toIso(nextRace.Sprint)],
+        ["QUALIFYING", toIso(nextRace.Qualifying)],
+        ["RACE", nextRace.time ? toIso({ date: nextRace.date, time: nextRace.time }) : null],
+      ]
+    : [];
+  const asciiData: AsciiDashData = {
+    season: { done: completedCount, total: totalRaces },
+    leader: {
+      familyName: leader.Driver.familyName.toUpperCase(),
+      fullName: `${leader.Driver.givenName} ${leader.Driver.familyName}`,
+      team: leader.Constructors[0]?.name ?? "",
+      color: getTeamColor(getDriverConstructorId(leader.Driver.driverId, leader.Constructors[0]?.constructorId) ?? ""),
+      pts: parseFloat(leader.points),
+      wins: parseInt(leader.wins, 10) || 0,
+      num: leader.Driver.permanentNumber ?? "",
+    },
+    second: {
+      familyName: second.Driver.familyName.toUpperCase(),
+      color: getTeamColor(getDriverConstructorId(second.Driver.driverId, second.Constructors[0]?.constructorId) ?? ""),
+      pts: parseFloat(second.points),
+    },
+    nextRace: nextRace
+      ? {
+          round: nextRace.round,
+          name: nextRace.raceName,
+          circuit: `${nextRace.Circuit.circuitName} · ${nextRace.Circuit.Location.locality}, ${nextRace.Circuit.Location.country}`,
+          place: nextRace.Circuit.Location.country,
+          targetISO: nextSessionISO,
+          sessions: nextSlots.flatMap(([type, iso]) => (iso ? [{ type, iso }] : [])),
+        }
+      : null,
+    drivers: driverStandings.slice(0, 12).map((s, i) => ({
+      pos: i + 1,
+      familyName: s.Driver.familyName.toUpperCase(),
+      fullName: `${s.Driver.givenName} ${s.Driver.familyName}`,
+      team: s.Constructors[0]?.name ?? "",
+      color: getTeamColor(getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? ""),
+      pts: parseFloat(s.points),
+      form: formData[s.Driver.driverId] ?? [],
+    })),
+    teams: constructorStandings.map((s) => ({
+      name: s.Constructor.name,
+      color: teamColorById[s.Constructor.constructorId],
+      pts: parseFloat(s.points),
+    })),
+    recent: recentRaces,
+    teamColors: teamColorById,
+  };
+
   if (!leader || !second) {
     return (
       <EmptyState
@@ -104,6 +165,7 @@ async function DashboardContent() {
         <LiveSessionBanner />
       </Suspense>
 
+      <div className="f1-std-only">
       {/* Today's Sessions Widget */}
       {todaySessions.length > 0 && (
         <div
@@ -274,6 +336,9 @@ async function DashboardContent() {
           </div>
         </div>
       </div>
+      </div>
+
+      <AsciiDashboard data={asciiData} />
     </>
   );
 }
@@ -281,7 +346,6 @@ async function DashboardContent() {
 export default function Home() {
   return (
     <>
-      <AsciiLogo className="mb-4" />
       <PageHeader
         title="Dashboard"
         subtitle="2026 Season · championship standings, battles & recent results"

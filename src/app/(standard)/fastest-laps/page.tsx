@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
+import FastestLapsView, { type FastestLapsViewData } from "@/components/ascii/views/FastestLapsView";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -88,14 +89,117 @@ async function FastestLapsContent() {
 
   if (completedRaces.length === 0) {
     return (
-      <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
-      </div>
+      <>
+        <div className="f1-std-only">
+          <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
+            <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
+          </div>
+        </div>
+        <FastestLapsView year={getCurrentYear()} data={null} />
+      </>
     );
   }
 
+  // ASCII view data: the same derivations as the standard markup below, as plain values.
+  const surname = (name: string) => name.split(" ").at(-1)?.toUpperCase() ?? name;
+  const ratio = (a: number, b: number) => (b > 0 ? a / b : 0);
+
+  const teamTotals = new Map<string, { name: string; constructorId: string; count: number }>();
+  for (const e of entries) {
+    const t = teamTotals.get(e.constructorId) ?? { name: e.team, constructorId: e.constructorId, count: 0 };
+    teamTotals.set(e.constructorId, { ...t, count: t.count + 1 });
+  }
+  const teamTotalsSorted = [...teamTotals.values()].sort((a, b) => b.count - a.count);
+  const maxTeam = teamTotalsSorted[0]?.count ?? 1;
+  const maxLeader = leaderboard[0]?.count ?? 1;
+
+  const buckets = [
+    { label: "P1-P3", min: 1, max: 3, count: 0 },
+    { label: "P4-P10", min: 4, max: 10, count: 0 },
+    { label: "P11-P20", min: 11, max: 20, count: 0 },
+  ];
+  for (const e of entries) {
+    const pos = parseInt(e.racePosition);
+    for (const b of buckets) {
+      if (pos >= b.min && pos <= b.max) { b.count++; break; }
+    }
+  }
+  const maxBucket = Math.max(...buckets.map((b) => b.count), 1);
+
+  const lapNums = entries.map((e) => parseInt(e.lap)).filter((n) => !isNaN(n) && n > 0);
+  const maxLap = lapNums.length > 0 ? Math.max(...lapNums) : 0;
+  const binSize = Math.ceil(maxLap / 10);
+  const lapCounts = Array.from({ length: 10 }, (_, i) => ({
+    start: i * binSize + 1,
+    end: (i + 1) * binSize,
+    count: lapNums.filter((n) => n > i * binSize && n <= (i + 1) * binSize).length,
+  }));
+  const maxLapCount = Math.max(...lapCounts.map((b) => b.count), 1);
+
+  const asciiData: FastestLapsViewData = {
+    recorded: entries.length,
+    completed: completedRaces.length,
+    top: leaderboard[0]
+      ? { name: surname(leaderboard[0].name), team: leaderboard[0].team, count: leaderboard[0].count }
+      : null,
+    fastest: fastestEntry
+      ? {
+          time: fastestEntry.lapTime,
+          name: surname(fastestEntry.driverName),
+          race: fastestEntry.raceName.replace(" Grand Prix", " GP"),
+          speed: fastestEntry.avgSpeed,
+        }
+      : null,
+    leaderboard: leaderboard.map((d) => ({
+      id: d.id,
+      label: "",
+      name: d.name,
+      sub: d.team,
+      color: getTeamColor(d.constructorId),
+      count: d.count,
+      frac: ratio(d.count, maxLeader),
+    })),
+    teams: teamTotalsSorted.map((t) => ({
+      id: t.constructorId,
+      label: "",
+      name: t.name,
+      color: getTeamColor(t.constructorId),
+      count: t.count,
+      frac: ratio(t.count, maxTeam),
+    })),
+    buckets: buckets.map((b) => ({
+      id: b.label,
+      label: b.label,
+      count: b.count,
+      frac: ratio(b.count, maxBucket),
+      share: entries.length > 0 ? `${Math.round((b.count / entries.length) * 100)}%` : "",
+    })),
+    lapBins:
+      lapNums.length >= 3 && entries.length > 3
+        ? lapCounts.map((b) => ({
+            id: String(b.start),
+            label: `${b.start}–${b.end}`,
+            count: b.count,
+            frac: ratio(b.count, maxLapCount),
+          }))
+        : [],
+    rows: entries.map((e) => ({
+      round: e.round,
+      race: e.raceName.replace(" Grand Prix", " GP"),
+      driver: e.driverName,
+      team: e.team,
+      color: getTeamColor(e.constructorId),
+      time: e.lapTime,
+      lap: e.lap,
+      speed: e.avgSpeed,
+      position: e.racePosition,
+      best: e === fastestEntry,
+    })),
+  };
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Summary cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Fastest lap leaderboard top driver */}
@@ -390,6 +494,8 @@ async function FastestLapsContent() {
           </div>
         </div>
       )}
+      </div>
+      <FastestLapsView year={getCurrentYear()} data={asciiData} />
     </>
   );
 }
@@ -397,6 +503,7 @@ async function FastestLapsContent() {
 export default function FastestLapsPage() {
   return (
     <div>
+      <div className="f1-std-only">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <div
@@ -416,10 +523,11 @@ export default function FastestLapsPage() {
         </div>
         <RefreshButton />
       </div>
+      </div>
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="space-y-4 f1-std-only">
             <div className="h-24 rounded-xl bg-[#131313] animate-pulse" />
             <div className="h-96 rounded-xl bg-[#131313] animate-pulse" />
           </div>

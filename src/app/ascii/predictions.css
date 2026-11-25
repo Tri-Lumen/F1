@@ -1,0 +1,53 @@
+/* ── ASCII Pick'em (components/ascii/views/PredictionsView.tsx) ─────────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Panels, labels and muted/accent colours come
+ * from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-preds .pd-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  grid-template-columns: 28px minmax(130px, 1.5fr) 100px minmax(80px, 1fr) minmax(150px, 1.6fr) minmax(60px, 0.6fr) 110px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-preds .pd-row:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-ascii-preds .pd-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-ascii-preds .pd-rd { text-align: right; }
+html[data-style="ascii"] .f1-ascii-preds .pd-name {
+  font-weight: 700;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-preds .pd-sub {
+  display: none;
+  font-weight: 400;
+  font-size: 12px;
+}
+html[data-style="ascii"] .f1-ascii-preds .pd-num { white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-preds .pd-driver {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-preds .pd-status { white-space: nowrap; font-weight: 700; }
+
+/* Phone: race (with date under it), then status; pole, podium and fastest lap are dropped */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-preds .pd-row { grid-template-columns: 26px minmax(0, 1fr) auto; }
+  html[data-style="ascii"] .f1-ascii-preds .pd-date-col,
+  html[data-style="ascii"] .f1-ascii-preds .pd-wide { display: none; }
+  html[data-style="ascii"] .f1-ascii-preds .pd-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}

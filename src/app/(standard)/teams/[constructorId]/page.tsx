@@ -39,6 +39,7 @@ import {
 } from "@/lib/profileImages";
 import { getDriverNumber, getDriverConstructorId } from "@/lib/driverOverrides";
 import type { RaceResult } from "@/lib/types";
+import TeamDetailView, { type AsciiTeamDetailData } from "@/components/ascii/views/TeamDetailView";
 
 /**
  * Whether a race result belongs to the given team, resolved through the
@@ -175,8 +176,94 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
     }),
   }));
 
+  // Plain data for the ASCII view (same derivations as the standard markup above).
+  const teamPtsTotal = parseFloat(standing.points) || 1;
+  const asciiData: AsciiTeamDetailData = {
+    name: standing.Constructor.name,
+    subtitle: `${standing.Constructor.nationality} Constructor`,
+    color: teamColor,
+    wikiUrl: standing.Constructor.url,
+    year: String(getCurrentYear()),
+    position: standing.position,
+    points: standing.points,
+    wins: String(standing.wins),
+    headline: [
+      { label: "Podiums", value: String(podiums) },
+      { label: "Grid P1s", value: String(poles) },
+      { label: "1-2 finishes", value: String(oneTwo) },
+      { label: "Fastest laps", value: String(fastestLaps) },
+      { label: "DNFs", value: String(dnfs) },
+      { label: "2x points", value: String(doublePoints) },
+      { label: "Avg finish", value: teamRaces.length > 0 ? String(avgFinish) : "—" },
+      { label: "Races", value: String(teamRaces.length) },
+    ],
+    pitStops:
+      validStops.length > 0
+        ? {
+            avg: `${avgPitDuration.toFixed(2)}s`,
+            fastest: `${fastestPit.toFixed(1)}s`,
+            total: validStops.length,
+          }
+        : null,
+    pointsPerRace: teamRaces.length > 0 ? ppr.toFixed(1) : null,
+    retirements: dnfReasons.map((d) => ({
+      driver: d.driver.split(" ").at(-1) ?? d.driver,
+      raceName: d.raceName,
+      status: d.status,
+    })),
+    drivers: drivers.map((d) => {
+      const driverStops = validStops.filter((s) => s.driverId === d.Driver.driverId);
+      const driverAvg =
+        driverStops.length > 0
+          ? driverStops.reduce((sum, s) => sum + parseFloat(s.duration), 0) / driverStops.length
+          : 0;
+      return {
+        driverId: d.Driver.driverId,
+        code: d.Driver.code,
+        givenName: d.Driver.givenName,
+        familyName: d.Driver.familyName,
+        number: getDriverNumber(d.Driver.driverId, d.Driver.permanentNumber),
+        points: d.points,
+        position: d.position,
+        wins: d.wins,
+        share: (parseFloat(d.points) || 0) / teamPtsTotal,
+        form: raceRows
+          .flatMap(({ results }) => results.filter((r) => r.Driver.driverId === d.Driver.driverId))
+          .slice(-5)
+          .map((r) => parseInt(r.position, 10)),
+        pitAvg: driverStops.length > 0 ? `${driverAvg.toFixed(2)}s` : null,
+        pitStops: driverStops.length,
+      };
+    }),
+    rounds: raceRows.map(({ race, results }) => ({
+      round: race.round,
+      raceName: race.raceName.replace(" Grand Prix", " GP"),
+      country: race.Circuit.Location.country,
+      date: formatDate(race.date),
+      cells: drivers.map((d) => {
+        const r = results.find((res) => res.Driver.driverId === d.Driver.driverId);
+        return r
+          ? {
+              position: r.position,
+              dnf: r.status !== "Finished" && !r.status.startsWith("+"),
+              points: r.points,
+            }
+          : null;
+      }),
+      total: results.reduce((sum, r) => sum + parseFloat(r.points), 0),
+    })),
+    // Same series as the Points Breakdown by Race chart: one entry per driver column.
+    pointsBreakdown: pointsBreakdown.map((race) => ({
+      round: race.round,
+      raceName: race.raceName,
+      points: race.drivers.map((d) => d.points),
+      total: race.drivers.reduce((s, d) => s + d.points, 0),
+    })),
+  };
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Team Header */}
       <div className="mb-6 rounded-xl border border-f1-border bg-f1-card overflow-hidden">
         <div className="h-1.5 w-full" style={{ backgroundColor: teamColor }} />
@@ -536,6 +623,10 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
           Wikipedia &rarr;
         </a>
       </div>
+      </div>
+
+      {/* ASCII view (charts above are Standard-only) */}
+      <TeamDetailView data={asciiData} />
     </>
   );
 }
@@ -549,7 +640,7 @@ export default async function TeamDetailPage({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="f1-std-only mb-2 flex items-center justify-between">
         <Breadcrumbs
           items={[{ label: "Teams", href: "/teams" }, { label: "Team" }]}
         />
@@ -558,7 +649,7 @@ export default async function TeamDetailPage({
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="f1-std-only space-y-4">
             <div className="h-36 rounded-xl bg-f1-card animate-pulse" />
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
               {Array.from({ length: 8 }).map((_, i) => (

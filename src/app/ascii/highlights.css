@@ -1,0 +1,78 @@
+/* ── ASCII Highlights & Incidents (components/ascii/views/HighlightsView.tsx) ──
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. .f1-a-hide-s (ascii.css) drops columns on phones.
+ */
+
+html[data-style="ascii"] .f1-ascii-hl .hl-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-hl .hl-row:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-ascii-hl .hl-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-ascii-hl .hl-tl { grid-template-columns: 110px 52px minmax(0, 1.4fr) minmax(0, 1.2fr); }
+html[data-style="ascii"] .f1-ascii-hl .hl-inc { grid-template-columns: 52px minmax(0, 1.2fr) minmax(0, 1.4fr) 52px minmax(0, 1.2fr) 64px; }
+html[data-style="ascii"] .f1-ascii-hl .hl-dnf { grid-template-columns: minmax(0, 1fr) 64px 72px; }
+
+html[data-style="ascii"] .f1-ascii-hl .hl-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+}
+html[data-style="ascii"] .f1-ascii-hl .hl-type { font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-hl .hl-rd { white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-hl .hl-rdlink { color: var(--color-f1-text-muted); text-decoration: none; }
+html[data-style="ascii"] .f1-ascii-hl .hl-rdlink:hover { color: var(--color-f1-text); }
+html[data-style="ascii"] .f1-ascii-hl .hl-pos,
+html[data-style="ascii"] .f1-ascii-hl .hl-num { text-align: right; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-hl .hl-red { color: #ef4444; font-weight: 700; }
+html[data-style="ascii"] .f1-ascii-hl .hl-cat { font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-hl .hl-cell {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-hl .hl-driver,
+html[data-style="ascii"] .f1-ascii-hl .hl-driver-cell {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-hl .hl-driver-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+html[data-style="ascii"] .f1-ascii-hl a.hl-driver:hover .hl-name { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-hl .hl-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-hl .hl-sub { display: none; font-size: 12px; }
+html[data-style="ascii"] .f1-ascii-hl .hl-tl .hl-type { min-width: 0; }
+
+/* Phone: type, driver with the detail underneath; race round, reason and extra columns dropped */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-hl .hl-tl { grid-template-columns: 84px minmax(0, 1fr); }
+  html[data-style="ascii"] .f1-ascii-hl .hl-inc { grid-template-columns: 44px minmax(0, 1fr) 40px 56px; }
+  html[data-style="ascii"] .f1-ascii-hl .hl-dnf { grid-template-columns: minmax(0, 1fr) 48px 56px; }
+  html[data-style="ascii"] .f1-ascii-hl .hl-sub { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  html[data-style="ascii"] .f1-ascii-hl .hl-tl .hl-rd { display: none; }
+}

@@ -1,0 +1,62 @@
+/* ── ASCII points grid (components/ascii/views/PointsGrid.tsx) ─────────────
+ * Stand-in for the cumulative-points line charts. Every selector is scoped
+ * under html[data-style="ascii"], so nothing here affects the Standard style.
+ * The wrapper scrolls sideways inside its panel; the page never does.
+ */
+
+html[data-style="ascii"] .f1-a-pg-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html[data-style="ascii"] .f1-a-pg {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-style="ascii"] .f1-a-pg th,
+html[data-style="ascii"] .f1-a-pg td {
+  padding: 4px 6px;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 400;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+
+html[data-style="ascii"] .f1-a-pg thead th {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+}
+
+html[data-style="ascii"] .f1-a-pg tbody tr:last-child th,
+html[data-style="ascii"] .f1-a-pg tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Name column stays visible while the round columns scroll */
+html[data-style="ascii"] .f1-a-pg .f1-a-pg-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 9ch;
+  text-align: left;
+  font-weight: 700;
+  background: var(--bg, var(--color-f1-black));
+}
+
+html[data-style="ascii"] .f1-a-pg thead .f1-a-pg-name { font-weight: 400; }
+
+html[data-style="ascii"] .f1-a-pg .f1-a-pg-name .f1-a-swatch { margin-right: 4px; }
+
+html[data-style="ascii"] .f1-a-pg .f1-a-pg-trend {
+  text-align: left;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}

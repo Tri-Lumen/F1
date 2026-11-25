@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import { F1_DRIVERS_2026, SPECIAL_LIVERIES_2026 } from "@/lib/rssFeeds";
 import { getTeamColor } from "@/lib/api";
 import type { RssArticle } from "@/lib/types";
+import NewsView from "@/components/ascii/views/NewsView";
 
 function timeAgo(dateStr: string): string {
   const date = new Date(dateStr);
@@ -365,6 +366,8 @@ export default function NewsClient() {
   }, [articles, driverFilter]);
 
   return (
+    <>
+    <div className="f1-std-only">
     <div>
       <PageHeader
         title={<><span className="text-f1-red">F1</span> News</>}
@@ -530,5 +533,14 @@ export default function NewsClient() {
         </>
       )}
     </div>
+    </div>
+    <NewsView
+      articles={filteredArticles}
+      loading={loading}
+      error={error}
+      sourcesOn={enabledFeeds.length}
+      filtered={driverFilter.length > 0}
+    />
+    </>
   );
 }

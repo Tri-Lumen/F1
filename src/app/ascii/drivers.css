@@ -1,0 +1,58 @@
+/* ASCII Drivers page (components/ascii/views/DriversView.tsx). Scoped to the ASCII style. */
+
+html[data-style="ascii"] .f1-a-drv-table { font-variant-numeric: tabular-nums; }
+
+html[data-style="ascii"] .f1-a-drv-row {
+  display: grid;
+  grid-template-columns: 26px 10px minmax(120px, 1.4fr) minmax(90px, 1fr) 52px minmax(80px, 1.2fr) 44px 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-a-drv-row:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-a-drv-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-a-drv-pos { text-align: right; }
+html[data-style="ascii"] .f1-a-drv-r { text-align: right; }
+html[data-style="ascii"] .f1-a-drv-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-a-drv-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-a-drv-link:hover {
+  color: var(--ascii-hi);
+  text-decoration: underline;
+}
+html[data-style="ascii"] .f1-a-drv-team {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-a-drv-wiki {
+  font-size: 11px;
+  color: var(--color-f1-text-muted);
+  text-decoration: none;
+  letter-spacing: 0.06em;
+}
+html[data-style="ascii"] .f1-a-drv-wiki:hover { color: var(--ascii-hi); }
+
+/* Phone width: the team and bar columns drop (f1-a-hide-s, ascii.css); keep P, swatch, name, pts, wins, wiki. */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-a-drv-row {
+    grid-template-columns: 22px 10px minmax(0, 1fr) 48px 40px 36px;
+  }
+}

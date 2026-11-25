@@ -7,8 +7,10 @@ import {
   getAllSeasonResults,
   getRaceDate,
   getCurrentYear,
+  getTeamColor,
 } from "@/lib/api";
 import { buildStudioRaceCardData } from "@/lib/raceCards";
+import RacesView from "@/components/ascii/views/RacesView";
 
 export const metadata: Metadata = {
   title: "Race Calendar — F1 2026",
@@ -53,8 +55,21 @@ async function RacesContent() {
     buildStudioRaceCardData(resultsByRound.get(race.round) ?? race),
   );
 
+  // ASCII view data: same schedule split, plus team colours for the winners.
+  const asciiUpcoming = upcoming.map((r) => ({
+    round: r.round,
+    name: r.raceName.replace(" Grand Prix", " GP"),
+    circuit: r.Circuit.circuitName,
+    iso: getRaceDate(r).toISOString(),
+  }));
+  const teamColors: Record<string, string> = {};
+  for (const c of completedCards) {
+    teamColors[c.winnerTeamId] = getTeamColor(c.winnerTeamId);
+  }
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Season Progress Bar */}
       <CardShell className="mb-[22px] px-[18px] py-3.5">
         <div
@@ -121,6 +136,16 @@ async function RacesContent() {
           </Grid>
         </div>
       )}
+      </div>
+
+      <RacesView
+        year={getCurrentYear()}
+        done={completed.length}
+        total={races.length}
+        upcoming={asciiUpcoming}
+        completed={completedCards}
+        teamColors={teamColors}
+      />
     </>
   );
 }
@@ -128,18 +153,22 @@ async function RacesContent() {
 export default function RacesPage() {
   return (
     <>
-      <PageHeader
-        title="Race Calendar"
-        subtitle={`${getCurrentYear()} Season · Full schedule with results`}
-      />
+      <div className="f1-std-only">
+        <PageHeader
+          title="Race Calendar"
+          subtitle={`${getCurrentYear()} Season · Full schedule with results`}
+        />
+      </div>
 
       <Suspense
         fallback={
-          <Grid minColWidth={280} gap={12}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-40 rounded-xl bg-f1-card animate-pulse" />
-            ))}
-          </Grid>
+          <div className="f1-std-only">
+            <Grid minColWidth={280} gap={12}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-40 rounded-xl bg-f1-card animate-pulse" />
+              ))}
+            </Grid>
+          </div>
         }
       >
         <RacesContent />

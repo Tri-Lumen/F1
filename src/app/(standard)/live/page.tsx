@@ -33,6 +33,7 @@ import PageHeader from "@/components/PageHeader";
 import SectionHeading from "@/components/SectionHeading";
 import EmptyState from "@/components/EmptyState";
 import { COMPOUND_COLORS, COMPOUND_FALLBACK } from "@/lib/compounds";
+import LiveView, { type AsciiLiveDriver, type AsciiLiveState } from "@/components/ascii/views/LiveView";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -76,6 +77,9 @@ async function LiveContent() {
     // show a "connecting" state instead of the misleading next-session countdown
     if (ongoingScheduled) {
       return (
+        <>
+        <LiveView state={{ kind: "connecting", raceName: ongoingScheduled.raceName, type: ongoingScheduled.type }} />
+        <div className="f1-std-only">
         <div style={{ ...cardStyle, padding: "32px 24px", textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📡</div>
           <p
@@ -104,11 +108,15 @@ async function LiveContent() {
             This page refreshes automatically every 15&nbsp;seconds.
           </p>
         </div>
+        </div>
+        </>
       );
     }
 
     return (
-      <div>
+      <>
+      <LiveView state={{ kind: "empty" }} />
+      <div className="f1-std-only">
         <EmptyState
           className="mb-4"
           title="No session is currently active"
@@ -124,6 +132,7 @@ async function LiveContent() {
         />
         <NextSessionCard />
       </div>
+      </>
     );
   }
 
@@ -199,8 +208,71 @@ async function LiveContent() {
     VIRTUAL_SAFETY_CAR: { bg: "#ca8a04", color: "#000", label: "VSC" },
   };
 
+  // Plain data for the ASCII view. Same inputs and rules as the standard tables and feeds.
+  const lastLapByDriver = new Map<number, number>();
+  const lastLapNumByDriver = new Map<number, number>();
+  for (const lap of laps) {
+    if (lap.lap_duration == null || lap.is_pit_out_lap) continue;
+    const prevNum = lastLapNumByDriver.get(lap.driver_number) ?? -1;
+    if (lap.lap_number > prevNum) {
+      lastLapNumByDriver.set(lap.driver_number, lap.lap_number);
+      lastLapByDriver.set(lap.driver_number, lap.lap_duration);
+    }
+  }
+
+  const asciiDrivers: AsciiLiveDriver[] = sortedDrivers.map((driver) => {
+    const iv = latestIntervals.get(driver.driver_number);
+    const tire = currentStints.get(driver.driver_number);
+    return {
+      num: driver.driver_number,
+      acronym: driver.name_acronym,
+      fullName: driver.full_name,
+      team: driver.team_name,
+      color: driver.team_colour ? `#${driver.team_colour}` : "var(--color-f1-text-muted)",
+      pos: latestPositions.get(driver.driver_number) ?? null,
+      gap: iv?.gap ?? null,
+      interval: iv?.interval ?? null,
+      lastLap: lastLapByDriver.get(driver.driver_number) ?? null,
+      compoundLabel: tire
+        ? (COMPOUND_COLORS[tire.compound?.toUpperCase()] ?? COMPOUND_FALLBACK).label
+        : null,
+      tyreAge: tire?.age ?? null,
+    };
+  });
+
+  let asciiWarning: string | null = null;
+  if (isLive && !hasAnyData) {
+    asciiWarning =
+      "Unable to fetch live timing data from OpenF1. The data provider may be experiencing high traffic or the session data is not yet available.";
+  } else if (isLive && (!dataStatus.intervals || !dataStatus.stints)) {
+    const missing = [
+      !dataStatus.intervals && "intervals",
+      !dataStatus.stints && "tire data",
+      !dataStatus.radio && "team radio",
+    ]
+      .filter(Boolean)
+      .join(", ");
+    asciiWarning = `Some live data is temporarily unavailable (${missing}). Will retry on next refresh.`;
+  }
+
+  const asciiState: AsciiLiveState = {
+    kind: "live",
+    title: `${session.country_name} — ${session.session_name}`,
+    circuit: session.circuit_short_name,
+    isLive,
+    flag: currentFlag && flagStyles[currentFlag] ? flagStyles[currentFlag].label : null,
+    lap: session.session_type === "Race" ? currentLap : null,
+    warning: asciiWarning,
+    drivers: asciiDrivers,
+    raceControl,
+    weather,
+    radio,
+  };
+
   return (
     <>
+      <LiveView state={asciiState} />
+      <div className="f1-std-only">
       {/* Session Header */}
       <div style={{ ...cardStyle, padding: "18px 20px", marginBottom: 16 }}>
         <div
@@ -626,6 +698,7 @@ async function LiveContent() {
           </div>
         </div>
       </div>
+      </div>
     </>
   );
 }
@@ -633,6 +706,7 @@ async function LiveContent() {
 export default function LivePage() {
   return (
     <>
+      <div className="f1-std-only">
       <PageHeader
         title={
           <>
@@ -642,10 +716,12 @@ export default function LivePage() {
         subtitle="Real-time timing, tire strategy, team radio & onboard cameras"
         actions={<RefreshButton intervalMs={15000} />}
       />
+      </div>
 
       <Suspense
         fallback={
-          <div className="flex flex-col gap-4">
+          <>
+          <div className="f1-std-only flex flex-col gap-4">
             <div style={{ height: 96, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             <div style={{ height: 384, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -653,6 +729,10 @@ export default function LivePage() {
               <div style={{ height: 256, borderRadius: 12, background: "var(--color-f1-dark)" }} />
             </div>
           </div>
+          <div className="f1-ascii-dash">
+            <p className="f1-a-muted f1-a-upper">Loading live timing…</p>
+          </div>
+          </>
         }
       >
         <LiveContent />

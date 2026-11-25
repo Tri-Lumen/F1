@@ -97,6 +97,7 @@ async function PredictionsContent() {
 export default function PredictionsPage() {
   return (
     <>
+      <div className="f1-std-only">
       <div style={{ marginBottom: 16 }}>
         <h1
           style={{
@@ -121,8 +122,11 @@ export default function PredictionsPage() {
           official {getCurrentYear()} results.
         </p>
       </div>
+      </div>
       <Suspense
-        fallback={<div className="h-48 rounded-xl bg-f1-card animate-pulse" />}
+        fallback={
+          <div className="f1-std-only h-48 rounded-xl bg-f1-card animate-pulse" />
+        }
       >
         <PredictionsContent />
       </Suspense>

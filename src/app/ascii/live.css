@@ -1,0 +1,107 @@
+/* ASCII Live Timing page (components/ascii/views/LiveView.tsx). Scoped to the ASCII style. */
+
+html[data-style="ascii"] .f1-l-view { font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-l-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+}
+html[data-style="ascii"] .f1-l-live { color: var(--ascii-hi); font-weight: 700; }
+html[data-style="ascii"] .f1-l-flag {
+  color: var(--color-f1-accent);
+  border: 1px solid var(--color-f1-accent);
+  padding: 0 6px;
+  text-transform: uppercase;
+}
+html[data-style="ascii"] .f1-l-warn { color: var(--color-f1-accent); }
+html[data-style="ascii"] .f1-l-link {
+  color: var(--ascii-hi);
+  text-decoration: none;
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-l-link:hover { text-decoration: underline; }
+html[data-style="ascii"] .f1-l-code { font-weight: 700; white-space: nowrap; }
+html[data-style="ascii"] .f1-l-trunc {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Timing tower: fixed columns so the figures line up down the panel */
+html[data-style="ascii"] .f1-l-row {
+  display: grid;
+  grid-template-columns: 34px 8px 60px minmax(0, 1.4fr) 96px 84px 96px 100px;
+  align-items: center;
+  gap: 0 10px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-l-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-l-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-l-tyre { white-space: nowrap; }
+
+/* Weather key/value list */
+html[data-style="ascii"] .f1-l-kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+}
+html[data-style="ascii"] .f1-l-kv dt { color: var(--color-f1-text-muted); font-size: 11px; letter-spacing: 0.06em; }
+html[data-style="ascii"] .f1-l-kv dd { margin: 0; font-weight: 700; }
+html[data-style="ascii"] .f1-l-humid { margin-top: 4px; font-weight: 400; }
+
+/* Message lists */
+html[data-style="ascii"] .f1-l-list { list-style: none; margin: 0; padding: 0; }
+html[data-style="ascii"] .f1-l-list > li {
+  padding: 6px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  overflow-wrap: anywhere;
+}
+html[data-style="ascii"] .f1-l-list > li:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-l-scroll { max-height: 420px; overflow-y: auto; }
+html[data-style="ascii"] .f1-l-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+html[data-style="ascii"] .f1-l-radio {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+html[data-style="ascii"] .f1-l-radio-id { display: flex; align-items: center; gap: 6px; min-width: 0; }
+
+/* Panels side by side on desktop, stacked on phones */
+html[data-style="ascii"] .f1-l-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 18px;
+}
+@media (min-width: 900px) {
+  html[data-style="ascii"] .f1-l-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Phone width: the name and interval columns drop out (.f1-a-hide-s), so the tower
+   keeps six columns that fit a 390px screen without horizontal scroll */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-l-row {
+    grid-template-columns: 24px 6px 44px 60px 70px 82px;
+    gap: 0 6px;
+  }
+  html[data-style="ascii"] .f1-l-radio { grid-template-columns: auto minmax(0, 1fr) auto; }
+}

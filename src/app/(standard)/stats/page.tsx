@@ -15,6 +15,7 @@ import {
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
 import RefreshButton from "@/components/RefreshButton";
 import ChampionshipEvolutionChart from "@/components/ChampionshipEvolutionChart";
+import StatsView, { type StatsViewData } from "@/components/ascii/views/StatsView";
 
 export const metadata: Metadata = {
   title: "Season Stats — F1 2026",
@@ -42,9 +43,14 @@ async function StatsContent() {
 
   if (completedRaces.length === 0 && completedSprints.length === 0) {
     return (
-      <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
-        <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
-      </div>
+      <>
+        <div className="f1-std-only">
+          <div className="rounded-xl border border-[#1c1c1c] bg-[#131313] p-8 text-center">
+            <p className="text-f1-text-muted">No race data available yet for {getCurrentYear()}.</p>
+          </div>
+        </div>
+        <StatsView year={getCurrentYear()} data={null} />
+      </>
     );
   }
 
@@ -306,7 +312,143 @@ async function StatsContent() {
     .sort((a, b) => (b.points.at(-1) ?? 0) - (a.points.at(-1) ?? 0))
     .slice(0, 8);
 
+  // Gap to leader per round, same series as ChampionshipEvolutionChart's gap view:
+  // top8Evolution sorted by points, index 0 is the leader, who is left out of the rows.
+  const gapLeader = top8Evolution[0];
+  const gapRows = top8Evolution.slice(1).map((d) => ({
+    driverId: d.driverId,
+    name: d.name,
+    constructorId: d.constructorId,
+    gap: d.points.map((p, i) => (gapLeader?.points[i] ?? 0) - p),
+  }));
+
+  // ASCII view data: the same lists as the standard sections, reduced to plain values.
+  // The championship evolution chart is passed as plain points data (see `evolution` below).
+  const ratio = (a: number, b: number) => (b > 0 ? a / b : 0);
+  const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
+  const avMaxGain = posGainSorted[0]?.gained ?? 1;
+  const avMaxDnf = teamDNFSorted[0]?.dnfs ?? 1;
+  const avMaxLaps = lapsLedSorted[0]?.laps ?? 1;
+  const avMaxOvertakes = overtakesByRaceSorted[0]?.total ?? 1;
+  const avPitMax = teamPitSorted[teamPitSorted.length - 1]?.avg ?? 1;
+  const avPitRange = (avPitMax - (teamPitSorted[0]?.avg ?? 0)) || 1;
+  const avMaxStd = consistencySorted[consistencySorted.length - 1]?.stdDev ?? 1;
+
+  const asciiData: StatsViewData = {
+    racesComplete: completedRaces.length,
+    sprints: completedSprints.length,
+    totalPoints: Math.round(totalPoints),
+    totalDnfs: teamDNFSorted.reduce((s, t) => s + t.dnfs, 0),
+    drivers: driverStandings.length,
+    bestGain:
+      biggestGain.gain > 0
+        ? {
+            driver: biggestGain.driverName,
+            value: `+${biggestGain.gain} pos`,
+            race: biggestGain.raceName.replace(" Grand Prix", " GP"),
+            color: getTeamColor(biggestGain.constructorId),
+          }
+        : null,
+    worstDrop:
+      biggestLoss.loss > 0
+        ? {
+            driver: biggestLoss.driverName,
+            value: `-${biggestLoss.loss} pos`,
+            race: biggestLoss.raceName.replace(" Grand Prix", " GP"),
+            color: getTeamColor(biggestLoss.constructorId),
+          }
+        : null,
+    positions: posGainSorted.map((d, i) => ({
+      id: d.name,
+      rank: String(i + 1),
+      name: d.name,
+      color: getTeamColor(d.constructorId),
+      value: signed(d.gained),
+      sub: `avg ${d.avgGain >= 0 ? "+" : ""}${d.avgGain.toFixed(1)} per race`,
+      frac: Math.max(0, ratio(d.gained, avMaxGain)),
+    })),
+    points: pprSorted.map((d) => ({
+      id: d.name,
+      name: d.name,
+      color: getTeamColor(d.constructorId),
+      ppr: d.ppr.toFixed(1),
+      total: Math.round(d.totalPts),
+      races: d.races,
+    })),
+    dnfsByTeam: teamDNFSorted.map((t) => ({
+      id: t.constructorId,
+      rank: "",
+      name: t.name,
+      color: getTeamColor(t.constructorId),
+      value: String(t.dnfs),
+      frac: ratio(t.dnfs, avMaxDnf),
+    })),
+    lapsLed: lapsLedSorted.map((d, i) => ({
+      id: d.name,
+      rank: String(i + 1),
+      name: d.name,
+      color: getTeamColor(d.constructorId),
+      value: String(d.laps),
+      frac: ratio(d.laps, avMaxLaps),
+    })),
+    overtakes: overtakesByRaceSorted.map((r) => ({
+      id: r.round,
+      rank: r.round,
+      name: r.raceName,
+      value: String(r.total),
+      frac: ratio(r.total, avMaxOvertakes),
+    })),
+    pit: {
+      totalStops: totalPitStops,
+      fastest:
+        fastestPitStop.duration < Infinity
+          ? {
+              duration: fastestPitStop.duration.toFixed(1),
+              race: fastestPitStop.raceName.replace(" Grand Prix", " GP"),
+            }
+          : null,
+      teams: teamPitSorted.map((t, i) => ({
+        id: t.constructorId,
+        rank: String(i + 1),
+        name: t.name,
+        color: getTeamColor(t.constructorId),
+        value: `${t.avg.toFixed(2)}s`,
+        sub: `${t.count} stops · fastest ${t.fastest.toFixed(1)}s`,
+        frac: Math.max(10, ((avPitMax - t.avg) / avPitRange) * 80 + 20) / 100,
+      })),
+    },
+    consistency: consistencySorted.map((d, i) => ({
+      id: d.name,
+      rank: String(i + 1),
+      name: d.name,
+      color: getTeamColor(d.constructorId),
+      value: `±${d.stdDev.toFixed(1)}`,
+      sub: `avg P${d.avg.toFixed(1)}`,
+      frac: Math.max(10, ((avMaxStd - d.stdDev) / (avMaxStd || 1)) * 80 + 20) / 100,
+    })),
+    evolution: {
+      rounds: completedRaces.map((r) => r.round),
+      series: top8Evolution.map((d) => ({
+        id: d.driverId,
+        label: d.name.split(" ").pop() ?? d.name,
+        color: getTeamColor(d.constructorId),
+        values: d.points,
+      })),
+    },
+    gap: {
+      rounds: completedRaces.map((r) => r.round),
+      series: gapRows.map((d) => ({
+        id: d.driverId,
+        label: d.name.split(" ").pop() ?? d.name,
+        color: getTeamColor(d.constructorId),
+        values: d.gap,
+      })),
+    },
+  };
+
   return (
+    <>
+    <div className="f1-std-only">
     <div className="space-y-8">
       {/* Season summary KPIs */}
       <div id="summary" className="grid gap-4 grid-cols-2 sm:grid-cols-4">
@@ -641,6 +783,9 @@ async function StatsContent() {
         />
       )}
     </div>
+    </div>
+    <StatsView year={getCurrentYear()} data={asciiData} />
+    </>
   );
 }
 
@@ -650,6 +795,7 @@ const DM = "'DM Sans', sans-serif";
 export default function StatsPage() {
   return (
     <div>
+      <div className="f1-std-only">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <div
@@ -669,8 +815,9 @@ export default function StatsPage() {
         </div>
         <RefreshButton />
       </div>
+      </div>
 
-      <nav className="sticky top-0 z-10 -mx-4 mb-6 overflow-x-auto bg-f1-black/90 px-4 py-2 backdrop-blur flex gap-2 border-b border-f1-border/40">
+      <nav className="f1-std-only sticky top-0 z-10 -mx-4 mb-6 overflow-x-auto bg-f1-black/90 px-4 py-2 backdrop-blur flex gap-2 border-b border-f1-border/40">
         {[
           { href: "#summary",     label: "Overview" },
           { href: "#positions",   label: "Positions" },
@@ -693,7 +840,7 @@ export default function StatsPage() {
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="space-y-4 f1-std-only">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={`stats-skel-${i}`} className="h-48 rounded-xl bg-[#131313] animate-pulse" />
             ))}

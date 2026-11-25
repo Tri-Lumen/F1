@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ARCHIVE_SEASONS, getTeamColor } from "@/lib/api";
+import ArchiveView from "@/components/ascii/views/ArchiveView";
 
 export const metadata = {
   title: "F1 Archive — Season History",
@@ -30,7 +31,21 @@ const SEASON_DATA: Record<string, SeasonSummary> = {
 };
 
 export default function ArchivePage() {
+  // ASCII view data: the same season summaries as the standard grid, as plain values.
+  const asciiSeasons = ARCHIVE_SEASONS.map((season) => {
+    const info = SEASON_DATA[season];
+    return {
+      season,
+      races: info?.races,
+      driverChampion: info?.driverChampion.split(" ").pop()?.toUpperCase(),
+      constructorChampion: info?.constructorChampion,
+      color: info ? getTeamColor(info.constructorId) : "var(--color-f1-text-muted)",
+    };
+  });
+
   return (
+    <>
+    <div className="f1-std-only">
     <div>
       <div className="mb-6">
         <div
@@ -179,5 +194,8 @@ export default function ArchivePage() {
         })}
       </div>
     </div>
+    </div>
+    <ArchiveView seasons={asciiSeasons} />
+    </>
   );
 }

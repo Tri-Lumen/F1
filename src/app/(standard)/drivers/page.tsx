@@ -21,6 +21,8 @@ import {
 import type { Race } from "@/lib/types";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
 import PageHeader from "@/components/PageHeader";
+import DriversView, { type AsciiDriverRow } from "@/components/ascii/views/DriversView";
+import type { PointsGridData } from "@/components/ascii/views/PointsGrid";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
@@ -198,8 +200,45 @@ async function DriversContent() {
     };
   }).filter((d) => d.gap > 0);
 
+  const asciiDrivers: AsciiDriverRow[] = standings.map((s) => {
+    const constructorId =
+      getDriverConstructorId(s.Driver.driverId, s.Constructors[0]?.constructorId) ?? "";
+    return {
+      pos: parseInt(s.position, 10),
+      driverId: s.Driver.driverId,
+      fullName: `${s.Driver.givenName} ${s.Driver.familyName}`,
+      number: getDriverNumber(s.Driver.driverId, s.Driver.permanentNumber),
+      team: getDriverConstructorName(s.Driver.driverId, s.Constructors[0]?.name) ?? "",
+      color: getTeamColor(constructorId),
+      pts: parseFloat(s.points),
+      wins: parseInt(s.wins, 10) || 0,
+      wikiUrl: s.Driver.url,
+    };
+  });
+  const asciiSubtitle = `${getCurrentYear()} Season · Full driver stats and standings`;
+
+  // Same series as the PointsProgressionChart: cumulative points for the top 8 drivers.
+  const asciiProgression: PointsGridData = {
+    rounds: completedRaces.map((r) => r.round),
+    series: standings.slice(0, 8).map((s) => {
+      let total = 0;
+      const values = completedRaces.map((race) => {
+        const result = (race.Results ?? []).find((r) => r.Driver.driverId === s.Driver.driverId);
+        if (result) total += parseFloat(result.points);
+        return total;
+      });
+      return {
+        id: s.Driver.driverId,
+        label: s.Driver.code,
+        color: getTeamColor(s.Constructors[0]?.constructorId ?? ""),
+        values,
+      };
+    }),
+  };
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Championship Status */}
       {clinchInfo && completedRaces.length > 0 && (
         <CardShell className="mb-[18px] px-[18px] py-3.5">
@@ -521,6 +560,9 @@ async function DriversContent() {
           />
         </CardShell>
       )}
+      </div>
+
+      <DriversView subtitle={asciiSubtitle} drivers={asciiDrivers} progression={asciiProgression} />
     </>
   );
 }
@@ -528,14 +570,17 @@ async function DriversContent() {
 export default function DriversPage() {
   return (
     <>
+      <div className="f1-std-only">
       <PageHeader
         title="Drivers Championship"
         subtitle={`${getCurrentYear()} Season · Full driver stats and standings`}
       />
+      </div>
 
       <Suspense
         fallback={
           // Mirror the profile-card grid so content doesn't jump on load.
+          <div className="f1-std-only">
           <div
             style={{
               display: "grid",
@@ -549,6 +594,7 @@ export default function DriversPage() {
                 className="h-72 rounded-xl bg-f1-card animate-pulse"
               />
             ))}
+          </div>
           </div>
         }
       >

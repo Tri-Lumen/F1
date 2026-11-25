@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { DriverStanding } from "@/lib/types";
 import SidebarNav from "@/components/SidebarNav";
 import BottomTabBar from "@/components/BottomTabBar";
+import AsciiTopNav from "@/components/ascii/AsciiTopNav";
 import { OPEN_PALETTE_EVENT } from "@/components/CommandPalette";
 
 /**
@@ -37,8 +38,10 @@ export default function AppShell({
         Skip to content
       </a>
 
-      {/* Mobile top bar */}
-      <div className="sticky top-0 z-[120] flex items-center gap-3 border-b border-f1-border bg-f1-black/90 px-4 py-2.5 acrylic md:hidden">
+      <AsciiTopNav />
+
+      {/* Mobile top bar (Standard style only) */}
+      <div className="f1-std-only sticky top-0 z-[120] flex items-center gap-3 border-b border-f1-border bg-f1-black/90 px-4 py-2.5 acrylic md:hidden">
         <button
           onClick={() => setNavOpen(true)}
           aria-label="Open navigation"
@@ -74,19 +77,21 @@ export default function AppShell({
         />
       )}
 
+      <div className="f1-std-only">
       <SidebarNav
         standings={standings}
         mobileOpen={navOpen}
         onClose={() => setNavOpen(false)}
         hasLiveSession={hasLiveSession}
       />
+      </div>
 
       {/* `md:ml-56` (14rem = 224px) offsets the fixed sidebar — matches
           --sidebar-w. The inner wrapper caps content width and centres it so
           1440px+ and large Electron windows don't stretch edge-to-edge. */}
       <main
         id="main-content"
-        className="min-w-0 px-4 pb-20 pt-4 md:ml-56 md:px-6 md:pb-12 md:pt-6"
+        className="f1-main min-w-0 px-4 pb-20 pt-4 md:ml-56 md:px-6 md:pb-12 md:pt-6"
       >
         <div className="mx-auto w-full max-w-[var(--content-max)]">{children}</div>
       </main>

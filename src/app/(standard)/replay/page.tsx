@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getCompletedSessions, getCountryFlagByCountry, getCurrentYear } from "@/lib/api";
 import type { LiveSession } from "@/lib/types";
 import { LocalDate, LocalTime } from "@/components/LocalDateTime";
+import ReplayView from "@/components/ascii/views/ReplayView";
 
 export const metadata: Metadata = {
   title: "Session Replay — F1 2026",
@@ -45,8 +46,31 @@ function groupByMeeting(sessions: LiveSession[]): LiveSession[][] {
 async function ReplayContent() {
   const sessions = await getCompletedSessions();
 
+  // ASCII view: the same weekend groups as the standard cards, as plain data.
+  const asciiView = (
+    <ReplayView
+      year={getCurrentYear()}
+      weekends={groupByMeeting(sessions).map((g) => {
+        const head = g[g.length - 1];
+        return {
+          key: head.meeting_key,
+          country: head.country_name,
+          circuit: head.circuit_short_name,
+          dateISO: head.date_start,
+          sessions: g.map((s) => ({
+            key: s.session_key,
+            name: s.session_name,
+            dateISO: s.date_start,
+          })),
+        };
+      })}
+    />
+  );
+
   if (sessions.length === 0) {
     return (
+      <>
+      <div className="f1-std-only">
       <div style={{ ...cardStyle, padding: 24, textAlign: "center" }}>
         <p style={{ fontFamily: DM, fontSize: 13, color: "var(--color-f1-text-muted)" }}>
           No completed sessions yet for the {getCurrentYear()} season.{" "}
@@ -56,13 +80,17 @@ async function ReplayContent() {
           .
         </p>
       </div>
+      </div>
+      {asciiView}
+      </>
     );
   }
 
   const groups = groupByMeeting(sessions);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <>
+    <div className="f1-std-only"><div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {groups.map((group) => {
         const headline = group[group.length - 1];
         const flag = getCountryFlagByCountry(headline.country_name);
@@ -160,13 +188,16 @@ async function ReplayContent() {
         );
       })}
     </div>
+    </div>
+    {asciiView}
+    </>
   );
 }
 
 export default function ReplayIndexPage() {
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
+      <div className="f1-std-only"><div style={{ marginBottom: 16 }}>
         <h1
           style={{
             fontFamily: BC,
@@ -188,9 +219,9 @@ export default function ReplayIndexPage() {
         >
           Scrub through any completed session of the {getCurrentYear()} season.
         </p>
-      </div>
+      </div></div>
       <Suspense
-        fallback={<div className="h-48 rounded-xl bg-f1-card animate-pulse" />}
+        fallback={<div className="f1-std-only h-48 rounded-xl bg-f1-card animate-pulse" />}
       >
         <ReplayContent />
       </Suspense>
