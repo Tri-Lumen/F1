@@ -10,6 +10,10 @@ import {
   getDriverConstructorId,
   getDriverConstructorName,
 } from "@/lib/driverOverrides";
+import FavoritesView, {
+  type FavDriverRow,
+  type FavTeamRow,
+} from "@/components/ascii/views/FavoritesView";
 
 interface Props {
   driverStandings: DriverStanding[];
@@ -155,10 +159,20 @@ export default function FavoritesClient({
   }
 
   // Show skeleton until localStorage read completes to avoid empty-state flash
-  if (!mounted) return <LoadingSkeleton />;
+  if (!mounted)
+    return (
+      <>
+        <div className="f1-std-only">
+          <LoadingSkeleton />
+        </div>
+        <FavoritesView status="loading" drivers={[]} teams={[]} />
+      </>
+    );
 
   if (!hasAnyFavorites) {
     return (
+      <>
+      <div className="f1-std-only">
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <div className="mb-4 text-5xl">🏎</div>
         <h2 className="text-2xl font-black mb-2">No favourites yet</h2>
@@ -173,6 +187,9 @@ export default function FavoritesClient({
           Go to Settings →
         </Link>
       </div>
+      </div>
+      <FavoritesView status="empty" drivers={[]} teams={[]} />
+      </>
     );
   }
 
@@ -244,7 +261,46 @@ export default function FavoritesClient({
     return { ahead, behind };
   }
 
+  // ASCII view rows: the same lists and derived numbers as the cards, as plain data.
+  const asciiDrivers: FavDriverRow[] = favoriteDrivers.map((s) => {
+    const id = s.Driver.driverId;
+    const extras = computeDriverExtras(id, sortedRaces);
+    const cid =
+      getDriverConstructorId(id, s.Constructors[0]?.constructorId) ??
+      s.Constructors[0]?.constructorId ??
+      "";
+    return {
+      key: id,
+      position: s.positionText,
+      name: `${s.Driver.givenName} ${s.Driver.familyName}`,
+      team: s.Constructors[0]?.name ?? "",
+      teamColor: getTeamColor(cid),
+      points: s.points,
+      wins: s.wins,
+      podiums: extras.podiums,
+      perRace: extras.ppr.toFixed(1),
+      form: getDriverRecentResults(id).map((r) => parseInt(r.position, 10) || 20),
+    };
+  });
+  const asciiTeams: FavTeamRow[] = favoriteTeams.map((s) => {
+    const cid = s.Constructor.constructorId;
+    const extras = computeTeamExtras(cid, sortedRaces);
+    return {
+      key: cid,
+      position: s.positionText,
+      name: s.Constructor.name,
+      teamColor: getTeamColor(cid),
+      drivers: getTeamDriverNames(cid).join(", "),
+      points: s.points,
+      wins: s.wins,
+      podiums: extras.podiums,
+      perRace: extras.ppr.toFixed(1),
+    };
+  });
+
   return (
+    <>
+    <div className="f1-std-only">
     <div>
       <h1 className="text-3xl font-black tracking-tight mb-1">
         <span className="text-f1-red">My</span> Favourites
@@ -499,5 +555,8 @@ export default function FavoritesClient({
         </section>
       )}
     </div>
+    </div>
+    <FavoritesView status="ready" drivers={asciiDrivers} teams={asciiTeams} />
+    </>
   );
 }

@@ -12,6 +12,7 @@ import type {
   RaceResult,
 } from "@/lib/types";
 import DriverPicker from "./DriverPicker";
+import PredictionsView from "@/components/ascii/views/PredictionsView";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -58,6 +59,7 @@ const labelStyle: React.CSSProperties = {
 export default function PredictionsClient({
   rounds,
   drivers,
+  season,
 }: {
   rounds: RoundInfo[];
   drivers: DriverStanding[];
@@ -83,11 +85,19 @@ export default function PredictionsClient({
   }, [mounted, rounds, getPrediction]);
 
   if (!mounted) {
-    return <div className="h-48 rounded-xl bg-f1-card animate-pulse" />;
+    return (
+      <>
+        <div className="f1-std-only">
+          <div className="h-48 rounded-xl bg-f1-card animate-pulse" />
+        </div>
+        <PredictionsView year={season} rounds={rounds} drivers={drivers} />
+      </>
+    );
   }
 
   return (
     <>
+      <div className="f1-std-only">
       {/* Season total + Accuracy stats */}
       <div style={{ ...cardStyle, padding: "18px 20px", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
@@ -153,6 +163,8 @@ export default function PredictionsClient({
           />
         ))}
       </div>
+      </div>
+      <PredictionsView year={season} rounds={rounds} drivers={drivers} />
     </>
   );
 }

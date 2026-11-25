@@ -1,0 +1,92 @@
+/* ── ASCII Archive season page (components/ascii/views/ArchiveSeasonView.tsx) ──
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, the two-up grid, the
+ * header row, muted/accent colours, .f1-a-hide-s) come from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-archive-season .as-crumb { margin-top: 14px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-crumb a { color: inherit; text-decoration: none; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-crumb a:hover { color: var(--color-f1-text); }
+
+/* Champion */
+html[data-style="ascii"] .f1-ascii-archive-season .as-champ {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-champ > .f1-a-swatch { height: 36px; width: 10px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-champ-copy { display: grid; gap: 2px; min-width: 0; flex: 1 1 200px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-champ-name { font-weight: 700; font-size: 16px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-champ-stat { display: grid; justify-items: start; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-big { font-size: 26px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* Tables: a grid per row so columns line up, dashed dividers between rows */
+html[data-style="ascii"] .f1-ascii-archive-season .as-table { font-variant-numeric: tabular-nums; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-drv,
+html[data-style="ascii"] .f1-ascii-archive-season .as-con,
+html[data-style="ascii"] .f1-ascii-archive-season .as-race {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-drv:last-of-type,
+html[data-style="ascii"] .f1-ascii-archive-season .as-con:last-of-type,
+html[data-style="ascii"] .f1-ascii-archive-season .as-race:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-drv { grid-template-columns: 28px 10px minmax(0, 1fr) minmax(0, 0.9fr) 56px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-con { grid-template-columns: 28px 10px minmax(0, 1fr) 72px 56px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-race { grid-template-columns: 34px minmax(0, 1.3fr) 104px minmax(0, 1fr) 92px; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-pos { text-align: right; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-archive-season .as-name {
+  display: grid;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-sub {
+  display: none;
+  color: var(--color-f1-text-muted);
+  font-weight: 400;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-cell,
+html[data-style="ascii"] .f1-ascii-archive-season .as-num {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-num { text-align: right; font-weight: 700; }
+html[data-style="ascii"] .f1-ascii-archive-season .as-winner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+html[data-style="ascii"] .f1-ascii-archive-season .as-more { padding-top: 6px; }
+
+/* Phone: the team column drops and the team name sits under the driver */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-archive-season .as-drv { grid-template-columns: 26px 10px minmax(0, 1fr) 52px; }
+  html[data-style="ascii"] .f1-ascii-archive-season .as-sub { display: block; }
+  html[data-style="ascii"] .f1-ascii-archive-season .as-con { grid-template-columns: 26px 10px minmax(0, 1fr) 56px 48px; }
+  html[data-style="ascii"] .f1-ascii-archive-season .as-race { grid-template-columns: 28px minmax(0, 1fr) minmax(64px, auto); }
+  html[data-style="ascii"] .f1-ascii-archive-season .as-race .as-sub { display: block; }
+}

@@ -1,0 +1,42 @@
+/* ── ASCII Archive page (components/ascii/views/ArchiveView.tsx) ───────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, the header row, the muted
+ * and accent colours, .f1-a-hide-s) come from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-archive .ar-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1.3fr) minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-archive .ar-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-archive a.ar-row:hover .ar-year { color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-archive .ar-head { border-bottom: 1px solid var(--ascii-rule); padding-bottom: 6px; }
+html[data-style="ascii"] .f1-ascii-archive .ar-year { font-weight: 700; }
+html[data-style="ascii"] .f1-ascii-archive .ar-driver {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-archive .ar-team {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-archive .ar-r { text-align: right; }
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-archive .ar-row {
+    grid-template-columns: 56px minmax(0, 1fr) 40px;
+  }
+}

@@ -1,0 +1,49 @@
+/* ── ASCII News (components/ascii/views/NewsView.tsx) ───────────────────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Panels, labels and muted/accent colours come
+ * from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-news .nw-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(90px, 0.35fr) 72px;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 5px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-news .nw-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-news a.nw-row:hover .nw-title { color: var(--ascii-hi); }
+
+html[data-style="ascii"] .f1-ascii-news .nw-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-ascii-news .nw-title {
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[data-style="ascii"] .f1-ascii-news .nw-source {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-news .nw-date { text-align: right; white-space: nowrap; }
+
+/* Phone: title on the first line, source under it, date to the right */
+@media (max-width: 560px) {
+  html[data-style="ascii"] .f1-ascii-news .nw-head { display: none; }
+  html[data-style="ascii"] .f1-ascii-news .nw-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  html[data-style="ascii"] .f1-ascii-news .nw-source { grid-column: 1; font-size: 12px; }
+  html[data-style="ascii"] .f1-ascii-news .nw-date { grid-column: 2; grid-row: 1; }
+}

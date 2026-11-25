@@ -1,0 +1,52 @@
+/* ── ASCII Favourites (components/ascii/views/FavoritesView.tsx) ────────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. .f1-a-hide-s (ascii.css) drops columns on phones.
+ */
+
+html[data-style="ascii"] .f1-ascii-favs .fv-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-favs .fv-row:last-child { border-bottom: 0; }
+
+html[data-style="ascii"] .f1-ascii-favs .fv-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+html[data-style="ascii"] .f1-ascii-favs .fv-drv {
+  grid-template-columns: 30px minmax(0, 1.5fr) minmax(90px, 1fr) 52px 46px 46px 56px 96px;
+}
+html[data-style="ascii"] .f1-ascii-favs .fv-team {
+  grid-template-columns: 30px minmax(0, 1.5fr) minmax(120px, 1.4fr) 52px 46px 46px 56px;
+}
+
+html[data-style="ascii"] .f1-ascii-favs .fv-pos { white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-favs .fv-name {
+  font-weight: 700;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-favs .fv-pts { font-weight: 700; color: var(--ascii-hi); }
+html[data-style="ascii"] .f1-ascii-favs .fv-num { text-align: right; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-favs .fv-cell {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-style="ascii"] .f1-ascii-favs .fv-form { white-space: nowrap; letter-spacing: 0; }
+
+/* Phone: position, name and points only */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-favs .fv-drv { grid-template-columns: 26px minmax(0, 1fr) 52px; }
+  html[data-style="ascii"] .f1-ascii-favs .fv-team { grid-template-columns: 26px minmax(0, 1fr) 52px; }
+}
