@@ -16,6 +16,7 @@ import RefreshButton from "@/components/RefreshButton";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
 import DriverNewsSection from "@/components/DriverNewsSection";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import DriverDetailView from "@/components/ascii/views/DriverDetailView";
 
 export async function generateMetadata({
   params,
@@ -132,7 +133,7 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
   let frontRowStarts = 0;
   let pointsFinishes = 0;
   let poleToWins = 0;
-  let poleCount = poles;
+  const poleCount = poles;
 
   for (const race of races) {
     const r = race.Results?.[0];
@@ -211,8 +212,44 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
     return { teammate: tm, raceWins, tmRaceWins, qualWins, tmQualWins };
   })();
 
+  // Plain data for the ASCII view. Built from the same values the standard markup uses.
+  const asciiResults = races.flatMap((race) => {
+    const r = race.Results?.[0];
+    if (!r) return [];
+    return [{
+      round: race.round,
+      raceName: race.raceName,
+      country: race.Circuit.Location.country,
+      dateLabel: formatDate(race.date),
+      grid: r.grid,
+      position: r.position,
+      status: r.status,
+      points: r.points,
+      hasFastestLap: r.FastestLap?.rank === "1",
+    }];
+  });
+  const asciiForm = last5.flatMap((race) => {
+    const r = race.Results?.[0];
+    if (!r) return [];
+    return [{
+      round: race.round,
+      pos: parseInt(r.position),
+      isDNF: r.status !== "Finished" && !r.status.startsWith("+"),
+    }];
+  });
+  const asciiH2H = teammateH2H
+    ? {
+        teammateName: `${teammateH2H.teammate.Driver.givenName} ${teammateH2H.teammate.Driver.familyName}`,
+        raceWins: teammateH2H.raceWins,
+        tmRaceWins: teammateH2H.tmRaceWins,
+        qualWins: teammateH2H.qualWins,
+        tmQualWins: teammateH2H.tmQualWins,
+      }
+    : null;
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Driver Header */}
       <div className="mb-6 rounded-xl border border-f1-border bg-f1-card overflow-hidden">
         <div className="h-1.5 w-full" style={{ backgroundColor: teamColor }} />
@@ -584,6 +621,50 @@ async function DriverProfileContent({ driverId }: { driverId: string }) {
           Wikipedia &rarr;
         </a>
       </div>
+      </div>
+
+      <DriverDetailView
+        name={`${driver.givenName} ${driver.familyName}`}
+        subtitle={`${getCountryFlag(driver.nationality)} ${driver.nationality}${age !== null ? ` · Age ${age}` : ""}`}
+        team={constructorName}
+        teamColor={teamColor}
+        number={String(displayNumber)}
+        code={driver.code ?? ""}
+        wikiUrl={driver.url}
+        season={{
+          position: String(standing.position),
+          points: String(standing.points),
+          wins: String(standing.wins),
+          podiums,
+          poles,
+          fastestLaps,
+          dnfs,
+          racesEntered,
+          gridRaces,
+          avgFinish,
+          avgGrid,
+          ppr,
+          positionsGained: totalPositionsGained,
+          pointsFinishes,
+          pointsRate,
+          poleConversion,
+          poleToWins,
+          poleCount,
+          frontRowStarts,
+          year: String(getCurrentYear()),
+        }}
+        career={{
+          races: careerStats.races,
+          wins: careerStats.wins,
+          podiums: careerStats.podiums,
+          poles: careerStats.poles,
+          fastestLaps: careerStats.fastestLaps,
+          span: `2003–${getCurrentYear()}`,
+        }}
+        results={asciiResults}
+        form={asciiForm}
+        h2h={asciiH2H}
+      />
     </>
   );
 }
@@ -597,7 +678,7 @@ export default async function DriverProfilePage({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="f1-std-only mb-2 flex items-center justify-between">
         <Breadcrumbs
           items={[{ label: "Drivers", href: "/drivers" }, { label: "Profile" }]}
         />
@@ -606,7 +687,7 @@ export default async function DriverProfilePage({
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="f1-std-only space-y-4">
             <div className="h-36 rounded-xl bg-f1-card animate-pulse" />
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {Array.from({ length: 9 }).map((_, i) => (
