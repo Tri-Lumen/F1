@@ -22,6 +22,7 @@ import type { Race } from "@/lib/types";
 import PointsProgressionChart from "@/components/PointsProgressionChart";
 import PageHeader from "@/components/PageHeader";
 import DriversView, { type AsciiDriverRow } from "@/components/ascii/views/DriversView";
+import type { PointsGridData } from "@/components/ascii/views/PointsGrid";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
 import { DriverImage, DriverNumber } from "@/components/ProfileImage";
@@ -215,6 +216,25 @@ async function DriversContent() {
     };
   });
   const asciiSubtitle = `${getCurrentYear()} Season · Full driver stats and standings`;
+
+  // Same series as the PointsProgressionChart: cumulative points for the top 8 drivers.
+  const asciiProgression: PointsGridData = {
+    rounds: completedRaces.map((r) => r.round),
+    series: standings.slice(0, 8).map((s) => {
+      let total = 0;
+      const values = completedRaces.map((race) => {
+        const result = (race.Results ?? []).find((r) => r.Driver.driverId === s.Driver.driverId);
+        if (result) total += parseFloat(result.points);
+        return total;
+      });
+      return {
+        id: s.Driver.driverId,
+        label: s.Driver.code,
+        color: getTeamColor(s.Constructors[0]?.constructorId ?? ""),
+        values,
+      };
+    }),
+  };
 
   return (
     <>
@@ -542,7 +562,7 @@ async function DriversContent() {
       )}
       </div>
 
-      <DriversView subtitle={asciiSubtitle} drivers={asciiDrivers} />
+      <DriversView subtitle={asciiSubtitle} drivers={asciiDrivers} progression={asciiProgression} />
     </>
   );
 }

@@ -1,10 +1,11 @@
 import { AsciiHeader, Bar, Panel, Swatch } from "../kit";
+import { PointsGrid, type PointsGridData } from "./PointsGrid";
 import "@/app/ascii/stats.css";
 
 /*
  * ASCII view of the /stats page. Rendered next to the standard markup and shown only under
  * html[data-style="ascii"]. The page computes every list and passes plain values here, so
- * this stays a server component. The championship evolution chart is not drawn in ASCII.
+ * this stays a server component. The championship evolution chart becomes a points grid.
  */
 
 export interface StatsItem {
@@ -53,6 +54,8 @@ export interface StatsViewData {
     teams: StatsItem[];
   };
   consistency: StatsItem[];
+  /** Cumulative points per round for the top drivers (the evolution chart's data). */
+  evolution?: PointsGridData;
 }
 
 export interface StatsViewProps {
@@ -244,9 +247,12 @@ export default function StatsView({ year, data }: StatsViewProps) {
         )}
       </div>
 
-      <p className="f1-a-muted st-note">
-        The championship evolution chart is only drawn in the Standard style.
-      </p>
+      {d.evolution && d.evolution.rounds.length > 1 && d.evolution.series.length > 0 && (
+        <Panel label="Championship Evolution">
+          <p className="f1-a-muted">Cumulative points for top drivers after each round</p>
+          <PointsGrid data={d.evolution} nameHeader="DRIVER" />
+        </Panel>
+      )}
     </div>
   );
 }

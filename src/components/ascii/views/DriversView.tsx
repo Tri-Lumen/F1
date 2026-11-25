@@ -1,11 +1,12 @@
 import Link from "next/link";
 import "@/app/ascii/drivers.css";
 import { AsciiHeader, Bar, Panel, Swatch } from "../kit";
+import { PointsGrid, type PointsGridData } from "./PointsGrid";
 
 /*
  * ASCII view for the Drivers page. Shown only under html[data-style="ascii"] (see
  * .f1-ascii-dash in ascii.css); the standard driver cards sit beside it, hidden in ASCII.
- * Plain data in, server-safe out. The points-progression chart is standard-only.
+ * Plain data in, server-safe out. The points-progression chart is drawn as a points grid.
  */
 
 export interface AsciiDriverRow {
@@ -23,9 +24,12 @@ export interface AsciiDriverRow {
 export default function DriversView({
   subtitle,
   drivers,
+  progression,
 }: {
   subtitle: string;
   drivers: AsciiDriverRow[];
+  /** Cumulative points per round for the top drivers (the progression chart's data). */
+  progression?: PointsGridData;
 }) {
   const leaderPts = drivers[0]?.pts || 1;
 
@@ -81,6 +85,13 @@ export default function DriversView({
           </div>
         )}
       </Panel>
+
+      {progression && progression.rounds.length > 0 && progression.series.length > 0 && (
+        <Panel label="Points progression">
+          <p className="f1-a-muted">Cumulative championship points, top {progression.series.length} drivers</p>
+          <PointsGrid data={progression} nameHeader="DRIVER" />
+        </Panel>
+      )}
     </div>
   );
 }

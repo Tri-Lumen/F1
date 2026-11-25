@@ -313,7 +313,7 @@ async function StatsContent() {
     .slice(0, 8);
 
   // ASCII view data: the same lists as the standard sections, reduced to plain values.
-  // Charts are left out; the championship evolution chart is Standard-only.
+  // The championship evolution chart is passed as plain points data (see `evolution` below).
   const ratio = (a: number, b: number) => (b > 0 ? a / b : 0);
   const signed = (n: number) => `${n >= 0 ? "+" : ""}${n}`;
   const avMaxGain = posGainSorted[0]?.gained ?? 1;
@@ -416,6 +416,15 @@ async function StatsContent() {
       sub: `avg P${d.avg.toFixed(1)}`,
       frac: Math.max(10, ((avMaxStd - d.stdDev) / (avMaxStd || 1)) * 80 + 20) / 100,
     })),
+    evolution: {
+      rounds: completedRaces.map((r) => r.round),
+      series: top8Evolution.map((d) => ({
+        id: d.driverId,
+        label: d.name.split(" ").pop() ?? d.name,
+        color: getTeamColor(d.constructorId),
+        values: d.points,
+      })),
+    },
   };
 
   return (
