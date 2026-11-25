@@ -1,0 +1,85 @@
+/* ── ASCII Stats page (components/ascii/views/StatsView.tsx) ───────────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, bars, the two-up grid,
+ * the overview row, muted/accent colours, .f1-a-hide-s) come from src/app/ascii.css.
+ */
+
+/* Ranked list item: name row, then a bar and a sub-line indented under the name */
+html[data-style="ascii"] .f1-ascii-stats .st-item {
+  padding: 6px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-stats .st-list .st-item:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-stats .st-item-top {
+  display: grid;
+  grid-template-columns: 24px 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-rank { text-align: right; color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-stats .st-noswatch { width: 8px; }
+html[data-style="ascii"] .f1-ascii-stats .st-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-val {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-bar { padding-left: 42px; margin-top: 3px; }
+html[data-style="ascii"] .f1-ascii-stats .st-sub {
+  padding-left: 42px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-f1-text-muted);
+}
+
+/* Season swings: label, value, driver and race on one line */
+html[data-style="ascii"] .f1-ascii-stats .st-swing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-swing .st-val { font-size: 16px; }
+
+html[data-style="ascii"] .f1-ascii-stats .st-fastest { margin: 0 0 6px; }
+html[data-style="ascii"] .f1-ascii-stats .st-note { margin-top: 4px; }
+
+/* Points-per-race table: a grid per row so the columns line up */
+html[data-style="ascii"] .f1-ascii-stats .st-ppr {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 56px 56px 56px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-ppr:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-stats .st-ppr > span { text-align: right; }
+html[data-style="ascii"] .f1-ascii-stats .st-ppr > span:first-child { color: var(--color-f1-text-muted); }
+html[data-style="ascii"] .f1-ascii-stats .st-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-ppr > .st-ppr-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: left;
+}
+html[data-style="ascii"] .f1-ascii-stats .st-ppr-val { font-weight: 700; color: var(--ascii-hi); }
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-stats .st-ppr { grid-template-columns: 28px minmax(0, 1fr) 48px 48px; }
+}

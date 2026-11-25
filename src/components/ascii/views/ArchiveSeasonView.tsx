@@ -172,7 +172,8 @@ export default function ArchiveSeasonView({
                 <span className="as-name">
                   {r.name}
                   <span className="as-sub">
-                    {r.country} · {r.date}
+                    {r.country}
+                    <span className="as-sub-date"> · {r.date}</span>
                   </span>
                 </span>
                 <span className="f1-a-hide-s f1-a-muted as-cell">{r.date}</span>
