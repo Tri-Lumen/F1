@@ -1,0 +1,59 @@
+/* ── ASCII Races page (components/ascii/views/RacesView.tsx) ───────────────
+ * Every selector is scoped under html[data-style="ascii"], so nothing here
+ * affects the Standard style. Shared pieces (panels, bars, labels, the muted
+ * and accent colours, .f1-a-hide-s) come from src/app/ascii.css.
+ */
+
+/* Table rows: a grid per table so columns line up, dashed dividers between rows */
+html[data-style="ascii"] .f1-ascii-races .rc-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-races .rc-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-races a.rc-row:hover .rc-name { color: var(--ascii-hi); }
+
+/* Header row: uppercase, muted, rule underneath */
+html[data-style="ascii"] .f1-ascii-races .rc-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+
+/* Column templates */
+html[data-style="ascii"] .f1-ascii-races .rc-up {
+  grid-template-columns: 28px minmax(140px, 1.4fr) minmax(120px, 1.2fr) 110px;
+}
+html[data-style="ascii"] .f1-ascii-races .rc-done {
+  grid-template-columns: 28px minmax(130px, 1.4fr) 64px minmax(90px, 1fr) minmax(70px, 0.8fr) minmax(70px, 0.8fr);
+}
+html[data-style="ascii"] .f1-ascii-races .rc-rd { text-align: right; }
+html[data-style="ascii"] .f1-ascii-races .rc-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-races .rc-sub { display: none; }
+html[data-style="ascii"] .f1-ascii-races .rc-winner { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-races .rc-num { white-space: nowrap; }
+
+/* Phone width: one name column with the date under it, winner kept, the rest dropped */
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-races .rc-up {
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+  }
+  html[data-style="ascii"] .f1-ascii-races .rc-done {
+    grid-template-columns: 26px minmax(0, 1fr) minmax(70px, auto);
+  }
+  html[data-style="ascii"] .f1-ascii-races .rc-date-col { display: none; }
+  html[data-style="ascii"] .f1-ascii-races .rc-sub {
+    display: block;
+    color: var(--color-f1-text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

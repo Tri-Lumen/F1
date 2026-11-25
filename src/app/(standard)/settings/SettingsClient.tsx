@@ -15,6 +15,7 @@ import {
 import ThemeBuilderSection from "./ThemeBuilderSection";
 import TeamColorsSection from "./TeamColorsSection";
 import InterfaceSection from "./InterfaceSection";
+import "@/app/ascii/settings.css";
 
 interface ElectronAppAPI {
   isElectron?: boolean;
@@ -274,7 +275,7 @@ export default function SettingsClient({ availableDrivers, availableTeams }: Pro
   }
 
   return (
-    <div>
+    <div className="f1-settings">
       <h1 className="text-3xl font-black tracking-tight mb-1">
         <span className="text-f1-red">Settings</span>
       </h1>

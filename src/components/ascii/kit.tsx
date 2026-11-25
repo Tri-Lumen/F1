@@ -23,9 +23,19 @@ export function AsciiHeader({ title, subtitle }: { title: string; subtitle?: str
 }
 
 /** Single-line frame with the label set into the top rule: `[ LABEL ]`. */
-export function Panel({ label, children, className = "" }: { label?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({
+  label,
+  children,
+  className = "",
+  id,
+}: {
+  label?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  id?: string;
+}) {
   return (
-    <section className={`f1-a-panel ${className}`}>
+    <section id={id} className={`f1-a-panel ${className}`}>
       {label !== undefined && (
         <h2 className="f1-a-label">
           <span className="f1-a-rule">[ </span>
