@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 async function StatsContent() {
-  const [allRaces, sprintRaces, driverStandings, constructorStandings] = await Promise.all([
+  const [allRaces, sprintRaces, driverStandings] = await Promise.all([
     getAllSeasonResults(),
     getAllSprintResults(),
     getDriverStandings(),
