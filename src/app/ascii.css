@@ -368,6 +368,7 @@ html[data-style="ascii"] .f1-a-sessions .f1-a-next td { color: var(--color-f1-ac
 /* Bars: solid block characters, track dimmed, clipped to the percentage width */
 html[data-style="ascii"] .f1-a-bar {
   position: relative;
+  contain: inline-size; /* the block-character text must not size its grid cell */
   height: 1em;
   line-height: 1;
   white-space: pre;
