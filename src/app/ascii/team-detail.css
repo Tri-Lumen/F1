@@ -1,0 +1,121 @@
+/*
+ * ASCII view of /teams/[constructorId] (components/ascii/views/TeamDetailView.tsx).
+ * Every selector is scoped under html[data-style="ascii"], so Standard is unaffected.
+ * Shared panel, label, bar and muted/accent helpers come from src/app/ascii.css.
+ */
+
+html[data-style="ascii"] .f1-ascii-team { min-width: 0; }
+
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-back { margin: 0 0 6px; font-size: 12px; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-link {
+  color: var(--color-f1-text);
+  text-decoration: none;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-link:hover {
+  color: var(--ascii-hi);
+  text-decoration: underline;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-size: 12px;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-footer-end { justify-content: flex-end; margin: 0 0 18px; }
+
+/* Label / value rows: two columns, dashed rules between rows */
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-kv {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+  font-variant-numeric: tabular-nums;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  min-width: 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-kv-row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-sub { margin-top: 12px; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-sub-h { font-size: 11px; letter-spacing: 0.06em; margin-bottom: 4px; }
+
+/* Driver panels */
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-driver {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-kv-driver { grid-template-columns: minmax(0, 1fr); }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-share {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-spark { letter-spacing: 1px; font-size: 14px; }
+
+/* Retirements */
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-ret-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, auto);
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-ret-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-ret-race { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* Season race results table: column template is set inline from the driver count */
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-table { min-width: 0; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-round-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  min-width: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-round-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-head {
+  color: var(--color-f1-text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-race { display: grid; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-race-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-cell { display: grid; justify-items: end; min-width: 0; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-sub-line { display: block; font-size: 11px; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-p1 { font-weight: 700; }
+html[data-style="ascii"] .f1-ascii-team .f1-tdv-dnf { color: #f87171; font-weight: 700; }
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-team .f1-tdv-hide-s { display: none !important; }
+  html[data-style="ascii"] .f1-ascii-team .f1-tdv-kv { grid-template-columns: minmax(0, 1fr); }
+  html[data-style="ascii"] .f1-ascii-team .f1-tdv-ret-row { grid-template-columns: minmax(0, 1fr) minmax(0, auto); }
+  html[data-style="ascii"] .f1-ascii-team .f1-tdv-ret-race { display: none; }
+  html[data-style="ascii"] .f1-ascii-team .f1-tdv-round-row { font-size: 11px; gap: 6px; }
+}
