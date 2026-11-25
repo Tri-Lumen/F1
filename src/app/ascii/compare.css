@@ -105,3 +105,16 @@ html[data-style="ascii"] .f1-cmp-up { color: var(--ascii-hi); margin-left: 2px; 
   }
   html[data-style="ascii"] .f1-cmp-stat-head { gap: 8px; }
 }
+
+/* Split stat bar: driver 1 grows left from the centre line, driver 2 grows right */
+html[data-style="ascii"] .f1-cmp-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 0;
+}
+html[data-style="ascii"] .f1-cmp-bars > .f1-a-bar {
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-cmp-bars > .f1-a-bar:first-child {
+  border-right: 1px solid var(--ascii-rule);
+}

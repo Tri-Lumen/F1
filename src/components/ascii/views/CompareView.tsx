@@ -95,7 +95,7 @@ function StatRow({
         <span className={`f1-cmp-val f1-cmp-val-r${bWins ? " f1-cmp-val-on" : ""}`}>{format(b)}</span>
       </div>
       <div className="f1-cmp-bars">
-        <Bar frac={a / max} color={aWins ? colorA : RULE} />
+        <Bar frac={a / max} color={aWins ? colorA : RULE} mirror />
         <Bar frac={b / max} color={bWins ? colorB : RULE} />
       </div>
     </div>
