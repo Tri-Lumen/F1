@@ -78,6 +78,52 @@ export interface RaceDetailPace {
   isFastest: boolean;
 }
 
+/** One row of the qualifying gap-to-pole table (same series as QualifyingGapChart). */
+export interface RaceDetailQualGap {
+  driverId: string;
+  position: string;
+  code: string;
+  color: string;
+  bestTime: string;
+  /** "POLE" for the fastest driver, otherwise "+x.xxx". */
+  gap: string;
+  /** Bar fill, 0 to 1. Pole gets a thin marker. */
+  barFrac: number;
+}
+
+export interface RaceDetailQualRow {
+  driverId: string;
+  position: string;
+  name: string;
+  color: string;
+  /** Decisive segment time for this driver (the deepest session reached). */
+  time: string;
+  /** "POLE", "FASTEST", "+x.xxx", or "" when there is no time. */
+  gap: string;
+}
+
+/** One elimination zone of the qualifying progression (Q3 shootout, Q2 and Q1 knockouts). */
+export interface RaceDetailQualZone {
+  key: string;
+  title: string;
+  caption: string;
+  color: string;
+  rows: RaceDetailQualRow[];
+}
+
+/** One row of the grid vs finish table (drivers with a grid slot, in finish order). */
+export interface RaceDetailGridRow {
+  driverId: string;
+  name: string;
+  color: string;
+  grid: string;
+  /** Classified position, or "DNF" when isDnf. */
+  finish: string;
+  isDnf: boolean;
+  /** Places gained (positive) or lost (negative): grid minus finish. */
+  gained: number;
+}
+
 export interface RaceDetailViewProps {
   round: string;
   title: string;
@@ -99,6 +145,9 @@ export interface RaceDetailViewProps {
   /** Fastest pit stop line, e.g. "box" or "lane". Null when there are no stops. */
   fastestPit?: { kind: "box" | "lane"; duration: string; name: string; lap: string } | null;
   pace?: RaceDetailPace[];
+  qualGap?: RaceDetailQualGap[];
+  qualZones?: RaceDetailQualZone[];
+  gridVsFinish?: RaceDetailGridRow[];
 }
 
 const pad = (round: string) => round.padStart(2, "0");
@@ -191,6 +240,9 @@ export default function RaceDetailView({
   pitTimeline = [],
   fastestPit = null,
   pace = [],
+  qualGap = [],
+  qualZones = [],
+  gridVsFinish = [],
 }: RaceDetailViewProps) {
   return (
     <div className="f1-ascii-dash f1-ascii-race">
@@ -256,6 +308,39 @@ export default function RaceDetailView({
       {results.length > 0 && (
         <Panel label="Race results">
           <ResultsTable rows={results} variant="race" />
+        </Panel>
+      )}
+
+      {gridVsFinish.length > 0 && (
+        <Panel label="Grid vs finish">
+          <p className="f1-a-muted rd-note">Places gained (+) or lost (-) from grid to finish</p>
+          <div className="rd-tbl rd-gvf">
+            <div className="rd-row rd-head">
+              <span>DRIVER</span>
+              <span className="rd-num">GRID</span>
+              <span className="rd-num">FIN</span>
+              <span className="rd-num">+/-</span>
+            </div>
+            {gridVsFinish.map((d) => (
+              <div key={d.driverId} className={`rd-row${d.isDnf ? " rd-dnf" : ""}`}>
+                <span className="rd-driver">
+                  <Swatch color={d.color} />
+                  <span className="rd-name">{d.name}</span>
+                </span>
+                <span className="rd-num rd-mono">P{d.grid}</span>
+                <span className={`rd-num rd-mono${d.isDnf ? " rd-red" : ""}`}>
+                  {d.isDnf ? "DNF" : `P${d.finish}`}
+                </span>
+                <span
+                  className={`rd-num rd-mono ${
+                    d.gained > 0 ? "f1-a-accent" : d.gained < 0 ? "rd-red" : "f1-a-muted"
+                  }`}
+                >
+                  {d.gained > 0 ? `+${d.gained}` : d.gained}
+                </span>
+              </div>
+            ))}
+          </div>
         </Panel>
       )}
 
@@ -356,6 +441,76 @@ export default function RaceDetailView({
         </Panel>
       )}
 
+      {qualGap.length > 0 && (
+        <Panel label="Qualifying gap to pole">
+          <div className="rd-tbl rd-qgap">
+            <div className="rd-row rd-head">
+              <span className="rd-pos">POS</span>
+              <span>DRIVER</span>
+              <span className="rd-num">BEST</span>
+              <span className="rd-num">GAP</span>
+              <span className="f1-a-hide-s" />
+            </div>
+            {qualGap.map((d) => (
+              <div key={d.driverId} className={`rd-row${d.gap === "POLE" ? " rd-fl" : ""}`}>
+                <span className="rd-pos">P{d.position}</span>
+                <span className="rd-driver">
+                  <Swatch color={d.color} />
+                  <span className="rd-name rd-mono" style={{ color: d.color }}>
+                    {d.code}
+                  </span>
+                </span>
+                <span className="rd-num rd-mono">{d.bestTime}</span>
+                <span className={`rd-num rd-mono ${d.gap === "POLE" ? "f1-a-accent" : "f1-a-muted"}`}>
+                  {d.gap}
+                </span>
+                <span className="f1-a-hide-s">
+                  <Bar frac={d.barFrac} color={d.color} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
+      {qualZones.length > 0 && (
+        <Panel label="Qualifying progression">
+          {qualZones.map((z) => (
+            <div key={z.key} className="rd-zone">
+              <p className="rd-zone-h" style={{ color: z.color, borderTopColor: z.color }}>
+                {z.title}
+                <span className="f1-a-muted rd-zone-cap"> {z.caption}</span>
+              </p>
+              <div className="rd-tbl rd-prog">
+                <div className="rd-row rd-head">
+                  <span className="rd-pos">POS</span>
+                  <span>DRIVER</span>
+                  <span className="rd-num">TIME</span>
+                  <span className="rd-num">GAP</span>
+                </div>
+                {z.rows.map((d) => (
+                  <div key={d.driverId} className="rd-row">
+                    <span className="rd-pos">{d.position}</span>
+                    <span className="rd-driver">
+                      <Swatch color={d.color} />
+                      <span className="rd-name">{d.name}</span>
+                    </span>
+                    <span className="rd-num rd-mono">{d.time}</span>
+                    <span
+                      className={`rd-num rd-mono ${
+                        d.gap === "POLE" || d.gap === "FASTEST" ? "f1-a-accent" : "f1-a-muted"
+                      }`}
+                    >
+                      {d.gap}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </Panel>
+      )}
+
       {pace.length > 0 && (
         <Panel label="Race pace">
           <p className="f1-a-muted rd-note">Fastest lap comparison, ranked by lap time</p>
@@ -380,11 +535,6 @@ export default function RaceDetailView({
           </div>
         </Panel>
       )}
-
-      {/*
-        Not shown in ASCII: the Grid vs Finish SVG chart, the qualifying gap chart and the
-        qualifying progression chart. They remain in the standard markup only.
-      */}
     </div>
   );
 }
