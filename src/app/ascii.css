@@ -432,3 +432,62 @@ html[data-style="ascii"] .f1-a-seg { overflow: hidden; flex-basis: 0; min-width:
   html[data-style="ascii"] .f1-a-points { font-size: 44px; }
   html[data-style="ascii"] .f1-a-stats { gap: 14px; }
 }
+
+/* ── Top nav (ASCII) replaces the sidebar ──────────────────────────────── */
+.f1-ascii-topnav { display: none; }
+html[data-style="ascii"] .f1-ascii-topnav {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  background: var(--bg, var(--color-f1-black));
+  border-bottom: 1px solid var(--ascii-rule);
+  padding: 10px 16px 8px;
+  font-size: 13px;
+}
+html[data-style="ascii"] .f1-ascii-topnav-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 24px;
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+html[data-style="ascii"] .f1-ascii-brand {
+  font-weight: 700;
+  color: var(--color-f1-text);
+  text-decoration: none;
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-ascii-tabs { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+html[data-style="ascii"] .f1-ascii-tab {
+  color: var(--color-f1-text-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: pre;
+}
+html[data-style="ascii"] .f1-ascii-tab:hover { color: var(--color-f1-text); }
+html[data-style="ascii"] .f1-ascii-tab-on,
+html[data-style="ascii"] .f1-ascii-tab-on .f1-a-rule {
+  color: var(--color-f1-accent);
+}
+html[data-style="ascii"] .f1-ascii-tab-on { font-weight: 700; }
+html[data-style="ascii"] .f1-main { margin-left: 0 !important; }
+html[data-style="ascii"] .f1-main > div { max-width: var(--content-max); }
+
+/* Shared page header ("## TITLE") */
+html[data-style="ascii"] .f1-a-head-block { margin: 18px 0 16px; }
+html[data-style="ascii"] .f1-a-page-title {
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 4px;
+}
+
+/* Countdown fits one row on phones */
+@media (max-width: 480px) {
+  html[data-style="ascii"] .f1-a-count { gap: 6px; }
+  html[data-style="ascii"] .f1-a-count .f1-big-digits { font-size: 15px; }
+  html[data-style="ascii"] .f1-a-count-label { font-size: 9px; }
+}

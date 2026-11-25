@@ -2,15 +2,13 @@ import { LocalDate } from "@/components/LocalDateTime";
 import type { StudioRaceCardData } from "@/components/StudioRaceCard";
 import AsciiCountdown from "./AsciiCountdown";
 import AsciiLogo from "./AsciiLogo";
+import { Bar, FULL, Label, spark } from "./kit";
 
 /*
  * Terminal-grid dashboard for the ASCII visual style. Rendered alongside the standard
  * dashboard and shown only under html[data-style="ascii"] (see ascii.css, .f1-ascii-dash).
  * All values arrive as plain data from the home page, so this stays a server component.
  */
-
-const FULL = "█".repeat(300);
-const TRACK = "░".repeat(300);
 
 export interface AsciiDriver {
   pos: number;
@@ -49,38 +47,6 @@ export interface AsciiDashData {
   teams: AsciiTeam[];
   recent: StudioRaceCardData[];
   teamColors: Record<string, string>;
-}
-
-function Bar({ frac, color }: { frac: number; color: string }) {
-  const pct = Math.max(0, Math.min(1, frac)) * 100;
-  return (
-    <div className="f1-a-bar" aria-hidden="true">
-      <span className="f1-a-track">{TRACK}</span>
-      <span className="f1-a-fill" style={{ width: `${pct}%`, color }}>
-        {FULL}
-      </span>
-    </div>
-  );
-}
-
-function Label({ children }: { children: string }) {
-  return (
-    <h2 className="f1-a-label">
-      <span className="f1-a-rule">[ </span>
-      <span className="f1-a-lt">{children}</span>
-      <span className="f1-a-rule"> ]</span>
-    </h2>
-  );
-}
-
-const SPARK = "▁▂▃▄▅▆▇█";
-function spark(form: number[]) {
-  return form
-    .map((p) => {
-      const v = 1 - (Math.min(Math.max(p, 1), 20) - 1) / 19;
-      return SPARK[Math.min(7, Math.round(v * 7))];
-    })
-    .join("");
 }
 
 export default function AsciiDashboard({ data }: { data: AsciiDashData }) {
