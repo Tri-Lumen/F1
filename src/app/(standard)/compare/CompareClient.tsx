@@ -750,6 +750,8 @@ export default function CompareClient({
         h2hWinsB={h2hWinsB}
         h2hQualA={h2hQualA}
         h2hQualB={h2hQualB}
+        pointsA={cumulativePointsA}
+        pointsB={cumulativePointsB}
       />
     </>
   );

@@ -8,8 +8,18 @@ import "@/app/ascii/compare.css";
  * Terminal-grid version of the Head-to-Head page. Rendered by CompareClient alongside the
  * standard markup and shown only under html[data-style="ascii"] (.f1-ascii-dash). The
  * selection state and every number come from CompareClient; this file only lays them out.
- * Chart sections (Points Progression, Qualifying Gap) are intentionally omitted here.
+ * The two standard charts (Points Progression, Qualifying Gap) are rendered here as
+ * round-by-round terminal grids using the same series.
  */
+
+const BLOCKS = "▁▂▃▄▅▆▇█";
+
+/** One block character per value, scaled to `max` (running totals sparkline). */
+function blockLine(values: number[], max: number) {
+  return values
+    .map((v) => BLOCKS[Math.min(7, Math.max(0, Math.round((v / max) * 7)))])
+    .join("");
+}
 
 export interface CompareStats {
   position: number;
@@ -60,6 +70,9 @@ export interface CompareViewProps {
   h2hWinsB: number;
   h2hQualA: number;
   h2hQualB: number;
+  /** Cumulative points per race for each driver (same series as the standard chart). */
+  pointsA: number[];
+  pointsB: number[];
 }
 
 const RULE = "var(--ascii-rule)";
@@ -121,9 +134,20 @@ export default function CompareView({
   h2hWinsB,
   h2hQualA,
   h2hQualB,
+  pointsA,
+  pointsB,
 }: CompareViewProps) {
   const codeA = standingA?.Driver.code ?? "";
   const codeB = standingB?.Driver.code ?? "";
+
+  // Points progression: same axis rule as the standard chart (ceiling to a multiple of 25).
+  const maxPts = Math.max(...pointsA, ...pointsB, 1);
+  const yMax = Math.ceil(maxPts / 25) * 25 || 25;
+  const nRounds = Math.max(pointsA.length, pointsB.length);
+
+  // Qualifying gap: same filter as the standard chart (both drivers on a grid slot).
+  const qualRaces = h2hResults.filter((r) => r.a.grid > 0 && r.b.grid > 0);
+  const maxDelta = Math.max(...qualRaces.map((r) => Math.abs(r.a.grid - r.b.grid)), 1);
   const driverPanel = (
     label: string,
     value: string,
@@ -215,6 +239,82 @@ export default function CompareView({
             <StatRow label="Positions gained" a={statsA.totalPositionsGained} b={statsB.totalPositionsGained} colorA={teamColorA} colorB={teamColorB} format={(v) => (v >= 0 ? `+${v}` : String(v))} />
             <StatRow label="Best finish" a={statsA.bestFinish} b={statsB.bestFinish} colorA={teamColorA} colorB={teamColorB} higherIsBetter={false} format={(v) => (v > 0 ? `P${v}` : "—")} />
           </Panel>
+
+          {/* Points progression (standard: Points Progression chart) */}
+          {pointsA.length > 1 && pointsB.length > 1 && (
+            <Panel label="Points progression">
+              <p className="f1-a-muted f1-cmp-chart-note">Running total per round, scale 0–{yMax} pts</p>
+              <div className="f1-cmp-spark">
+                <span style={{ color: teamColorA }}>{codeA} {blockLine(pointsA, yMax)}</span>
+                <span style={{ color: teamColorB }}>{codeB} {blockLine(pointsB, yMax)}</span>
+              </div>
+              <div className="f1-cmp-race">
+                <div className="f1-cmp-chart-row f1-cmp-race-head f1-a-upper">
+                  <span>Round</span>
+                  <span className="f1-a-r">{codeA}</span>
+                  <span />
+                  <span className="f1-a-r">{codeB}</span>
+                </div>
+                {Array.from({ length: nRounds }, (_, i) => {
+                  const a = pointsA[i];
+                  const b = pointsB[i];
+                  return (
+                    <div className="f1-cmp-chart-row f1-cmp-pts-row" key={i}>
+                      <span className="f1-a-muted">R{i + 1}</span>
+                      <span className="f1-a-r f1-cmp-val">{a ?? "—"}</span>
+                      <div className="f1-cmp-bars">
+                        <Bar frac={(a ?? 0) / yMax} color={teamColorA} mirror />
+                        <Bar frac={(b ?? 0) / yMax} color={teamColorB} />
+                      </div>
+                      <span className="f1-a-r f1-cmp-val">{b ?? "—"}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          )}
+
+          {/* Qualifying gap (standard: Qualifying Gap chart) */}
+          {qualRaces.length > 1 && (
+            <Panel label="Qualifying gap">
+              <p className="f1-a-muted f1-cmp-chart-note">
+                Grid-position gap per race. Left bar = {codeA} ahead, right bar = {codeB} ahead.
+              </p>
+              <div className="f1-cmp-race">
+                <div className="f1-cmp-chart-row f1-cmp-qual-row f1-cmp-race-head f1-a-upper">
+                  <span>Race</span>
+                  <span className="f1-a-muted">{codeA} ◂ ▸ {codeB}</span>
+                  <span className="f1-a-r">Gap</span>
+                </div>
+                {qualRaces.map((r) => {
+                  const delta = r.b.grid - r.a.grid; // positive = A ahead on the grid
+                  const mag = Math.abs(delta);
+                  const aAhead = delta > 0;
+                  const bAhead = delta < 0;
+                  const leader = aAhead ? codeA : codeB;
+                  const leaderColor = aAhead ? teamColorA : teamColorB;
+                  return (
+                    <div className="f1-cmp-chart-row f1-cmp-qual-row" key={r.round}>
+                      <span className="f1-a-muted f1-cmp-race-name">
+                        R{r.round} {r.raceName.replace(" Grand Prix", "")}
+                      </span>
+                      <div className="f1-cmp-bars">
+                        <Bar frac={aAhead ? mag / maxDelta : 0} color={teamColorA} mirror />
+                        <Bar frac={bAhead ? mag / maxDelta : 0} color={teamColorB} />
+                      </div>
+                      <span className="f1-a-r f1-cmp-result">
+                        {delta === 0 ? (
+                          <span className="f1-a-muted">=</span>
+                        ) : (
+                          <span style={{ color: leaderColor }}>{leader} +{mag}</span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          )}
 
           {h2hResults.length > 0 && (
             <>

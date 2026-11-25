@@ -99,6 +99,54 @@ html[data-style="ascii"] .f1-cmp-pos { font-weight: 700; color: var(--color-f1-t
 html[data-style="ascii"] .f1-cmp-result { font-weight: 700; white-space: nowrap; }
 html[data-style="ascii"] .f1-cmp-up { color: var(--ascii-hi); margin-left: 2px; }
 
+/* Chart blocks: points progression and qualifying gap as round-by-round grids */
+html[data-style="ascii"] .f1-cmp-chart-note { font-size: 12px; margin-bottom: 8px; }
+html[data-style="ascii"] .f1-cmp-spark {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: pre;
+  overflow: hidden;
+}
+html[data-style="ascii"] .f1-cmp-chart-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px dashed color-mix(in srgb, var(--ascii-rule) 60%, transparent);
+}
+html[data-style="ascii"] .f1-cmp-chart-row:last-child { border-bottom: 0; }
+html[data-style="ascii"] .f1-cmp-chart-row.f1-cmp-race-head {
+  border-bottom: 1px solid var(--ascii-rule);
+  padding-bottom: 6px;
+}
+html[data-style="ascii"] .f1-cmp-pts-row {
+  grid-template-columns: 40px 40px minmax(0, 1fr) 40px;
+}
+html[data-style="ascii"] .f1-cmp-pts-row .f1-cmp-bars,
+html[data-style="ascii"] .f1-cmp-qual-row .f1-cmp-bars {
+  min-width: 0;
+}
+html[data-style="ascii"] .f1-cmp-qual-row {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr) 72px;
+}
+html[data-style="ascii"] .f1-cmp-qual-row .f1-cmp-race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-style="ascii"] .f1-cmp-chart-row .f1-a-r { white-space: nowrap; }
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-cmp-qual-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) 56px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-cmp-pts-row {
+    grid-template-columns: 32px 32px minmax(0, 1fr) 32px;
+    gap: 6px;
+  }
+}
+
 @media (max-width: 760px) {
   html[data-style="ascii"] .f1-cmp-race-row {
     grid-template-columns: minmax(0, 1fr) 44px 44px 52px;
