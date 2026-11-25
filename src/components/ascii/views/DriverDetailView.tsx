@@ -7,8 +7,8 @@ import "@/app/ascii/driver-detail.css";
  * ASCII view of the driver detail page. Rendered next to the standard markup and shown only
  * under html[data-style="ascii"] (see .f1-ascii-dash in ascii.css). The page computes every
  * number and passes plain data in, so this stays a server component. Row styles live in
- * src/app/ascii/driver-detail.css. The trajectory SVG, the news section and the interactive
- * widgets are standard-only and are not rendered here.
+ * src/app/ascii/driver-detail.css. The trajectory is drawn here as a block sparkline from the
+ * season results. The news section and the interactive widgets stay standard-only.
  */
 
 export interface DriverDetailResult {
@@ -205,6 +205,26 @@ export default function DriverDetailView({
           </div>
         )}
       </Panel>
+
+      {/* Position trajectory: finishing position per round as a block sparkline */}
+      {results.length >= 2 && (
+        <Panel label="Position trajectory">
+          <p className="dd-traj" style={{ color: teamColor }} aria-hidden="true">
+            {spark(results.map((r) => (isDNFStatus(r.status) ? 21 : parseInt(r.position, 10))))}
+          </p>
+          <ol className="dd-traj-rounds">
+            {results.map((r) => {
+              const isDNF = isDNFStatus(r.status);
+              return (
+                <li key={r.round} className={isDNF ? "dd-traj-dnf" : undefined}>
+                  <span className="f1-a-muted">R{r.round}</span> {isDNF ? "DNF" : `P${r.position}`}
+                </li>
+              );
+            })}
+          </ol>
+          <p className="f1-a-muted dd-traj-note">Taller block = higher finish. DNF plots as the lowest step.</p>
+        </Panel>
+      )}
 
       {/* Career */}
       <Panel label="Career summary">

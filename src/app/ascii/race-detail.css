@@ -157,3 +157,44 @@ html[data-style="ascii"] .f1-ascii-race .rd-time { white-space: nowrap; overflow
   }
   html[data-style="ascii"] .f1-ascii-race .rd-info { grid-template-columns: 72px minmax(0, 1fr); }
 }
+
+/* Qualifying gap to pole: position, driver, best lap, gap and a gap bar (bar hidden on phone) */
+html[data-style="ascii"] .f1-ascii-race .rd-qgap .rd-row {
+  grid-template-columns: 40px minmax(0, 1fr) 96px 84px minmax(0, 1.4fr);
+}
+
+/* Qualifying progression: one table per elimination zone, zone title set in its colour */
+html[data-style="ascii"] .f1-ascii-race .rd-zone + .rd-zone { margin-top: 14px; }
+html[data-style="ascii"] .f1-ascii-race .rd-zone-h {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  border-top: 2px solid;
+  padding-top: 6px;
+  margin-bottom: 4px;
+}
+html[data-style="ascii"] .f1-ascii-race .rd-zone-cap { font-weight: 400; text-transform: none; letter-spacing: 0; }
+html[data-style="ascii"] .f1-ascii-race .rd-prog .rd-row {
+  grid-template-columns: 40px minmax(0, 1.5fr) 96px 84px;
+}
+
+/* Grid vs finish */
+html[data-style="ascii"] .f1-ascii-race .rd-gvf .rd-row {
+  grid-template-columns: minmax(0, 1.6fr) 64px 64px 56px;
+}
+
+@media (max-width: 760px) {
+  html[data-style="ascii"] .f1-ascii-race .rd-qgap .rd-row {
+    grid-template-columns: 34px minmax(0, 1fr) 84px 72px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-prog .rd-row {
+    grid-template-columns: 30px minmax(0, 1fr) 84px 72px;
+    gap: 6px;
+  }
+  html[data-style="ascii"] .f1-ascii-race .rd-gvf .rd-row {
+    grid-template-columns: minmax(0, 1fr) 56px 56px 48px;
+    gap: 6px;
+  }
+}

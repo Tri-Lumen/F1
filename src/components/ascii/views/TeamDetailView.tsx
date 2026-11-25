@@ -43,6 +43,14 @@ export interface AsciiTeamDetailRound {
   total: number;
 }
 
+/** Points scored per driver in one round, in the same driver order as `drivers`. */
+export interface AsciiTeamPointsRound {
+  round: string;
+  raceName: string;
+  points: number[];
+  total: number;
+}
+
 export interface AsciiTeamDetailData {
   name: string;
   subtitle: string;
@@ -58,6 +66,7 @@ export interface AsciiTeamDetailData {
   retirements: { driver: string; raceName: string; status: string }[];
   drivers: AsciiTeamDetailDriver[];
   rounds: AsciiTeamDetailRound[];
+  pointsBreakdown: AsciiTeamPointsRound[];
 }
 
 function KV({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
@@ -70,8 +79,10 @@ function KV({ label, value, accent = false }: { label: string; value: string; ac
 }
 
 export default function TeamDetailView({ data }: { data: AsciiTeamDetailData }) {
-  const { name, subtitle, color, wikiUrl, year, drivers, rounds } = data;
+  const { name, subtitle, color, wikiUrl, year, drivers, rounds, pointsBreakdown } = data;
   const gridCols = `44px minmax(0, 1fr) ${drivers.map(() => "66px").join(" ")} 48px`;
+  const ptsGridCols = `44px minmax(0, 1fr) ${drivers.map(() => "56px").join(" ")} 52px`;
+  const maxRoundTotal = Math.max(1, ...pointsBreakdown.map((r) => r.total));
 
   return (
     <div className="f1-ascii-dash f1-ascii-team">
@@ -225,6 +236,48 @@ export default function TeamDetailView({ data }: { data: AsciiTeamDetailData }) 
           </div>
         )}
       </Panel>
+
+      {/* Points per round per driver. Bars show each round's team total against the best round. */}
+      {drivers.length >= 2 && pointsBreakdown.length > 0 && (
+        <Panel label="Points breakdown by race">
+          <p className="f1-a-muted" style={{ marginBottom: 8 }}>
+            Points scored per driver each round
+          </p>
+          <div className="f1-tdv-table">
+            <div className="f1-tdv-round-row f1-tdv-head" style={{ gridTemplateColumns: ptsGridCols }}>
+              <span>R</span>
+              <span>RACE</span>
+              {drivers.map((d, i) => (
+                <span key={d.driverId} className="f1-a-r" style={{ color: i === 0 ? color : `${color}aa` }}>
+                  {d.code}
+                </span>
+              ))}
+              <span className="f1-a-r">PTS</span>
+            </div>
+            {pointsBreakdown.map((r) => (
+              <div className="f1-tdv-round-row" key={r.round} style={{ gridTemplateColumns: ptsGridCols }}>
+                <span className="f1-a-muted">R{r.round}</span>
+                <span className="f1-tdv-race">
+                  <span className="f1-tdv-race-name">{r.raceName}</span>
+                  <span className="f1-tdv-hide-s">
+                    <Bar frac={r.total / maxRoundTotal} color={color} />
+                  </span>
+                </span>
+                {r.points.map((p, i) => (
+                  <span
+                    key={i}
+                    className={`f1-a-r f1-a-num${p > 0 ? "" : " f1-a-muted"}`}
+                    style={p > 0 ? { color: i === 0 ? color : `${color}aa` } : undefined}
+                  >
+                    {p > 0 ? p : "–"}
+                  </span>
+                ))}
+                <span className="f1-a-r f1-a-pts">{r.total}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
 
       <p className="f1-tdv-footer f1-tdv-footer-end">
         <a href={wikiUrl} target="_blank" rel="noopener noreferrer" className="f1-a-muted f1-tdv-link">

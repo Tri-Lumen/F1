@@ -20,13 +20,18 @@ import {
   getCurrentYear,
 } from "@/lib/api";
 import type { Metadata } from "next";
-import type { Race, RaceResult } from "@/lib/types";
+import type { Race, RaceResult, QualifyingResult } from "@/lib/types";
+import { parseLapTimeToMs, parseLapTimeToSeconds } from "@/lib/lapTime";
+import { getDriverConstructorId } from "@/lib/driverOverrides";
 import RaceDetailView, {
   type RaceDetailDriver,
+  type RaceDetailGridRow,
   type RaceDetailPace,
   type RaceDetailPitStop,
   type RaceDetailPitSummary,
   type RaceDetailQuali,
+  type RaceDetailQualGap,
+  type RaceDetailQualZone,
 } from "@/components/ascii/views/RaceDetailView";
 import RefreshButton from "@/components/RefreshButton";
 import QualifyingGapChart from "@/components/QualifyingGapChart";
@@ -265,6 +270,119 @@ async function RaceContent({ round }: { round: string }) {
         duration: boxStop ? boxStop.duration.toFixed(3) : parseFloat(p.duration).toFixed(3),
         isPitBox: !!boxStop,
         timeOfDay: p.time,
+      };
+    });
+
+  // Qualifying gap to pole: same series and rules as QualifyingGapChart.
+  const qualClassified = qualifying
+    .map((q) => ({
+      q,
+      ms: parseLapTimeToMs(q.Q3) ?? parseLapTimeToMs(q.Q2) ?? parseLapTimeToMs(q.Q1),
+    }))
+    .filter((x): x is { q: QualifyingResult; ms: number } => x.ms !== null)
+    .sort((a, b) => a.ms - b.ms);
+  const qualPoleMs = qualClassified[0]?.ms ?? 0;
+  const qualMaxGap = qualClassified.length > 0 ? qualClassified[qualClassified.length - 1].ms - qualPoleMs : 0;
+  const asciiQualGap: RaceDetailQualGap[] =
+    qualClassified.length >= 2 && qualMaxGap > 0
+      ? qualClassified.map(({ q, ms }) => {
+          const gap = ms - qualPoleMs;
+          return {
+            driverId: q.Driver.driverId,
+            position: q.position,
+            code: q.Driver.code,
+            color: getTeamColor(q.Constructor.constructorId),
+            bestTime: q.Q3 ?? q.Q2 ?? q.Q1 ?? "-",
+            gap: gap === 0 ? "POLE" : `+${(gap / 1000).toFixed(3)}`,
+            barFrac: gap === 0 ? 0.02 : Math.max(0.01, (gap / qualMaxGap) * 0.95),
+          };
+        })
+      : [];
+
+  // Qualifying progression: each driver's decisive segment, grouped by elimination zone
+  // (same grouping and gap rules as QualifyingProgression).
+  const qualSorted = [...qualifying].sort((a, b) => parseInt(a.position, 10) - parseInt(b.position, 10));
+  const qualZoneDefs: {
+    key: string;
+    title: string;
+    caption: string;
+    color: string;
+    seg: (q: QualifyingResult) => string | undefined;
+    rows: QualifyingResult[];
+  }[] = [
+    {
+      key: "q3",
+      title: "Q3 · Top-10 shootout",
+      caption: "Pole position fight",
+      color: "var(--color-f1-accent)",
+      seg: (q) => q.Q3,
+      rows: qualSorted.filter((q) => q.Q3),
+    },
+    {
+      key: "q2",
+      title: "Q2 · Knocked out",
+      caption: "Eliminated P11–15",
+      color: "#f59e0b",
+      seg: (q) => q.Q2,
+      rows: qualSorted.filter((q) => !q.Q3 && q.Q2),
+    },
+    {
+      key: "q1",
+      title: "Q1 · Knocked out",
+      caption: "Eliminated P16+",
+      color: "#9ca3af",
+      seg: (q) => q.Q1,
+      rows: qualSorted.filter((q) => !q.Q3 && !q.Q2),
+    },
+  ];
+  const asciiQualZones: RaceDetailQualZone[] = qualZoneDefs
+    .filter((z) => z.rows.length > 0)
+    .map((z) => {
+      const secs = z.rows
+        .map((q) => parseLapTimeToSeconds(z.seg(q)))
+        .filter((t): t is number => t !== null);
+      const best = secs.length ? Math.min(...secs) : null;
+      return {
+        key: z.key,
+        title: z.title,
+        caption: z.caption,
+        color: z.color,
+        rows: z.rows.map((q) => {
+          const t = parseLapTimeToSeconds(z.seg(q));
+          const gap = t !== null && best !== null ? t - best : null;
+          return {
+            driverId: q.Driver.driverId,
+            position: q.position,
+            name: q.Driver.familyName.toUpperCase(),
+            color: getTeamColor(getDriverConstructorId(q.Driver.driverId, q.Constructor.constructorId) ?? ""),
+            time: z.seg(q) ?? "-",
+            gap:
+              gap === null
+                ? ""
+                : gap > 0.0005
+                  ? `+${gap.toFixed(3)}`
+                  : z.key === "q3"
+                    ? "POLE"
+                    : "FASTEST",
+          };
+        }),
+      };
+    });
+
+  // Grid vs finish: drivers with a grid slot (pit-lane starters are excluded, as in the chart).
+  const asciiGridVsFinish: RaceDetailGridRow[] = results
+    .filter((r) => parseInt(r.grid) > 0)
+    .map((r) => {
+      const grid = parseInt(r.grid);
+      const finish = parseInt(r.position);
+      return {
+        driverId: r.Driver.driverId,
+        name: r.Driver.familyName.toUpperCase(),
+        color: getTeamColor(r.Constructor.constructorId),
+        grid: String(grid),
+        finish: String(finish),
+        isDnf: r.status !== "Finished" && !r.status.startsWith("+"),
+        gained: grid - finish,
       };
     });
 
@@ -919,6 +1037,9 @@ async function RaceContent({ round }: { round: string }) {
             : null
         }
         pace={asciiPace}
+        qualGap={asciiQualGap}
+        qualZones={asciiQualZones}
+        gridVsFinish={asciiGridVsFinish}
       />
     </>
   );

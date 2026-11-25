@@ -252,6 +252,13 @@ async function TeamDetailContent({ constructorId }: { constructorId: string }) {
       }),
       total: results.reduce((sum, r) => sum + parseFloat(r.points), 0),
     })),
+    // Same series as the Points Breakdown by Race chart: one entry per driver column.
+    pointsBreakdown: pointsBreakdown.map((race) => ({
+      round: race.round,
+      raceName: race.raceName,
+      points: race.drivers.map((d) => d.points),
+      total: race.drivers.reduce((s, d) => s + d.points, 0),
+    })),
   };
 
   return (
