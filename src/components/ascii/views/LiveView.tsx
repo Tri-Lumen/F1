@@ -1,8 +1,8 @@
 import Link from "next/link";
 import "@/app/ascii/live.css";
-import type { LiveTimingDriver, RaceControlMessage, TeamRadio, WeatherData } from "@/lib/types";
+import type { RaceControlMessage, TeamRadio, WeatherData } from "@/lib/types";
 import { LocalClockTime } from "@/components/LocalDateTime";
-import { AsciiHeader, Panel, Swatch } from "../kit";
+import { AsciiHeader, Bar, Panel, Swatch } from "../kit";
 
 /*
  * Terminal-grid Live Timing page for the ASCII visual style. Rendered next to the
@@ -23,7 +23,6 @@ export interface AsciiLiveDriver {
   gap: number | null;
   interval: number | null;
   lastLap: number | null;
-  compound: string | null;
   compoundLabel: string | null;
   tyreAge: number | null;
 }
@@ -191,12 +190,7 @@ export default function LiveView({ state }: { state: AsciiLiveState }) {
               <dd>
                 {weather.humidity.toFixed(0)}%
                 <div className="f1-l-humid">
-                  <span className="f1-a-bar">
-                    <span className="f1-a-track">{"░".repeat(40)}</span>
-                    <span className="f1-a-fill" style={{ width: `${Math.min(100, weather.humidity)}%`, color: "var(--color-f1-accent)" }}>
-                      {"█".repeat(40)}
-                    </span>
-                  </span>
+                  <Bar frac={weather.humidity / 100} color="var(--color-f1-accent)" />
                 </div>
               </dd>
               <dt>WIND</dt>
