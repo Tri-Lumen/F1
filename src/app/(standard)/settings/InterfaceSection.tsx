@@ -1,12 +1,39 @@
 "use client";
 
-import { useTheme, type BorderRadius } from "@/lib/ThemeContext";
+import { useTheme, type BorderRadius, type VisualStyle } from "@/lib/ThemeContext";
 
 const RADIUS_OPTIONS: { id: BorderRadius; label: string; desc: string; preview: string }[] = [
   { id: "sharp",   label: "Sharp",    desc: "Minimal radius — technical, data-dense",  preview: "2px" },
   { id: "default", label: "Default",  desc: "Balanced — the standard F1 dashboard look", preview: "12px" },
   { id: "rounded", label: "Rounded",  desc: "Soft corners — easier on the eyes",        preview: "20px" },
 ];
+
+const STYLE_OPTIONS: { id: VisualStyle; label: string; desc: string }[] = [
+  { id: "standard", label: "Standard", desc: "The broadcast look: condensed type, rounded cards, ambient glow." },
+  { id: "ascii", label: "ASCII", desc: "Terminal look: monospace type, box-drawing frames, block bars and dithered driver and car images." },
+];
+
+/** Tiny static sample of each style so the choice is visible before applying it. */
+function StylePreview({ id }: { id: VisualStyle }) {
+  if (id === "ascii") {
+    return (
+      <pre
+        aria-hidden="true"
+        className="h-[58px] overflow-hidden text-[9px] leading-[11px] text-f1-text-muted"
+        style={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+      >
+        {"┌─[ DRIVERS ]──────┐\n│ 1 NOR ██████▌░░░ │\n│ 2 VER █████░░░░░ │\n└──────────────────┘"}
+      </pre>
+    );
+  }
+  return (
+    <div className="h-[58px] overflow-hidden rounded-xl border border-f1-border bg-f1-dark p-2">
+      <div className="mb-1.5 h-2 w-16 rounded bg-f1-text-muted/40" />
+      <div className="mb-1 h-1.5 w-full rounded-full bg-f1-accent/70" />
+      <div className="h-1.5 w-4/5 rounded-full bg-f1-accent/40" />
+    </div>
+  );
+}
 
 function RadiusPreview({ radius }: { radius: string }) {
   return (
@@ -28,6 +55,9 @@ export default function InterfaceSection() {
     reduceMotion, setReduceMotion,
     compactMode, setCompactMode,
     borderRadius, setBorderRadius,
+    visualStyle, setVisualStyle,
+    asciiScanlines, setAsciiScanlines,
+    asciiDither, setAsciiDither,
   } = useTheme();
 
   return (
@@ -36,6 +66,58 @@ export default function InterfaceSection() {
       <p className="text-sm text-f1-text-muted mb-6">
         Fine-tune how the dashboard looks and behaves.
       </p>
+
+      {/* Visual style */}
+      <div className="mb-6">
+        <p className="text-xs uppercase tracking-wider text-f1-text-muted mb-3 font-semibold">Visual Style</p>
+        <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Visual style">
+          {STYLE_OPTIONS.map((opt) => {
+            const active = visualStyle === opt.id;
+            return (
+              <button
+                key={opt.id}
+                role="radio"
+                aria-checked={active}
+                onClick={() => setVisualStyle(opt.id)}
+                className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                  active ? "border-f1-accent bg-f1-accent/5" : "border-f1-border bg-f1-card hover:border-f1-text-muted"
+                }`}
+              >
+                <div className="mb-3">
+                  <StylePreview id={opt.id} />
+                </div>
+                <p className="font-bold text-sm">{opt.label}</p>
+                <p className="text-xs text-f1-text-muted mt-0.5">{opt.desc}</p>
+                {active && (
+                  <span className="absolute top-3 right-3 h-5 w-5 flex items-center justify-center rounded-full bg-f1-accent text-white text-xs">✓</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {visualStyle === "ascii" && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[
+              { label: "Dithered images", desc: "Driver and car images drawn with the Riemersma dither.", value: asciiDither, set: setAsciiDither },
+              { label: "Scanlines", desc: "A faint CRT scanline overlay.", value: asciiScanlines, set: setAsciiScanlines },
+            ].map((o) => (
+              <label key={o.label} className="flex cursor-pointer items-start gap-3 rounded-xl border border-f1-border bg-f1-card p-4">
+                <input
+                  type="checkbox"
+                  checked={o.value}
+                  onChange={(e) => o.set(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[var(--color-f1-accent)]"
+                />
+                <span>
+                  <span className="block text-sm font-semibold">{o.label}</span>
+                  <span className="block text-xs text-f1-text-muted">{o.desc}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Border Radius */}
       <div className="mb-6">

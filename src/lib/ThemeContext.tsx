@@ -13,6 +13,19 @@ export type AccentTheme = "none" | `team-${string}` | `retro-${string}` | `custo
 /** Card corner style */
 export type BorderRadius = "sharp" | "default" | "rounded";
 
+/**
+ * Whole-app visual style. "standard" is the original broadcast look; "ascii" is the
+ * terminal look (mono type, box-drawing frames, blocky bars, dithered imagery).
+ * Independent of mode, accent livery and corner style, which all keep working.
+ */
+export type VisualStyle = "standard" | "ascii";
+
+/** What the Electron shell exposes for the native View > Visual style menu. */
+interface ElectronStyleBridge {
+  onVisualStyle?: (cb: (style: string) => void) => void;
+  reportVisualStyle?: (style: VisualStyle) => void;
+}
+
 /** A fully user-defined theme preset */
 export interface CustomTheme {
   id: string;       // "custom-{timestamp}"
@@ -66,6 +79,11 @@ interface ThemeContextValue {
   glowIntensity: number;       // 0–100
   reduceMotion: boolean;
   compactMode: boolean;
+  visualStyle: VisualStyle;
+  /** ASCII style only: CRT scanline overlay */
+  asciiScanlines: boolean;
+  /** ASCII style only: render driver and car images dithered */
+  asciiDither: boolean;
 
   setMode: (m: ColorMode) => void;
   setAccentTheme: (t: AccentTheme) => void;
@@ -73,6 +91,9 @@ interface ThemeContextValue {
   setGlowIntensity: (v: number) => void;
   setReduceMotion: (v: boolean) => void;
   setCompactMode: (v: boolean) => void;
+  setVisualStyle: (s: VisualStyle) => void;
+  setAsciiScanlines: (v: boolean) => void;
+  setAsciiDither: (v: boolean) => void;
 
   saveCustomTheme: (name: string, colors: TeamThemeColors) => CustomTheme;
   updateCustomTheme: (id: string, name: string, colors: TeamThemeColors) => void;
@@ -92,12 +113,18 @@ const ThemeContext = createContext<ThemeContextValue>({
   glowIntensity: 50,
   reduceMotion: false,
   compactMode: false,
+  visualStyle: "standard",
+  asciiScanlines: true,
+  asciiDither: true,
   setMode: () => {},
   setAccentTheme: () => {},
   setBorderRadius: () => {},
   setGlowIntensity: () => {},
   setReduceMotion: () => {},
   setCompactMode: () => {},
+  setVisualStyle: () => {},
+  setAsciiScanlines: () => {},
+  setAsciiDither: () => {},
   saveCustomTheme: () => ({ id: "", name: "", colors: {} as TeamThemeColors }),
   updateCustomTheme: () => {},
   deleteCustomTheme: () => {},
@@ -123,6 +150,9 @@ function isValidMode(m: string): m is ColorMode {
 function isValidRadius(r: string): r is BorderRadius {
   return r === "sharp" || r === "default" || r === "rounded";
 }
+function isValidStyle(v: string): v is VisualStyle {
+  return v === "standard" || v === "ascii";
+}
 function isValidAccent(a: string, customs: CustomTheme[]): a is AccentTheme {
   if (a === "none") return true;
   if (TEAM_THEMES.some((t) => t.id === a)) return true;
@@ -147,6 +177,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [glowIntensity, setGlowIntensityState] = useState(50);
   const [reduceMotion, setReduceMotionState] = useState(false);
   const [compactMode, setCompactModeState] = useState(false);
+  const [visualStyle, setVisualStyleState] = useState<VisualStyle>("standard");
+  const [asciiScanlines, setAsciiScanlinesState] = useState(true);
+  const [asciiDither, setAsciiDitherState] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   // Load all prefs on first render
@@ -192,6 +225,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const storedCompact = ls("f1-compact-mode");
     if (storedCompact) setCompactModeState(storedCompact === "true");
+
+    const storedStyle = ls("f1-visual-style");
+    if (storedStyle && isValidStyle(storedStyle)) setVisualStyleState(storedStyle);
+    const storedScan = ls("f1-ascii-scanlines");
+    if (storedScan) setAsciiScanlinesState(storedScan === "true");
+    const storedDither = ls("f1-ascii-dither");
+    if (storedDither) setAsciiDitherState(storedDither === "true");
 
     setCustomThemes(parsedCustom);
     setTeamColorOverrides(parsedOverrides);
@@ -275,6 +315,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     lsSet("f1-compact-mode", String(compactMode));
   }, [compactMode, mounted]);
 
+  // Apply visual style + ASCII options. Attributes are read by ascii.css, and the
+  // inline boot script in layout.tsx sets the same ones before first paint.
+  useEffect(() => {
+    if (!mounted) return;
+    const el = document.documentElement;
+    if (visualStyle === "ascii") el.setAttribute("data-style", "ascii");
+    else el.removeAttribute("data-style");
+    el.setAttribute("data-ascii-crt", asciiScanlines ? "on" : "off");
+    el.setAttribute("data-ascii-dither", asciiDither ? "on" : "off");
+    lsSet("f1-visual-style", visualStyle);
+    lsSet("f1-ascii-scanlines", String(asciiScanlines));
+    lsSet("f1-ascii-dither", String(asciiDither));
+    // Keep the Electron View menu's radio selection in step with this setting.
+    const bridge = (window as unknown as { electronApp?: ElectronStyleBridge }).electronApp;
+    bridge?.reportVisualStyle?.(visualStyle);
+  }, [visualStyle, asciiScanlines, asciiDither, mounted]);
+
+  // The Electron View > Visual style menu sends the chosen style here.
+  useEffect(() => {
+    const bridge = (window as unknown as { electronApp?: ElectronStyleBridge }).electronApp;
+    bridge?.onVisualStyle?.((style) => {
+      if (isValidStyle(style)) setVisualStyleState(style);
+    });
+  }, []);
+
   // ── CRUD for custom themes ──────────────────────────────────────────────
 
   const saveCustomTheme = useCallback((name: string, colors: TeamThemeColors): CustomTheme => {
@@ -333,12 +398,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         glowIntensity,
         reduceMotion,
         compactMode,
+        visualStyle,
+        asciiScanlines,
+        asciiDither,
         setMode: setModeState,
         setAccentTheme: setAccentState,
         setBorderRadius: setBorderRadiusState,
         setGlowIntensity: setGlowIntensityState,
         setReduceMotion: setReduceMotionState,
         setCompactMode: setCompactModeState,
+        setVisualStyle: setVisualStyleState,
+        setAsciiScanlines: setAsciiScanlinesState,
+        setAsciiDither: setAsciiDitherState,
         saveCustomTheme,
         updateCustomTheme,
         deleteCustomTheme,

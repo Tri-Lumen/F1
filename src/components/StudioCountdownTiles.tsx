@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useState } from "react";
 import { calcTimeLeft, type TimeLeft } from "@/lib/countdown";
+import BigDigits from "./ascii/BigDigits";
 
 const BC = "'Barlow Condensed', sans-serif";
 const DM = "'DM Sans', sans-serif";
@@ -52,6 +53,7 @@ function StudioCountdownTiles({ target }: { target: string }) {
           }}
         >
           <div
+            className="f1-keep-sr"
             style={{
               fontFamily: BC,
               fontWeight: 900,
@@ -62,6 +64,7 @@ function StudioCountdownTiles({ target }: { target: string }) {
           >
             {String(value).padStart(2, "0")}
           </div>
+          <BigDigits text={String(value).padStart(2, "0")} />
           <div
             style={{
               fontSize: 8,

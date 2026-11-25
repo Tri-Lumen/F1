@@ -28,7 +28,7 @@ export default function SectionHeading({
   if (variant === "card") {
     return (
       <div
-        className={`flex items-center justify-between border-b border-f1-border px-3.5 py-3 ${className}`}
+        className={`f1-sh f1-sh-card flex items-center justify-between border-b border-f1-border px-3.5 py-3 ${className}`}
       >
         <span
           className="text-sm font-extrabold tracking-[0.04em]"
@@ -42,7 +42,7 @@ export default function SectionHeading({
   }
 
   return (
-    <div className={`mb-3 flex items-center justify-between gap-3 ${className}`}>
+    <div className={`f1-sh f1-sh-label mb-3 flex items-center justify-between gap-3 ${className}`}>
       <span
         className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-f1-text-muted"
         style={{ fontFamily: BC }}

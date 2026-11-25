@@ -26,6 +26,7 @@ import StudioNextRaceCard from "@/components/StudioNextRaceCard";
 import LiveSessionBanner from "@/components/LiveSessionBanner";
 import { LocalTime } from "@/components/LocalDateTime";
 import PageHeader from "@/components/PageHeader";
+import AsciiLogo from "@/components/ascii/AsciiLogo";
 import CardShell from "@/components/CardShell";
 import SectionHeading from "@/components/SectionHeading";
 import EmptyState from "@/components/EmptyState";
@@ -280,6 +281,7 @@ async function DashboardContent() {
 export default function Home() {
   return (
     <>
+      <AsciiLogo className="mb-4" />
       <PageHeader
         title="Dashboard"
         subtitle="2026 Season · championship standings, battles & recent results"

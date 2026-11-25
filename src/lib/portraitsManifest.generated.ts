@@ -26,6 +26,9 @@ export const DRIVER_PORTRAITS: Record<string, DriverPortraitEntry> = {
   "antonelli": {
     "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/mercedes/andant01/2026mercedesandant01right.webp"
   },
+  "arvid_lindblad": {
+    "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/racingbulls/arvlin01/2026racingbullsarvlin01right.webp"
+  },
   "bearman": {
     "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/haasf1team/olibea01/2026haasf1teamolibea01right.webp"
   },
@@ -58,9 +61,6 @@ export const DRIVER_PORTRAITS: Record<string, DriverPortraitEntry> = {
   },
   "leclerc": {
     "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/ferrari/chalec01/2026ferrarichalec01right.webp"
-  },
-  "lindblad": {
-    "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/racingbulls/arvlin01/2026racingbullsarvlin01right.webp"
   },
   "max_verstappen": {
     "card": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/redbullracing/maxver01/2026redbullracingmaxver01right.webp"
@@ -121,4 +121,4 @@ export const TEAM_PORTRAITS: Record<string, TeamPortraitEntry> = {
   }
 };
 
-export const GENERATED_AT = "2026-11-25T02:31:47.692Z";
+export const GENERATED_AT = "2026-11-25T19:53:04.062Z";

@@ -73,7 +73,7 @@ export const F1_DRIVERS_2026: { id: string; name: string; keywords: string[] }[]
   { id: "bortoleto", name: "Gabriel Bortoleto", keywords: ["bortoleto", "gabriel bortoleto"] },
   { id: "hadjar", name: "Isack Hadjar", keywords: ["hadjar", "isack hadjar"] },
   { id: "lawson", name: "Liam Lawson", keywords: ["lawson", "liam lawson"] },
-  { id: "lindblad", name: "Arvid Lindblad", keywords: ["lindblad", "arvid lindblad"] },
+  { id: "arvid_lindblad", name: "Arvid Lindblad", keywords: ["lindblad", "arvid lindblad"] },
   { id: "bottas", name: "Valtteri Bottas", keywords: ["bottas", "valtteri bottas"] },
   { id: "perez", name: "Sergio Perez", keywords: ["perez", "sergio perez", "pérez"] },
 ];

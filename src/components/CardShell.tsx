@@ -24,8 +24,8 @@ export default function CardShell({
 }: CardShellProps) {
   const base =
     variant === "plain"
-      ? "rounded-xl bg-f1-card/60"
-      : "rounded-xl border border-f1-border bg-f1-card";
+      ? "f1-box rounded-xl bg-f1-card/60"
+      : "f1-box rounded-xl border border-f1-border bg-f1-card";
 
   if (variant === "accent") {
     return (

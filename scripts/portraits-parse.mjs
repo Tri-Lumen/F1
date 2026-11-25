@@ -36,7 +36,7 @@ export const DRIVER_CODES = {
   bortoleto: "gabbor",
   hadjar: "isahad",
   lawson: "lialaw",
-  lindblad: "arvlin",
+  arvid_lindblad: "arvlin",
   bottas: "valbot",
   perez: "serper",
   // Not in profileImages.ts yet; id is a best guess at the Jolpica driverId.

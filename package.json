@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "sync-portraits": "node scripts/sync-f1-portraits.mjs",
+    "audit": "node scripts/audit.mjs",
     "electron:dev": "next build && electron .",
     "electron:build": "next build && electron-builder",
     "electron:build:win": "next build && electron-builder --win",

@@ -60,4 +60,22 @@ contextBridge.exposeInMainWorld('electronApp', {
     ipcRenderer.removeAllListeners('update-error');
     ipcRenderer.on('update-error', (_event, data) => cb(data));
   },
+
+  /**
+   * Register a callback for the native View > Visual style menu.
+   * @param {(style: 'standard' | 'ascii') => void} cb
+   */
+  onVisualStyle(cb) {
+    ipcRenderer.removeAllListeners('set-visual-style');
+    ipcRenderer.on('set-visual-style', (_event, style) => cb(style));
+  },
+
+  /**
+   * Tell the main process which visual style is active so the menu's radio
+   * selection matches the in-app Settings choice.
+   * @param {'standard' | 'ascii'} style
+   */
+  reportVisualStyle(style) {
+    ipcRenderer.send('visual-style-changed', style);
+  },
 });
