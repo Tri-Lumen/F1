@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { DriverStanding, Race } from "@/lib/types";
 import { getTeamColor, getCountryFlag } from "@/lib/api";
 import { getDriverConstructorId, getDriverConstructorName } from "@/lib/driverOverrides";
+import CompareView from "@/components/ascii/views/CompareView";
 
 interface DriverStats {
   position: number;
@@ -279,6 +280,7 @@ export default function CompareClient({
 
   return (
     <>
+      <div className="f1-std-only">
       {/* Teammate Quick-Select */}
       {teammatePairs.length > 0 && (
         <div className="mb-4">
@@ -724,6 +726,31 @@ export default function CompareClient({
           )}
         </>
       )}
+      </div>
+
+      <CompareView
+        standings={standings}
+        driverA={driverA}
+        driverB={driverB}
+        onChangeA={setDriverA}
+        onChangeB={setDriverB}
+        onPickPair={(a, b) => {
+          setDriverA(a);
+          setDriverB(b);
+        }}
+        teammatePairs={teammatePairs}
+        standingA={standingA}
+        standingB={standingB}
+        statsA={statsA}
+        statsB={statsB}
+        teamColorA={teamColorA}
+        teamColorB={teamColorB}
+        h2hResults={h2hResults}
+        h2hWinsA={h2hWinsA}
+        h2hWinsB={h2hWinsB}
+        h2hQualA={h2hQualA}
+        h2hQualB={h2hQualB}
+      />
     </>
   );
 }

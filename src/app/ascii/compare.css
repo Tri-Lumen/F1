@@ -4,8 +4,6 @@
  * Shared panel, bar, row and label styles live in ascii.css; only compare-specific rules here.
  */
 
-html[data-style="ascii"] .f1-cmp { padding-top: 0; }
-
 /* Driver/teammate controls */
 html[data-style="ascii"] .f1-cmp-select {
   width: 100%;
