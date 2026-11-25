@@ -491,3 +491,6 @@ html[data-style="ascii"] .f1-a-page-title {
   html[data-style="ascii"] .f1-a-count .f1-big-digits { font-size: 15px; }
   html[data-style="ascii"] .f1-a-count-label { font-size: 9px; }
 }
+
+/* Mirrored bar: fills from the right edge (used for the right-hand driver in comparisons) */
+html[data-style="ascii"] .f1-a-bar-mirror .f1-a-fill { left: auto; right: 0; }

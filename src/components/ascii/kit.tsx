@@ -49,10 +49,10 @@ export function Panel({
 }
 
 /** Solid block bar clipped to `frac` (0–1) of its width, with a dimmed track. */
-export function Bar({ frac, color }: { frac: number; color: string }) {
+export function Bar({ frac, color, mirror = false }: { frac: number; color: string; mirror?: boolean }) {
   const pct = Math.max(0, Math.min(1, frac)) * 100;
   return (
-    <div className="f1-a-bar" aria-hidden="true">
+    <div className={`f1-a-bar${mirror ? " f1-a-bar-mirror" : ""}`} aria-hidden="true">
       <span className="f1-a-track">{TRACK}</span>
       <span className="f1-a-fill" style={{ width: `${pct}%`, color }}>
         {FULL}
