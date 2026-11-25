@@ -56,6 +56,8 @@ export interface StatsViewData {
   consistency: StatsItem[];
   /** Cumulative points per round for the top drivers (the evolution chart's data). */
   evolution?: PointsGridData;
+  /** Points deficit to the championship leader after each round (the gap view's data). */
+  gap?: PointsGridData;
 }
 
 export interface StatsViewProps {
@@ -251,6 +253,13 @@ export default function StatsView({ year, data }: StatsViewProps) {
         <Panel label="Championship Evolution">
           <p className="f1-a-muted">Cumulative points for top drivers after each round</p>
           <PointsGrid data={d.evolution} nameHeader="DRIVER" />
+        </Panel>
+      )}
+
+      {d.gap && d.gap.rounds.length > 1 && d.gap.series.length > 0 && (
+        <Panel label="Gap to leader">
+          <p className="f1-a-muted">Points behind the championship leader after each round</p>
+          <PointsGrid data={d.gap} nameHeader="DRIVER" />
         </Panel>
       )}
     </div>

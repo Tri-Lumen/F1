@@ -312,6 +312,16 @@ async function StatsContent() {
     .sort((a, b) => (b.points.at(-1) ?? 0) - (a.points.at(-1) ?? 0))
     .slice(0, 8);
 
+  // Gap to leader per round, same series as ChampionshipEvolutionChart's gap view:
+  // top8Evolution sorted by points, index 0 is the leader, who is left out of the rows.
+  const gapLeader = top8Evolution[0];
+  const gapRows = top8Evolution.slice(1).map((d) => ({
+    driverId: d.driverId,
+    name: d.name,
+    constructorId: d.constructorId,
+    gap: d.points.map((p, i) => (gapLeader?.points[i] ?? 0) - p),
+  }));
+
   // ASCII view data: the same lists as the standard sections, reduced to plain values.
   // The championship evolution chart is passed as plain points data (see `evolution` below).
   const ratio = (a: number, b: number) => (b > 0 ? a / b : 0);
@@ -423,6 +433,15 @@ async function StatsContent() {
         label: d.name.split(" ").pop() ?? d.name,
         color: getTeamColor(d.constructorId),
         values: d.points,
+      })),
+    },
+    gap: {
+      rounds: completedRaces.map((r) => r.round),
+      series: gapRows.map((d) => ({
+        id: d.driverId,
+        label: d.name.split(" ").pop() ?? d.name,
+        color: getTeamColor(d.constructorId),
+        values: d.gap,
       })),
     },
   };
