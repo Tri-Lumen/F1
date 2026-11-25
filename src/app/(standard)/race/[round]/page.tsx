@@ -20,6 +20,14 @@ import {
   getCurrentYear,
 } from "@/lib/api";
 import type { Metadata } from "next";
+import type { Race, RaceResult } from "@/lib/types";
+import RaceDetailView, {
+  type RaceDetailDriver,
+  type RaceDetailPace,
+  type RaceDetailPitStop,
+  type RaceDetailPitSummary,
+  type RaceDetailQuali,
+} from "@/components/ascii/views/RaceDetailView";
 import RefreshButton from "@/components/RefreshButton";
 import QualifyingGapChart from "@/components/QualifyingGapChart";
 import QualifyingProgression from "@/components/QualifyingProgression";
@@ -38,6 +46,48 @@ export async function generateMetadata({
     description: race
       ? `Results, qualifying, pit stops, and analysis for the ${race.raceName}`
       : `Race results for round ${round} of the 2026 F1 season`,
+  };
+}
+
+/* Header fields shared by the Standard and ASCII race views. */
+function raceHeaderProps(race: Race) {
+  return {
+    title: race.raceName,
+    circuit: race.Circuit.circuitName,
+    location: `${race.Circuit.Location.locality}, ${race.Circuit.Location.country}`,
+    flag: getCountryFlagByCountry(race.Circuit.Location.country),
+    dateLabel: getRaceDate(race).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+    f1tvUrl: getF1TVRaceUrl(race),
+    wikiUrl: race.url,
+  };
+}
+
+/* One result row as the ASCII view shows it. Sprint rows never show DNF or fastest lap. */
+function toDetailDriver(r: RaceResult, sprint = false): RaceDetailDriver {
+  const isDnf = !sprint && r.status !== "Finished" && !r.status.startsWith("+");
+  const gridPos = parseInt(r.grid);
+  const gridDiff = gridPos > 0 ? gridPos - parseInt(r.position) : 0;
+  return {
+    driverId: r.Driver.driverId,
+    position: isDnf ? "DNF" : r.position,
+    isDnf,
+    flag: getCountryFlag(r.Driver.nationality),
+    givenName: r.Driver.givenName,
+    familyName: r.Driver.familyName,
+    teamColor: getTeamColor(r.Constructor.constructorId),
+    teamName: r.Constructor.name,
+    grid: r.grid,
+    gridDiff,
+    laps: r.laps,
+    timeOrStatus: r.Time?.time ?? r.status,
+    points: r.points !== "0" ? r.points : "",
+    fastestLap:
+      !sprint && r.FastestLap?.rank === "1" ? r.FastestLap?.Time?.time ?? "" : "",
   };
 }
 
@@ -65,19 +115,31 @@ async function RaceContent({ round }: { round: string }) {
     // 24 rounds and someone requests round 27) genuinely doesn't exist —
     // that's a real 404, distinct from a scheduled round that just hasn't
     // been run yet (which legitimately has no results and isn't an error).
-    if (!schedule.some((r) => r.round === round)) notFound();
+    const scheduledRace = schedule.find((r) => r.round === round);
+    if (!scheduledRace) notFound();
     return (
-      <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
-        <p className="text-f1-text-muted">
-          No results available for this race yet.
-        </p>
-        <Link
-          href="/races"
-          className="mt-3 inline-block text-sm text-f1-accent hover:underline"
-        >
-          &larr; Back to races
-        </Link>
-      </div>
+      <>
+        <div className="f1-std-only">
+          <div className="rounded-xl border border-f1-border bg-f1-card p-8 text-center">
+            <p className="text-f1-text-muted">
+              No results available for this race yet.
+            </p>
+            <Link
+              href="/races"
+              className="mt-3 inline-block text-sm text-f1-accent hover:underline"
+            >
+              &larr; Back to races
+            </Link>
+          </div>
+        </div>
+        <RaceDetailView
+          round={round}
+          {...raceHeaderProps(scheduledRace)}
+          prevRound={prevRound ? String(prevRound) : null}
+          nextRound={nextRound ? String(nextRound) : null}
+          hasResults={false}
+        />
+      </>
     );
   }
 
@@ -157,8 +219,58 @@ async function RaceContent({ round }: { round: string }) {
     })
     .sort((a, b) => a.lapMs - b.lapMs);
 
+  // ASCII view data: the same derived values as the standard markup below, as plain data.
+  const paceRange =
+    paceData.length > 1 ? paceData[paceData.length - 1].lapMs - paceData[0].lapMs : 0;
+  const asciiPace: RaceDetailPace[] = paceData.map((d, i) => {
+    const delta = d.lapMs - paceData[0].lapMs;
+    const barWidth =
+      i === 0 || paceRange === 0 ? 100 : Math.max(20, 100 - (delta / paceRange) * 80);
+    return {
+      driverId: d.driverId,
+      position: i + 1,
+      name: d.name,
+      color: getTeamColor(d.constructorId),
+      lapTime: d.lapTime,
+      delta: i > 0 ? (delta / 1000).toFixed(3) : null,
+      barFrac: barWidth / 100,
+      isFastest: i === 0,
+    };
+  });
+  const asciiPitSummaries: RaceDetailPitSummary[] = pitDriverSummaries.map((d) => {
+    const raceResult = results.find((r) => r.Driver.driverId === d.driverId);
+    return {
+      driverId: d.driverId,
+      name: d.driverId.replace(/_/g, " "),
+      color: raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)",
+      stops: d.stops,
+      duration: d.fastestDuration.toFixed(3),
+      lap: d.fastestLap,
+      isFastest: d.driverId === fastestPit?.driverId,
+    };
+  });
+  const asciiPitTimeline: RaceDetailPitStop[] = [...pitStops]
+    .sort((a, b) => parseInt(a.lap) - parseInt(b.lap))
+    .map((p, i) => {
+      const raceResult = results.find((r) => r.Driver.driverId === p.driverId);
+      const boxStop = pitBoxTimes.get(p.driverId)?.find((b) => b.lap === parseInt(p.lap));
+      return {
+        key: `${p.lap}-${p.driverId}-${i}`,
+        lap: p.lap,
+        name: raceResult
+          ? `${raceResult.Driver.givenName} ${raceResult.Driver.familyName}`
+          : p.driverId.replace(/_/g, " "),
+        color: raceResult ? getTeamColor(raceResult.Constructor.constructorId) : "var(--color-f1-text-muted)",
+        stop: String(parseInt(p.stop)),
+        duration: boxStop ? boxStop.duration.toFixed(3) : parseFloat(p.duration).toFixed(3),
+        isPitBox: !!boxStop,
+        timeOfDay: p.time,
+      };
+    });
+
   return (
     <>
+      <div className="f1-std-only">
       {/* Prev/Next race navigation */}
       {(prevRound || nextRound) && (
         <div className="mb-4 flex items-center justify-between text-sm">
@@ -771,6 +883,43 @@ async function RaceContent({ round }: { round: string }) {
           </div>
         </div>
       )}
+      </div>
+
+      <RaceDetailView
+        round={round}
+        {...raceHeaderProps(race)}
+        prevRound={prevRound ? String(prevRound) : null}
+        nextRound={nextRound ? String(nextRound) : null}
+        hasResults={results.length > 0}
+        podium={results.length >= 3 ? results.slice(0, 3).map((r) => ({ ...toDetailDriver(r), timeOrStatus: r.Time?.time ?? "" })) : []}
+        results={results.map((r) => toDetailDriver(r))}
+        sprint={sprint.map((r) => toDetailDriver(r, true))}
+        qualifying={qualifying.map((q): RaceDetailQuali => ({
+          driverId: q.Driver.driverId,
+          position: q.position,
+          flag: getCountryFlag(q.Driver.nationality),
+          givenName: q.Driver.givenName,
+          familyName: q.Driver.familyName,
+          teamColor: getTeamColor(q.Constructor.constructorId),
+          teamName: q.Constructor.name,
+          q1: q.Q1 ?? "-",
+          q2: q.Q2 ?? "-",
+          q3: q.Q3 ?? "-",
+        }))}
+        pitSummaries={asciiPitSummaries}
+        pitTimeline={asciiPitTimeline}
+        fastestPit={
+          fastestPit
+            ? {
+                kind: hasPitBox ? "box" : "lane",
+                duration: fastestPit.fastestDuration.toFixed(3),
+                name: fastestPit.driverId.replace(/_/g, " "),
+                lap: fastestPit.fastestLap,
+              }
+            : null
+        }
+        pace={asciiPace}
+      />
     </>
   );
 }
@@ -784,22 +933,24 @@ export default async function RacePage({
 
   return (
     <div>
-      <Breadcrumbs
-        items={[
-          { label: "Races", href: "/races" },
-          { label: `Round ${round}` },
-        ]}
-      />
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-black tracking-tight">Race Details</h1>
-        <RefreshButton />
+      <div className="f1-std-only">
+        <Breadcrumbs
+          items={[
+            { label: "Races", href: "/races" },
+            { label: `Round ${round}` },
+          ]}
+        />
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-black tracking-tight">Race Details</h1>
+          <RefreshButton />
+        </div>
       </div>
 
       <Suspense
         fallback={
           <div className="space-y-4">
-            <div className="h-48 rounded-xl bg-f1-card animate-pulse" />
-            <div className="h-96 rounded-xl bg-f1-card animate-pulse" />
+            <div className="f1-std-only h-48 rounded-xl bg-f1-card animate-pulse" />
+            <div className="f1-std-only h-96 rounded-xl bg-f1-card animate-pulse" />
           </div>
         }
       >

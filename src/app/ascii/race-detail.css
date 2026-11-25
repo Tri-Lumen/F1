@@ -33,7 +33,6 @@ html[data-style="ascii"] .f1-ascii-race .rd-links { display: flex; flex-wrap: wr
 html[data-style="ascii"] .f1-ascii-race .rd-links a { text-decoration: none; }
 html[data-style="ascii"] .f1-ascii-race .rd-links a:hover { color: var(--color-f1-text); }
 html[data-style="ascii"] .f1-ascii-race .rd-note { margin-bottom: 10px; }
-html[data-style="ascii"] .f1-ascii-race .rd-note + .rd-tbl { margin-top: 0; }
 html[data-style="ascii"] .f1-ascii-race .rd-info + .rd-note { margin-top: 12px; margin-bottom: 0; }
 
 /* Shared helpers */
