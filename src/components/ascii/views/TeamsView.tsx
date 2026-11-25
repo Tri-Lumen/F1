@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { AsciiHeader, Bar, Panel, Swatch } from "@/components/ascii/kit";
+import { PointsGrid, type PointsGridData } from "./PointsGrid";
 import "@/app/ascii/teams.css";
 
 /*
  * Terminal-grid Teams page for the ASCII visual style. Rendered beside the standard
  * markup on /teams and shown only under html[data-style="ascii"] (see
  * app/ascii/teams.css). Receives plain data from the page, so it stays a server component.
- * The standard charts (ConstructorPointsChart, TeammateH2H) are not shown in ASCII.
+ * The constructor points chart is drawn as a points grid; TeammateH2H is not shown in ASCII.
  */
 
 export interface AsciiTeamDriver {
@@ -31,10 +32,12 @@ export interface AsciiTeamEntry {
 export interface AsciiTeamsData {
   subtitle: string;
   teams: AsciiTeamEntry[];
+  /** Cumulative points per round per constructor (the constructor points chart's data). */
+  progression?: PointsGridData;
 }
 
 export default function TeamsView({ data }: { data: AsciiTeamsData }) {
-  const { subtitle, teams } = data;
+  const { subtitle, teams, progression } = data;
   const leaderPts = teams[0]?.points || 1;
 
   return (
@@ -78,6 +81,13 @@ export default function TeamsView({ data }: { data: AsciiTeamsData }) {
               ))}
             </div>
           </Panel>
+
+          {progression && progression.rounds.length > 0 && progression.series.length > 0 && (
+            <Panel label="Constructor points progression">
+              <p className="f1-a-muted">Cumulative championship points, all {progression.series.length} constructors</p>
+              <PointsGrid data={progression} nameHeader="TEAM" />
+            </Panel>
+          )}
 
           {/* Per-team driver points */}
           <div className="f1-a-two">

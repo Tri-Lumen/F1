@@ -22,6 +22,7 @@ import PageHeader from "@/components/PageHeader";
 import TeammateH2H from "@/components/TeammateH2H";
 import ConstructorPointsChart from "@/components/ConstructorPointsChart";
 import TeamsView, { type AsciiTeamEntry } from "@/components/ascii/views/TeamsView";
+import type { PointsGridData } from "@/components/ascii/views/PointsGrid";
 import { getDriverNumber, getDriverConstructorId } from "@/lib/driverOverrides";
 import { getTeamLogoUrl } from "@/lib/profileImages";
 
@@ -136,6 +137,23 @@ async function TeamsContent() {
       })),
     };
   });
+
+  // Same series as the ConstructorPointsChart: cumulative points per constructor after each race.
+  const asciiCompleted = allRaces.filter((r) => (r.Results?.length ?? 0) > 0);
+  const asciiProgression: PointsGridData = {
+    rounds: asciiCompleted.map((r) => r.round),
+    series: constructorStandings.map((s) => {
+      const cid = s.Constructor.constructorId;
+      let total = 0;
+      const values = asciiCompleted.map((race) => {
+        total += (race.Results ?? [])
+          .filter((r) => r.Constructor.constructorId === cid)
+          .reduce((sum, r) => sum + parseFloat(r.points), 0);
+        return total;
+      });
+      return { id: cid, label: s.Constructor.name, color: getTeamColor(cid), values };
+    }),
+  };
 
   return (
     <>
@@ -323,8 +341,8 @@ async function TeamsContent() {
       <TeammateH2H driverStandings={driverStandings} allRaces={allRaces} />
       </div>
 
-      {/* ASCII view (charts above are Standard-only) */}
-      <TeamsView data={{ subtitle: `${getCurrentYear()} Season · Full team stats and standings`, teams: asciiTeams }} />
+      {/* ASCII view (the points progression is drawn as a grid in ASCII) */}
+      <TeamsView data={{ subtitle: `${getCurrentYear()} Season · Full team stats and standings`, teams: asciiTeams, progression: asciiProgression }} />
     </>
   );
 }
